@@ -6,6 +6,14 @@ export type meta = {
   size: number;
 };
 
+
+export type itemDefaut = {
+  code: string;
+  libelle: string;
+  id: number;
+};
+
+
 export type PaginationParams = {
   page?: number;
   size?: number;

@@ -1,15 +1,14 @@
-import { bonLivraison, listBonLivraisons } from "@/types/bon-livraisons.type";
 import { client, listClients } from "@/types/client.type";
 import { devis, listDevis } from "@/types/devis.type";
-import { fournisseur, listFournisseurs } from "@/types/fournisseur.type";
 import { listMouvements } from "@/types/mouvements.type";
 import { listOperations, operation } from "@/types/operations.type";
-import { dataChart, meta, stat } from "@/types/other.type";
+import { dataChart, itemDefaut, meta, stat } from "@/types/other.type";
 import { listProduits } from "@/types/produits.type";
 import { listPromotions } from "@/types/promotions.type";
 import { listReglements, reglement } from "@/types/reglements-clients.type";
 import { SoldeResponse } from "@/types/solde.type";
 import { AuthResponse, user } from "@/types/user.type";
+import { listVehicules, vehicule } from "@/types/vehicule.type";
 import { detailsVente, listVentes } from "@/types/ventes.type";
 
 export const soldeFake: SoldeResponse = {
@@ -363,44 +362,125 @@ export const operations: operation[] = [
   },
 ];
 
-export const fournisseurs: fournisseur[] = [];
-
 export const proformas: devis[] = [];
 
-export const bonLivraisons: bonLivraison[] = [];
+export const vehicules: vehicule[] = [
+  
+      {
+        id: 1,
+        numImmatriculation: "AB-123-CD",
+        dateImmatriculation: new Date("2020-01-01"),
+        dateMiseEnCirculation: new Date("2020-02-01"),
+        numSerie: "SERIE123",  
+        numCarteGrise: "CARTE123",
+        nbPlaces: 5,
+        chargeUtile: 500,
+        cylindree: 2000,
+        puissance: 150,
+        nbCartes : 1,
+        valeurNeuve: 20000,
+        valeurVenale: 15000,
+        modele: "Toyota Corolla",
+        typeCommercial: "Berline",
+        commentaires : "Véhicule en bon état",
+        usageId: 1,
+        genreId : 1,
+        typeId : 1,
+        carrosserieId : 1,
+        energieId : 1,
+        marqueId : 1,
+        couleurId : 1,
+        categorieId: 1,
+        sousCategorieId: 1,
+        villeId: 1,
+        zoneCirculationId: 1,
+        conducteurLuiMeme: true,
+  },
+  {
+    id: 2,
+    numImmatriculation: "EF-456-GH",
+    dateImmatriculation: new Date("2019-05-15"),
+    dateMiseEnCirculation: new Date("2019-06-01"),
+    numSerie: "SERIE456",
+    numCarteGrise: "CARTE456",
+    nbPlaces: 2,
+    chargeUtile: 300,
+    cylindree: 1500,
+    puissance: 100,
+    nbCartes : 1,
+    valeurNeuve: 15000,
+    valeurVenale: 12000,
+    modele: "Honda Civic",
+    typeCommercial: "Coupe",
+    commentaires : "Véhicule en bon état",
+    usageId: 2,
+    genreId : 2,
+    typeId : 2,
+    carrosserieId : 2,
+    energieId : 2,
+    marqueId : 2,
+    couleurId : 2,
+    categorieId: 2,
+    sousCategorieId: 2,
+    villeId: 2,
+    zoneCirculationId: 2,
+    conducteurLuiMeme: false,
+    typeConducteur: 1,
+    idProfessionConducteur: 1,
+    libTypeConducteur: "Chauffeur professionnel",
+    nomConducteur: "Michel",
+    emailConducteur: "michel@example.com"
+  },
+  
+];
+
 
 export const clients: client[] = [
   {
-    id: "reg-001",
+    id: 1,
+    civilite: 1,
+    type: 1,
     nom: "Ange mariotte",
+    prenom: "Ange",
     code: "CODE-001",
     email: "email@example.com",
+    mobile: "0123456789",
     tel: "0123456789",
-    adresse: "Adresse 1",
-    solde: 150000,
-    statut: "Actif",
+    whatsapp: "0123456789",
+    boitePostale: "Adresse 1",
+    vehicules: vehicules 
   },
   {
-    id: "reg-002",
+    id: 2,
+    civilite: 2,
+    type: 2,
     nom: "Jean Dupont",
+    prenom: "Jean",
     code: "CODE-002",
     email: "jean.dupont@example.com",
+    mobile: "0987654321",
     tel: "0987654321",
-    adresse: "Adresse 2",
-    solde: 0,
-    statut: "Inactif",
+    whatsapp: "0987654321",
+    boitePostale: "Adresse 2",
+    vehicules: vehicules 
+
   },
   {
-    id: "reg-003",
+    id: 3,
+    civilite: 1,
+    type: 1,
     nom: "Alice Martin",
-    solde: 50000,
+    prenom: "Alice" ,
     code: "CODE-003",
     email: "alice.martin@example.com",
+    mobile: "0123456789",
     tel: "0123456789",
-    adresse: "Adresse 3",
-    statut: "Actif",
+    whatsapp: "0123456789",
+    boitePostale : "Adresse 3",
+    vehicules: vehicules 
   },
 ];
+
 
 export const dataChartsFakeData: dataChart[] = [
   {
@@ -445,22 +525,275 @@ export const operationsFakeData: listOperations = {
   data: operations,
 };
 
-export const fournisseursFakeData: listFournisseurs = {
-  meta: metaFakeData,
-  data: fournisseurs,
-};
 
 export const proformasFakeData: listDevis = {
   meta: metaFakeData,
   data: proformas,
 };
 
-export const bonLivraisonsFakeData: listBonLivraisons = {
-  meta: metaFakeData,
-  data: bonLivraisons,
-};
 
 export const clientsFakeData: listClients = {
   meta: metaFakeData,
   data: clients,
 };
+
+
+export const vehiculesFakeData: listVehicules = {
+  meta: metaFakeData,
+  data: vehicules,
+};
+
+export const professionsFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "PROF-001",
+    libelle: "Agriculteur",
+  },
+  {
+    id: 2,
+    code: "PROF-002",
+    libelle: "Commerçant",
+  },
+  {
+    id: 3,
+    code: "PROF-003",
+    libelle: "Artisan",
+  },
+  {
+    id: 4,
+    code: "PROF-004",
+    libelle: "Profession libérale",
+  },
+];
+
+export const genresFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "GEN-001",
+    libelle: "Tourisme",
+  },
+  {
+    id: 2,
+    code: "GEN-002",
+    libelle: "Utilitaire",
+  },
+  {
+    id: 3,
+    code: "GEN-003",
+    libelle: "Camion",
+  },
+  {
+    id: 4,
+    code: "GEN-004",
+    libelle: "Moto",
+  },
+];
+
+export const carroreseriesFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "CAR-001",
+    libelle: "Berline",
+  },
+  {
+    id: 2,
+    code: "CAR-002",
+    libelle: "SUV",
+  },
+  {
+    id: 3,
+    code: "CAR-003",
+    libelle: "Break",
+  },
+  {
+    id: 4,
+    code: "CAR-004",
+    libelle: "Pickup",
+  },
+];
+
+export const energiesFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "ENE-001",
+    libelle: "Essence",
+  },
+  {
+    id: 2,
+    code: "ENE-002",
+    libelle: "Diesel",
+  },
+  {
+    id: 3,
+    code: "ENE-003",
+    libelle: "Hybride",
+  },
+  {
+    id: 4,
+    code: "ENE-004",
+    libelle: "Electrique",
+  },
+];
+
+export const marquesFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "MAR-001",
+    libelle: "Toyota",
+  },
+  {
+    id: 2,
+    code: "MAR-002",
+    libelle: "Hyundai",
+  },
+  {
+    id: 3,
+    code: "MAR-003",
+    libelle: "Peugeot",
+  },
+  {
+    id: 4,
+    code: "MAR-004",
+    libelle: "Renault",
+  },
+];
+
+export const couleursFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "COU-001",
+    libelle: "Blanc",
+  },
+  {
+    id: 2,
+    code: "COU-002",
+    libelle: "Noir",
+  },
+  {
+    id: 3,
+    code: "COU-003",
+    libelle: "Gris",
+  },
+  {
+    id: 4,
+    code: "COU-004",
+    libelle: "Bleu",
+  },
+];
+
+export const UsagesFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "USA-001",
+    libelle: "Affaire",
+  },
+  {
+    id: 2,
+    code: "USA-002",
+    libelle: "Personnel",
+  },
+  {
+    id: 3,
+    code: "USA-003",
+    libelle: "Transport",
+  },
+  {
+    id: 4,
+    code: "USA-004",
+    libelle: "Mixte",
+  },
+];
+
+export const VehiculeTypesFakeData: itemDefaut [] = [
+   {
+    id: 1,
+    code: "VP",
+    libelle: "VP  (Véhicule de tourisme)",
+  },
+  {
+    id: 2,
+    code: "VUL",
+    libelle: "VUL (Véhicule utilitaire léger)",
+  },
+  {
+    id: 3,
+    code: "PL",
+    libelle: "PL (Poids lourd)",
+  },
+];
+
+export const villesFakeData: itemDefaut [] = [
+   {
+    id: 1,
+    code: "Abidjan",
+    libelle: "Abidjan",
+  },
+  {
+    id: 2,
+    code: "Yamoussoukro",
+    libelle: "Yamoussoukro",
+  },
+  {
+    id: 3,
+    code: "Bouake",
+    libelle: "Bouake",
+  },
+];
+
+
+export const categorieVehiculeFakeData: itemDefaut [] = [
+   {
+    id: 1,
+    code: "Promenade et affaires",
+    libelle: "Promenade et affaires",
+  },
+  {
+    id: 2,
+    code: "Véhicule de transport",
+    libelle: "Véhicule de transport",
+  },
+  {
+    id: 3,
+    code: "Véhcule professionnel",
+    libelle: "Véhcule professionnel",
+  },
+];
+
+
+
+export const sousCategoriesFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "Standard",
+    libelle: "Standard",
+  },
+  {
+    id: 2,
+    code: "Premium",
+    libelle: "Premium",
+  },
+  {
+    id: 3,
+    code: "Entreprise",
+    libelle: "Entreprise",
+  },
+];
+
+export const zonesFakeData: itemDefaut [] = [
+  {
+    id: 1,
+    code: "Urbain",
+    libelle: "Urbain",
+  },
+  {
+    id: 2,
+    code: "Inter-urbain",
+    libelle: "Inter-urbain",
+  },
+  {
+    id: 3,
+    code: "National",
+    libelle: "National",
+  },
+];
+

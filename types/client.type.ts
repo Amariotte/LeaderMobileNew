@@ -1,14 +1,26 @@
 import { meta } from "./other.type";
+import { vehicule } from "./vehicule.type";
 
 export type client = {
-  id: string;
-  nom: string;
+  id: number;
+  civilite: number;
+  type: number;
   code: string;
+  nom: string;
+  prenom: string;
   email: string;
+  mobile: string;
   tel: string;
-  adresse: string;
-  solde: number;
-  statut: string;
+  whatsapp: string;
+  boitePostale: string;
+
+  libProfession?: string;
+  libCivilite?: string;
+  libtype?: string;
+  solde?: number;
+  statut?: string;
+
+  vehicules?: vehicule[];
 };
 
 export type listClients = {

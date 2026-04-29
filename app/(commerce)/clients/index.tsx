@@ -1,21 +1,30 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { router } from "expo-router";
+import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
+import ClientEditorModal from "@/components/client-editor-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useCachedResource } from "@/hooks/use-cached-resource";
+import { useClientEditorModal } from "@/hooks/use-client-editor-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchClients } from "@/services/api-service";
 import { CLIENTS_LIST_CACHE_KEY } from "@/services/cache-service";
-import { formatNumber } from "@/tools/tools";
-import { listClients } from "@/types/client.type";
-import { useMemo } from "react";
+import { client, listClients } from "@/types/client.type";
+import { useMemo, useState } from "react";
 
 export default function ClientsScreen() {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
+
+  const [customersList, setCustomersList] = useState<client[]>([]);
+  const [searchText, setSearchText] = useState("");
+  const clientEditor = useClientEditorModal({
+    createTitle: "Creer un nouveau client",
+    getEditTitle: (selectedClient) => `Modifier ${selectedClient.nom}`,
+  });
 
   const initialClients = useMemo<listClients>(
     () => ({
@@ -39,12 +48,110 @@ export default function ClientsScreen() {
       ),
   });
 
-  const customers = clients?.data;
+  const customers = clients?.data ?? [];
+
+  // Sync customers list when data changes
+  useMemo(() => {
+    setCustomersList(customers);
+  }, [customers]);
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
   const softBlock = isDark ? "#242735" : "#F2F3F8";
   const mutedText = isDark ? "#A8AEC7" : "#8B90A5";
+
+  const handleOpenNewClient = () => {
+    clientEditor.openCreate();
+  };
+
+  const handleOpenEditClient = (client: client) => {
+    clientEditor.openEdit(client);
+  };
+
+  const handleOpenClientDetails = (client: client) => {
+    router.push({
+      pathname: "/(commerce)/clients/details",
+      params: { clientData: JSON.stringify(client) },
+    });
+  };
+
+  const handleCreateCotation = (clientItem: client) => {
+    Alert.alert("Cotation", `Créer une cotation pour ${clientItem.nom}`);
+  };
+
+  const handleCreateContrat = (clientItem: client) => {
+    router.push({
+      pathname: "/(commerce)/contrats",
+      params: { mode: "create", clientData: JSON.stringify(clientItem) },
+    });
+  };
+
+  const handleAddVehicule = (clientItem: client) => {
+    router.push({
+      pathname: "/(commerce)/vehicules/form",
+      params: {
+        mode: "create",
+        clientData: JSON.stringify(clientItem),
+        returnTo: "vehicules",
+      },
+    });
+  };
+
+  const getClientTypeLabel = (type?: number) => {
+    if (type === 2) return "Personne morale";
+    return "Personne physique";
+  };
+
+  const handleSubmitClient = (
+    data: Partial<client>,
+    mode: "create" | "edit",
+    selectedClient?: client,
+  ) => {
+    if (!data.nom || !data.prenom) {
+      Alert.alert("Erreur", "Le nom et le prénom sont obligatoires");
+      return;
+    }
+
+    if (mode === "edit" && selectedClient) {
+      // Edit existing client
+      const updatedList = customersList.map((c) =>
+        c.id === selectedClient.id ? { ...c, ...data } : c
+      );
+      setCustomersList(updatedList);
+    } else {
+      // Add new client
+      const newClient: client = {
+        id: Math.max(...customersList.map((c) => c.id), 0) + 1,
+        ...data,
+      } as client;
+      setCustomersList([...customersList, newClient]);
+    }
+  };
+
+  const handleDeleteClient = (client: client) => {
+    Alert.alert(
+      "Confirmation",
+      `Êtes-vous sûr de vouloir supprimer ${client.nom}?`,
+      [
+        { text: "Annuler", onPress: () => {} },
+        {
+          text: "Supprimer",
+          onPress: () => {
+            setCustomersList(customersList.filter((c) => c.id !== client.id));
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
+  // Filter customers based on search
+  const filteredCustomers = customersList.filter(
+    (c) =>
+      c.nom.toLowerCase().includes(searchText.toLowerCase()) ||
+      (c.code && c.code.toLowerCase().includes(searchText.toLowerCase())) ||
+      (c.prenom && c.prenom.toLowerCase().includes(searchText.toLowerCase()))
+  );
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
@@ -53,10 +160,19 @@ export default function ClientsScreen() {
       </View>
 
       <View style={[styles.searchBar, { backgroundColor: cardBackground }]}>
-        <ThemedText style={[styles.searchPlaceholder, { color: mutedText }]}>
-          Search Customers
-        </ThemedText>
         <MaterialIcons name="search" size={18} color={mutedText} />
+        <TextInput
+          style={[styles.searchInput, { color: mutedText }]}
+          placeholder="Chercher par nom, code ou prénom"
+          placeholderTextColor={mutedText}
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        {searchText.length > 0 && (
+          <Pressable onPress={() => setSearchText("")}>
+            <MaterialIcons name="close" size={18} color={mutedText} />
+          </Pressable>
+        )}
       </View>
 
       <View style={styles.summaryRow}>
@@ -64,12 +180,15 @@ export default function ClientsScreen() {
           <ThemedText style={styles.totalLabel}>Clients</ThemedText>
           <View style={styles.countBadge}>
             <ThemedText style={styles.countText}>
-              {customers?.length ?? 0}
+              {customersList?.length ?? 0}
             </ThemedText>
           </View>
         </View>
         <View style={styles.summaryActions}>
-          <Pressable style={styles.primaryAction}>
+          <Pressable
+            style={styles.primaryAction}
+            onPress={handleOpenNewClient}
+          >
             <MaterialIcons name="add" size={18} color="#FFFFFF" />
           </Pressable>
           <Pressable
@@ -91,7 +210,7 @@ export default function ClientsScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       >
-        {customers?.map((item) => {
+        {filteredCustomers?.map((item) => {
           const isActive = item.statut === "Active";
 
           return (
@@ -128,17 +247,25 @@ export default function ClientsScreen() {
                     >
                       {item.nom}
                     </ThemedText>
-                    <ThemedText
-                      style={[styles.companyMeta, { color: mutedText }]}
-                    >
-                      Code : {item.code}
-                    </ThemedText>
+                    <View style={styles.companyMetaRow}>
+                      <ThemedText
+                        style={[styles.companyMeta, { color: mutedText }]}
+                      >
+                        Code : {item.code}
+                      </ThemedText>
+                      <View style={[styles.typePill, { backgroundColor: softBlock }]}> 
+                        <ThemedText style={[styles.typePillText, { color: mutedText }]}> 
+                          {getClientTypeLabel(item.type)}
+                        </ThemedText>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
                 <View style={styles.cardActions}>
                   <Pressable
                     style={[styles.actionIcon, { backgroundColor: softBlock }]}
+                    onPress={() => handleOpenEditClient(item)}
                   >
                     <MaterialIcons
                       name="edit"
@@ -148,6 +275,7 @@ export default function ClientsScreen() {
                   </Pressable>
                   <Pressable
                     style={[styles.actionIcon, { backgroundColor: softBlock }]}
+                    onPress={() => handleDeleteClient(item)}
                   >
                     <MaterialIcons
                       name="delete-outline"
@@ -157,6 +285,7 @@ export default function ClientsScreen() {
                   </Pressable>
                   <Pressable
                     style={[styles.actionIcon, { backgroundColor: softBlock }]}
+                    onPress={() => handleOpenClientDetails(item)}
                   >
                     <MaterialIcons
                       name="person-outline"
@@ -166,43 +295,30 @@ export default function ClientsScreen() {
                   </Pressable>
                 </View>
               </View>
-
-              <View style={styles.cardBottom}>
-                <View
-                  style={[styles.balancePill, { backgroundColor: "#FFECE8" }]}
-                >
-                  <ThemedText style={styles.balanceText}>
-                    Balance : {formatNumber(item.solde)}
-                  </ThemedText>
-                </View>
-
-                <View style={styles.invoiceAction}>
-                  <MaterialIcons name="add-circle" size={14} color="#2E334A" />
-                  <ThemedText style={styles.invoiceActionText}>
-                    Add Invoice
-                  </ThemedText>
-                </View>
-
-                <View
-                  style={[
-                    styles.statusPill,
-                    { backgroundColor: isActive ? "#4CBF1F" : "#E8382D" },
-                  ]}
-                >
-                  <ThemedText style={styles.statusText}>
-                    {item.statut}
-                  </ThemedText>
-                </View>
-              </View>
             </View>
           );
         })}
       </ScrollView>
+
+      <ClientEditorModal
+        controller={clientEditor}
+        onSubmit={handleSubmitClient}
+      />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: 16,
+    paddingHorizontal: 12,
+  },
+  headerWrap: {
+    marginTop: -16,
+    marginHorizontal: -12,
+    marginBottom: 14,
+  },
   searchBar: {
     height: 42,
     borderRadius: 12,
@@ -211,6 +327,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 14,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    paddingVertical: 8,
   },
   searchPlaceholder: {
     fontSize: 13,
@@ -255,7 +377,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#6B3CFF",
+    backgroundColor: "#1F8B82",
   },
   secondaryAction: {
     width: 34,
@@ -303,43 +425,55 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 1,
   },
+  companyMetaRow: {
+    marginTop: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  typePill: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  typePillText: {
+    fontSize: 10,
+    fontWeight: "600",
+  },
   cardActions: {
     flexDirection: "row",
     gap: 6,
   },
   actionIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#D8DDEB",
   },
   cardBottom: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  balancePill: {
-    height: 24,
-    borderRadius: 7,
-    paddingHorizontal: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  balanceText: {
-    fontSize: 12,
-    color: "#FF5A3B",
-    fontWeight: "700",
-  },
-  invoiceAction: {
+  quickActionsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 8,
+    justifyContent: "flex-end",
   },
-  invoiceActionText: {
-    fontSize: 12,
-    fontWeight: "600",
+  quickActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#D8DDEB",
   },
+ 
   statusPill: {
     minWidth: 68,
     height: 24,

@@ -2,12 +2,12 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, usePathname } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    View,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -18,29 +18,21 @@ type HeaderVariant = "surface" | "primary";
 type AppRoute =
   | "/"
   | "/profile"
-  | "/produits"
+  | "/clients"
+  | "/vehicules"
+  | "/contrats"
   | "/ventes"
   | "/proformas"
-  | "/clients"
-  | "/fournisseurs";
+  | "/produits";
 
-type SubMenuKey = "sales" | "stock" | "settings";
+type SubMenuKey = "souscriptions" | "stocks" | "comptabilites" | "settings";
 
 type DrawerItem = {
   id:
     | "dashboard"
-    | "ventes-parent"
-    | "produits"
-    | "devis"
+    | "souscriptions"
     | "stocks"
-    | "receptions"
-    | "mouvements"
-    | "decaissements"
-    | "encaissements"
-    | "regl-clients"
-    | "regl-fournisseurs"
-    | "clients"
-    | "fournisseurs"
+    | "comptabilites"
     | "parametres-parent";
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -63,60 +55,31 @@ const DRAWER_WIDTH = 280;
 
 const DRAWER_ITEMS: DrawerItem[] = [
   { id: "dashboard", label: "Tableau de bord", icon: "dashboard", route: "/" },
-  {
-    id: "produits",
-    label: "Produits",
-    icon: "inventory-2",
-    route: "/produits",
-  },
-  {
-    id: "ventes-parent",
-    label: "Ventes & Proformas",
-    icon: "point-of-sale",
-    subMenuKey: "sales",
-  },
-  { id: "stocks", label: "Stocks", icon: "warehouse", subMenuKey: "stock" },
-  { id: "receptions", label: "Receptions", icon: "local-shipping" },
-  { id: "mouvements", label: "Mouvements de stock", icon: "swap-horiz" },
-  { id: "decaissements", label: "Decaissements", icon: "payments" },
-  {
-    id: "encaissements",
-    label: "Encaissements",
-    icon: "account-balance-wallet",
-  },
-  { id: "regl-clients", label: "Reglements clients", icon: "request-quote" },
-  {
-    id: "regl-fournisseurs",
-    label: "Reglements fournisseurs",
-    icon: "receipt-long",
-  },
-
-  { id: "clients", label: "Clients", icon: "groups", route: "/clients" },
-  {
-    id: "fournisseurs",
-    label: "Fournisseurs",
-    icon: "storefront",
-    route: "/fournisseurs",
-  },
-
-  {
-    id: "parametres-parent",
-    label: "Parametres",
-    icon: "settings",
-    subMenuKey: "settings",
-  },
+  { id: "souscriptions", label: "Souscriptions", icon: "sell", subMenuKey: "souscriptions" },
+  { id: "stocks", label: "Stocks", icon: "inventory", subMenuKey: "stocks" },
+  { id: "comptabilites", label: "Comptabilités", icon: "inventory", subMenuKey: "comptabilites" },
+  {id: "parametres-parent",label: "Parametres",icon: "settings",subMenuKey: "settings",},
 ];
 
 const SUB_MENU_ITEMS: Record<SubMenuKey, DrawerSubItem[]> = {
-  sales: [
-    { id: "ventes", label: "Ventes", route: "/ventes" },
-    { id: "proformas", label: "Proformas", route: "/proformas" },
+  souscriptions: [
+    { id: "clients", label: "Clients", route: "/clients" },
+    { id: "vehicules", label: "Véhicules", route: "/vehicules" },
+    { id: "cotations", label: "Cotations" },
+    { id: "contrats", label: "Contrats", route: "/contrats" },
+    { id: "polices", label: "Polices" },
   ],
-  stock: [
-    { id: "stock-produits", label: "Produits en stock", route: "/produits" },
-    { id: "stock-mouvements", label: "Mouvements de stock" },
-    { id: "stock-inventaires", label: "Inventaires" },
+  stocks: [
+    { id: "stock-me", label: "Mon stock", route: "/produits" },
+    { id: "stock-courtiers", label: "Stocks courtiers" },
+    { id: "stock-partenaires", label: "Stocks partenaires" },
+    { id: "stock-producteurs", label: "Stocks producteurs" },
   ],
+  comptabilites: [
+    { id: "encaissements-primes", label: "Encaissements Primes", route: "/ventes" },
+    { id: "operations-diverses", label: "Opérations diverses", route: "/proformas" },
+  ],
+
   settings: [
     { id: "settings-familles", label: "Familles" },
     { id: "settings-sites", label: "Sites" },
@@ -134,8 +97,11 @@ export default function AppHeaderDrawer({
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [openSubMenus, setOpenSubMenus] = useState<Record<SubMenuKey, boolean>>(
     {
-      sales: pathname === "/ventes" || pathname === "/proformas",
-      stock: pathname === "/produits",
+      souscriptions:
+        pathname === "/clients" || pathname === "/vehicules" || pathname === "/contrats",
+      stocks: pathname === "/produits",
+      comptabilites:
+        pathname === "/ventes" || pathname === "/proformas",
       settings: false,
     },
   );
@@ -144,9 +110,15 @@ export default function AppHeaderDrawer({
   useEffect(() => {
     setOpenSubMenus((prev) => ({
       ...prev,
-      sales:
-        pathname === "/ventes" || pathname === "/proformas" ? true : prev.sales,
-      stock: pathname === "/produits" ? true : prev.stock,
+      souscriptions:
+        pathname === "/clients" || pathname === "/vehicules" || pathname === "/contrats"
+          ? true
+          : prev.souscriptions,
+      stocks: pathname === "/produits" ? true : prev.stocks,
+      comptabilites:
+        pathname === "/ventes" || pathname === "/proformas"
+          ? true
+          : prev.comptabilites,
     }));
   }, [pathname]);
 
@@ -162,7 +134,7 @@ export default function AppHeaderDrawer({
 
   const titleColor = variant === "primary" ? "#FFFFFF" : undefined;
   const mutedText = isDark ? "#A3A9C3" : "#7C8097";
-  const headerBg = isDark ? "#4E2ED8" : "#6B3CFF";
+  const headerBg = isDark ? "#1F8B82" : "#1F8B82";
 
   const openDrawer = () => {
     setIsDrawerVisible(true);
@@ -291,7 +263,7 @@ export default function AppHeaderDrawer({
                     <MaterialIcons
                       name="local-fire-department"
                       size={18}
-                      color="#6B3CFF"
+                      color="#1F8B82"
                     />
                   </View>
                   <View>

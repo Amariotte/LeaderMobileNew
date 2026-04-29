@@ -34,7 +34,7 @@ function RootNavigator() {
   if (isLoading) {
     return (
       <View style={styles.loaderWrap}>
-        <ActivityIndicator size="large" color="#6B3CFF" />
+        <ActivityIndicator size="large" color="#1F8B82" />
       </View>
     );
   }
@@ -56,15 +56,39 @@ function RootNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="(commerce)/clients/details"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/vehicules"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/vehicules/details"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/vehicules/form"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/contrats"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/contrats/form"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="(commerce)/fournisseurs"
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="(commerce)/vente-details"
+        name="(commerce)/ventes/details"
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="(commerce)/vente-saisie"
+        name="(commerce)/ventes/saisie"
         options={{ headerShown: false }}
       />
       <Stack.Screen

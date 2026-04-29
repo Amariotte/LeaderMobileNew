@@ -72,7 +72,7 @@ export default function HomeScreen() {
   const isDark = scheme === "dark";
 
   const surface = isDark ? "#1A1A22" : "#FFFFFF";
-  const screenBg = isDark ? "#4E2ED8" : "#6B3CFF";
+  const screenBg = isDark ? "#1F8B82" : "#1F8B82";
   const textMute = isDark ? "#B7B8C7" : "#61637A";
   const innerBorder = isDark ? "#363A4C" : "#E7EAF5";
 

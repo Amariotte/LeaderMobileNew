@@ -69,7 +69,7 @@ export default function SalesListScreen() {
 
         <View style={styles.summaryActions}>
           <Pressable
-            onPress={() => router.push("/vente-saisie")}
+            onPress={() => router.push("/ventes/saisie")}
             style={styles.primaryAction}
           >
             <MaterialIcons name="add" size={18} color="#FFFFFF" />
@@ -138,7 +138,7 @@ export default function SalesListScreen() {
                 <Pressable
                   onPress={() =>
                     router.push({
-                      pathname: "/vente-details",
+                      pathname: "/ventes/details",
                       params: {
                         id: String(sale.id),
                         codeVente: sale.codeVente,
