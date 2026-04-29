@@ -12,6 +12,40 @@ export const sharedStyles = StyleSheet.create({
     marginHorizontal: -12,
     marginBottom: 14,
   },
+  contractsSearchBar: {
+    height: 42,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
+    gap: 8,
+  },
+  contractsSearchInput: {
+    flex: 1,
+    fontSize: 13,
+    paddingVertical: 8,
+  },
+  contractsPrimaryAction: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1F8B82",
+  },
+  contractsSecondaryAction: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  contractsListContent: {
+    paddingBottom: 24,
+    gap: 12,
+  },
 
   safeArea: {
     flex: 1,

@@ -8,6 +8,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { contratsFakeData } from "@/data/datas.fake";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { sharedStyles } from "@/styles/shared.js";
 import { formatAmount, formatDate } from "@/tools/tools";
 import { client } from "@/types/client.type";
 import { contrat } from "@/types/contrat.type";
@@ -283,15 +284,15 @@ export default function ContratsScreen() {
   };
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}> 
-      <View style={styles.headerWrap}>
+    <ThemedView style={[sharedStyles.container, { backgroundColor: pageBackground }]}> 
+      <View style={sharedStyles.headerWrap}>
         <AppHeaderDrawer title="Contrats" />
       </View>
 
-      <View style={[styles.searchBar, { backgroundColor: cardBackground }]}> 
+      <View style={[sharedStyles.contractsSearchBar, { backgroundColor: cardBackground }]}> 
         <MaterialIcons name="search" size={18} color={mutedText} />
         <TextInput
-          style={[styles.searchInput, { color: mutedText }]}
+          style={[sharedStyles.contractsSearchInput, { color: mutedText }]}
           placeholder="Chercher par contrat, immatriculation, assuré"
           placeholderTextColor={mutedText}
           value={searchText}
@@ -326,13 +327,13 @@ export default function ContratsScreen() {
           >
             <MaterialIcons name="tune" size={17} color={activeFilterCount > 0 ? "#146B40" : mutedText} />
           </Pressable>
-          <Pressable style={styles.primaryAction} onPress={handleCreate}>
+          <Pressable style={sharedStyles.contractsPrimaryAction} onPress={handleCreate}>
             <MaterialIcons name="add" size={18} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.listContent}>
+      <View style={sharedStyles.contractsListContent}>
         {filteredContrats.map((item) => {
           const contractMode = item.categorie?.toLowerCase().includes("flotte")
             ? "Flotte"
@@ -363,7 +364,7 @@ export default function ContratsScreen() {
                   <MaterialIcons name="edit" size={16} color={isDark ? "#DCE0F8" : "#2E334A"} />
                 </Pressable>
                 <Pressable style={[styles.iconBtn, { backgroundColor: softBlock }]} onPress={() => handleDelete(item)}>
-                  <MaterialIcons name="delete-outline" size={16} color="#EF4444" />
+                    sharedStyles.contractsSecondaryAction,
                 </Pressable>
               </View>
             </View>
@@ -558,30 +559,6 @@ export default function ContratsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 12,
-  },
-  headerWrap: {
-    marginTop: -16,
-    marginHorizontal: -12,
-    marginBottom: 14,
-  },
-  searchBar: {
-    height: 42,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 14,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    paddingVertical: 8,
-  },
   summaryRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -628,26 +605,6 @@ const styles = StyleSheet.create({
     color: "#146B40",
     fontSize: 11,
     fontWeight: "700",
-  },
-  primaryAction: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1F8B82",
-  },
-  secondaryAction: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  listContent: {
-    paddingBottom: 24,
-    gap: 12,
   },
   card: {
     borderRadius: 14,
