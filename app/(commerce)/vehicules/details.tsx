@@ -7,7 +7,6 @@ import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { client } from "@/types/client.type";
 import { vehicule } from "@/types/vehicule.type";
 
 export default function VehiculeDetailsScreen() {
@@ -26,15 +25,6 @@ export default function VehiculeDetailsScreen() {
       return undefined;
     }
   }, [vehiculeData]);
-
-  const selectedClient = useMemo<client | undefined>(() => {
-    if (!clientData) return undefined;
-    try {
-      return JSON.parse(clientData);
-    } catch {
-      return undefined;
-    }
-  }, [clientData]);
 
   const vehiculeItem = initialVehicule;
 

@@ -270,7 +270,7 @@ export default function ContractFormModal({
 
             <View style={[styles.block, { backgroundColor: cardBackground, borderColor }]}> 
               <ThemedText type="defaultSemiBold" style={{ color: textColor, marginBottom: 8 }}>
-                Informations de l'assuré
+                Informations de l&apos;assuré
               </ThemedText>
               <View style={styles.row2}>
                 {select("Type", formData.assureType, () => cycleOption("assureType", TYPES))}

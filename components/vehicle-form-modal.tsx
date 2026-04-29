@@ -398,7 +398,7 @@ export default function VehicleFormModal({
                       <View style={[styles.checkbox, { borderColor }]}> 
                         {formData.conducteurLuiMeme && <View style={styles.checkboxDot} />}
                       </View>
-                      <ThemedText style={{ color: textColor }}>Le client lui-même est l'assuré</ThemedText>
+                      <ThemedText style={{ color: textColor }}>Le client lui-même est l&apos;assuré</ThemedText>
                     </Pressable>
                   </View>
                   <View style={styles.row2}>

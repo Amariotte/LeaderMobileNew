@@ -83,7 +83,7 @@ export default function LoginScreen() {
 
             <View style={styles.fieldBlock}>
               <ThemedText style={styles.fieldLabel}>
-                Nom d'utilisateur
+                Nom d&apos;utilisateur
               </ThemedText>
               <View style={styles.inputWrap}>
                 <TextInput

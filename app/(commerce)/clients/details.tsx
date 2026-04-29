@@ -2,10 +2,10 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
@@ -45,10 +45,6 @@ export default function ClientDetailsScreen() {
   const handleSubmitEdit = (data: Partial<client>) => {
     setSelectedClient((prev) => (prev ? { ...prev, ...data } : prev));
     clientEditor.close();
-  };
-
-  const handleBack = () => {
-    router.back();
   };
 
   const handleCreateVehicle = () => {

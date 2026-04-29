@@ -22,7 +22,7 @@ type AppRoute =
   | "/vehicules"
   | "/contrats"
   | "/ventes"
-  | "/proformas"
+  | "/operations-diverses"
   | "/produits";
 
 type SubMenuKey = "souscriptions" | "stocks" | "comptabilites" | "settings";
@@ -77,7 +77,7 @@ const SUB_MENU_ITEMS: Record<SubMenuKey, DrawerSubItem[]> = {
   ],
   comptabilites: [
     { id: "encaissements-primes", label: "Encaissements Primes", route: "/ventes" },
-    { id: "operations-diverses", label: "Opérations diverses", route: "/proformas" },
+    { id: "operations-diverses", label: "Opérations diverses", route: "/operations-diverses" },
   ],
 
   settings: [
@@ -101,7 +101,7 @@ export default function AppHeaderDrawer({
         pathname === "/clients" || pathname === "/vehicules" || pathname === "/contrats",
       stocks: pathname === "/produits",
       comptabilites:
-        pathname === "/ventes" || pathname === "/proformas",
+        pathname === "/ventes" || pathname === "/operations-diverses",
       settings: false,
     },
   );
@@ -116,7 +116,7 @@ export default function AppHeaderDrawer({
           : prev.souscriptions,
       stocks: pathname === "/produits" ? true : prev.stocks,
       comptabilites:
-        pathname === "/ventes" || pathname === "/proformas"
+        pathname === "/ventes" || pathname === "/operations-diverses"
           ? true
           : prev.comptabilites,
     }));

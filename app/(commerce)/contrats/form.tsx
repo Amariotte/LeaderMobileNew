@@ -471,7 +471,7 @@ export default function ContratFormScreen() {
     <ScrollView contentContainerStyle={styles.stepContent} showsVerticalScrollIndicator={false}>
       <ThemedText style={[styles.stepTitle, { color: textColor }]}>Recherche du véhicule</ThemedText>
       <ThemedText style={[styles.stepSub, { color: mutedText }]}>
-        Saisissez le numéro d'immatriculation pour rechercher un véhicule existant.
+        Saisissez le numéro d&apos;immatriculation pour rechercher un véhicule existant.
       </ThemedText>
 
       <View style={[styles.searchRow]}>
@@ -588,7 +588,7 @@ export default function ContratFormScreen() {
           {form.souscripteurMemeAssure && <MaterialIcons name="check" size={14} color="#fff" />}
         </View>
         <ThemedText style={[styles.toggleLabel, { color: textColor }]}>
-          Le souscripteur est aussi l'assuré
+          Le souscripteur est aussi l&apos;assuré
         </ThemedText>
       </Pressable>
 

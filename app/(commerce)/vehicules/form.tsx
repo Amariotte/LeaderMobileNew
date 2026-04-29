@@ -116,11 +116,11 @@ function getOptionLabel(option: string | itemDefaut) {
   return typeof option === "string" ? option : option.libelle;
 }
 
-function getFirstOptionLabel(options: Array<string | itemDefaut>) {
+function getFirstOptionLabel(options: (string | itemDefaut)[]) {
   return options.length > 0 ? getOptionLabel(options[0]) : "";
 }
 
-function normalizeOptions(options: Array<string | itemDefaut>) {
+function normalizeOptions(options: (string | itemDefaut)[]) {
   return options.map(getOptionLabel);
 }
 
@@ -279,7 +279,7 @@ export default function VehiculeFormScreen() {
   const openPicker = (
     field: VehicleSelectField,
     title: string,
-    options: Array<string | itemDefaut>,
+    options: (string | itemDefaut)[],
   ) => {
     setPickerState({
       visible: true,
@@ -579,7 +579,7 @@ export default function VehiculeFormScreen() {
             <View style={[styles.inlineInfo, { borderColor, backgroundColor: inputBg }]}> 
               <MaterialIcons name="info-outline" size={16} color={COLORS.primaryColor} />
               <ThemedText style={[styles.inlineInfoText, { color: labelColor }]}>
-                Sélectionnez d'abord un client pour lier correctement ce véhicule.
+                Sélectionnez d&apos;abord un client pour lier correctement ce véhicule.
               </ThemedText>
             </View>
           )}
@@ -693,7 +693,7 @@ export default function VehiculeFormScreen() {
               <View style={[styles.checkbox, { borderColor }]}> 
                 {formData.conducteurLuiMeme && <View style={styles.checkboxDot} />}
               </View>
-              <ThemedText style={{ color: textColor }}>Le client lui-même est l'assuré</ThemedText>
+              <ThemedText style={{ color: textColor }}>Le client lui-même est l&apos;assuré</ThemedText>
             </Pressable>
           </View>
           <View style={styles.row2}>

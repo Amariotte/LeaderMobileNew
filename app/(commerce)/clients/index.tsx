@@ -13,7 +13,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchClients } from "@/services/api-service";
 import { CLIENTS_LIST_CACHE_KEY } from "@/services/cache-service";
 import { client, listClients } from "@/types/client.type";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function ClientsScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -48,12 +48,11 @@ export default function ClientsScreen() {
       ),
   });
 
-  const customers = clients?.data ?? [];
-
   // Sync customers list when data changes
-  useMemo(() => {
+  useEffect(() => {
+    const customers = clients?.data ?? [];
     setCustomersList(customers);
-  }, [customers]);
+  }, [clients]);
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
@@ -72,28 +71,6 @@ export default function ClientsScreen() {
     router.push({
       pathname: "/(commerce)/clients/details",
       params: { clientData: JSON.stringify(client) },
-    });
-  };
-
-  const handleCreateCotation = (clientItem: client) => {
-    Alert.alert("Cotation", `Créer une cotation pour ${clientItem.nom}`);
-  };
-
-  const handleCreateContrat = (clientItem: client) => {
-    router.push({
-      pathname: "/(commerce)/contrats",
-      params: { mode: "create", clientData: JSON.stringify(clientItem) },
-    });
-  };
-
-  const handleAddVehicule = (clientItem: client) => {
-    router.push({
-      pathname: "/(commerce)/vehicules/form",
-      params: {
-        mode: "create",
-        clientData: JSON.stringify(clientItem),
-        returnTo: "vehicules",
-      },
     });
   };
 
@@ -211,8 +188,6 @@ export default function ClientsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {filteredCustomers?.map((item) => {
-          const isActive = item.statut === "Active";
-
           return (
             <View
               key={item.id}
