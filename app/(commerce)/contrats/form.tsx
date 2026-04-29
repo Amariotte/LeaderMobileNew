@@ -81,6 +81,13 @@ const formatDate = (d?: Date | string) => {
   return dt.toLocaleDateString("fr-FR");
 };
 
+const toInputDate = (value: unknown, fallback: Date) => {
+  if (!value) return fallback.toISOString().slice(0, 10);
+  const dt = value instanceof Date ? value : new Date(String(value));
+  if (isNaN(dt.getTime())) return fallback.toISOString().slice(0, 10);
+  return dt.toISOString().slice(0, 10);
+};
+
 // ─── Step indicator ────────────────────────────────────────────────────────────
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
@@ -218,17 +225,17 @@ export default function ContratFormScreen() {
   const assureNomInitial =
     initialContract?.assureNom ??
     (initialClient ? `${initialClient.nom} ${initialClient.prenom}`.trim() : "");
-  const assureTelInitial = initialContract?.assureTelephone ?? initialClient?.tel ?? initialClient?.mobile ?? "";
+  const assureTelInitial = initialContract?.assureTel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
   const assureEmailInitial = initialContract?.assureEmail ?? initialClient?.email ?? "";
-  const assureBpInitial = initialContract?.assureBoitePostale ?? initialClient?.boitePostale ?? "";
+  const assureBpInitial = initialContract?.assureBp ?? initialClient?.boitePostale ?? "";
   const assureProfessionInitial = initialContract?.assureProfession ?? initialClient?.libProfession ?? "";
   const souscripteurNomInitial =
     initialContract?.souscripteurNom ??
     (initialClient ? `${initialClient.nom} ${initialClient.prenom}`.trim() : "");
   const souscripteurTelInitial =
-    initialContract?.souscripteurTelephone ?? initialClient?.tel ?? initialClient?.mobile ?? "";
+    initialContract?.souscripteurTel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
   const souscripteurEmailInitial = initialContract?.souscripteurEmail ?? initialClient?.email ?? "";
-  const souscripteurBpInitial = initialContract?.souscripteurBoitePostale ?? initialClient?.boitePostale ?? "";
+  const souscripteurBpInitial = initialContract?.souscripteurBp ?? initialClient?.boitePostale ?? "";
 
   const [form, setForm] = useState<ContratFormData>({
     vehicule: selectedInitialVehicule,
@@ -248,18 +255,11 @@ export default function ContratFormScreen() {
     agence: initialContract?.agence ?? AGENCES[0],
     couverture: initialContract?.couverture ?? COUVERTURES[0],
     duree: initialContract?.duree ?? DUREES[3],
-    dateEffet:
-      initialContract?.dateEffet instanceof Date
-        ? initialContract.dateEffet.toISOString().slice(0, 10)
-        : (typeof initialContract?.dateEffet === "string" && initialContract.dateEffet.length >= 10
-            ? initialContract.dateEffet.slice(0, 10)
-            : new Date().toISOString().slice(0, 10)),
-    dateEcheance:
-      initialContract?.dateEcheance instanceof Date
-        ? initialContract.dateEcheance.toISOString().slice(0, 10)
-        : (typeof initialContract?.dateEcheance === "string" && initialContract.dateEcheance.length >= 10
-            ? initialContract.dateEcheance.slice(0, 10)
-            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)),
+    dateEffet: toInputDate(initialContract?.dateEffet, new Date()),
+    dateEcheance: toInputDate(
+      initialContract?.dateEcheance,
+      new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    ),
     garantiesSelectionnees: [
       { id: 1, code: "RC", libelle: "Responsabilité Civile", prime: 45000 },
     ],
@@ -839,22 +839,21 @@ export default function ContratFormScreen() {
         initialContract?.numeroContrat ?? `CTR-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
       categorie: initialContract?.categorie ?? "NOUVELLE AFFAIRE",
       dateContrat: initialContract?.dateContrat ?? new Date(),
-      heureContrat: initialContract?.heureContrat ?? "",
       numeroPolice: initialContract?.numeroPolice ?? "",
       numeroAttestation: initialContract?.numeroAttestation ?? "",
       immatriculation: form.vehicule.numImmatriculation,
       vehiculeId: form.vehicule.id,
       assureType: initialContract?.assureType ?? "PERSONNE PHYSIQUE",
       assureNom: form.assureNom,
-      assureTelephone: form.assureTel,
+      assureTel: form.assureTel,
       assureEmail: form.assureEmail,
-      assureBoitePostale: form.assureBp,
+      assureBp: form.assureBp,
       assureProfession: form.assureProfession,
       souscripteurType: initialContract?.souscripteurType ?? "PERSONNE PHYSIQUE",
       souscripteurNom: form.souscripteurMemeAssure ? form.assureNom : form.souscripteurNom,
-      souscripteurTelephone: form.souscripteurMemeAssure ? form.assureTel : form.souscripteurTel,
+      souscripteurTel: form.souscripteurMemeAssure ? form.assureTel : form.souscripteurTel,
       souscripteurEmail: form.souscripteurMemeAssure ? form.assureEmail : form.souscripteurEmail,
-      souscripteurBoitePostale: form.souscripteurMemeAssure ? form.assureBp : form.souscripteurBp,
+      souscripteurBp: form.souscripteurMemeAssure ? form.assureBp : form.souscripteurBp,
       agence: form.agence,
       compagnie: form.compagnie,
       duree: form.duree,
@@ -872,7 +871,7 @@ export default function ContratFormScreen() {
     };
 
     router.replace({
-      pathname: "/(commerce)/contrats",
+      pathname: "../contrats",
       params: {
         action: isEditMode ? "updated" : "created",
         savedContractData: JSON.stringify(payload),

@@ -41,14 +41,14 @@ function RootNavigator() {
 
   if (!userToken) {
     return (
-      <Stack>
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
       </Stack>
     );
   }
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(commerce)/ventes" options={{ headerShown: false }} />
       <Stack.Screen
@@ -61,6 +61,10 @@ function RootNavigator() {
       />
       <Stack.Screen
         name="(commerce)/vehicules"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/vehicules/index"
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -118,7 +122,7 @@ function RootNavigator() {
       <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen
         name="modal"
-        options={{ presentation: "modal", title: "Modal" }}
+        options={{ presentation: "modal", headerShown: false }}
       />
       <Stack.Screen name="index" options={{ headerShown: false }} />
     </Stack>

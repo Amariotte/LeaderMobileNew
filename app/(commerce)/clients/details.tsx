@@ -70,7 +70,7 @@ export default function ClientDetailsScreen() {
 
   const handleCreateContract = () => {
     router.push({
-      pathname: "/(commerce)/contrats",
+      pathname: "/(commerce)/contrats/form",
       params: { mode: "create", clientData: JSON.stringify(selectedClient) },
     });
   };

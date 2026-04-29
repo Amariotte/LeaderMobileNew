@@ -259,6 +259,31 @@ export default function VehiculesScreen() {
                 </ThemedText>
               </View>
             </View>
+
+            <View style={[styles.detailsBlock, { backgroundColor: softBlock }]}> 
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Catégorie</ThemedText>
+                <ThemedText style={styles.detailValue}>{item.libCategorie || "-"}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Sous-catégorie</ThemedText>
+                <ThemedText style={styles.detailValue}>{item.libSousCategorie || "-"}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Usage</ThemedText>
+                <ThemedText style={styles.detailValue}>{item.libUsage || "-"}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Genre</ThemedText>
+                <ThemedText style={styles.detailValue}>{item.libGenre || "-"}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Autres</ThemedText>
+                <ThemedText style={styles.detailValue}>
+                  {item.libType || "-"} • {item.libCarrosserie || "-"} • {item.libCouleur || "-"}
+                </ThemedText>
+              </View>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -368,5 +393,26 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
+  },
+  detailsBlock: {
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  detailLabel: {
+    fontSize: 12,
+    minWidth: 90,
+  },
+  detailValue: {
+    fontSize: 12,
+    flex: 1,
+    textAlign: "right",
   },
 });

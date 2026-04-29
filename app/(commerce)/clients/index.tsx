@@ -270,6 +270,27 @@ export default function ClientsScreen() {
                   </Pressable>
                 </View>
               </View>
+
+              <View style={[styles.contactBlock, { backgroundColor: softBlock }]}>
+                <View style={styles.contactRow}>
+                  <MaterialIcons name="email" size={14} color={mutedText} />
+                  <ThemedText style={[styles.contactText, { color: mutedText }]}>
+                    {item.email || "-"}
+                  </ThemedText>
+                </View>
+                <View style={styles.contactRow}>
+                  <MaterialIcons name="phone" size={14} color={mutedText} />
+                  <ThemedText style={[styles.contactText, { color: mutedText }]}>
+                    {item.tel || "-"}
+                  </ThemedText>
+                </View>
+                <View style={styles.contactRow}>
+                  <MaterialIcons name="smartphone" size={14} color={mutedText} />
+                  <ThemedText style={[styles.contactText, { color: mutedText }]}>
+                    {item.mobile || "-"}
+                  </ThemedText>
+                </View>
+              </View>
             </View>
           );
         })}
@@ -427,6 +448,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#D8DDEB",
+  },
+  contactBlock: {
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 5,
+  },
+  contactRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  contactText: {
+    fontSize: 12,
+    flex: 1,
   },
   cardBottom: {
     flexDirection: "row",

@@ -327,7 +327,7 @@ export default function VehiculeFormScreen() {
 
     if (payload) {
       router.replace({
-        pathname: "/(commerce)/vehicules",
+        pathname: "../vehicules",
         params: {
           action: mode === "edit" ? "updated" : "created",
           savedVehiculeData: JSON.stringify(payload),

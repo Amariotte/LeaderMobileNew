@@ -86,10 +86,6 @@ export default function HomeScreen() {
       router.push("/clients");
       return;
     }
-
-    if (tileId === "fournisseurs") {
-      router.push("/fournisseurs");
-    }
   };
 
   return (
