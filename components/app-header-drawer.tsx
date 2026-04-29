@@ -21,9 +21,12 @@ type AppRoute =
   | "/clients"
   | "/vehicules"
   | "/contrats"
-  | "/ventes"
+  | "/encaissements-primes"
   | "/operations-diverses"
-  | "/produits";
+  | "/stock-mon"
+  | "/stock-courtiers"
+  | "/stock-partenaires"
+  | "/stock-producteurs";
 
 type SubMenuKey = "souscriptions" | "stocks" | "comptabilites" | "settings";
 
@@ -70,13 +73,13 @@ const SUB_MENU_ITEMS: Record<SubMenuKey, DrawerSubItem[]> = {
     { id: "polices", label: "Polices" },
   ],
   stocks: [
-    { id: "stock-me", label: "Mon stock", route: "/produits" },
-    { id: "stock-courtiers", label: "Stocks courtiers" },
-    { id: "stock-partenaires", label: "Stocks partenaires" },
-    { id: "stock-producteurs", label: "Stocks producteurs" },
+    { id: "stock-me", label: "Mon stock", route: "/stock-mon" },
+    { id: "stock-courtiers", label: "Stocks courtiers", route: "/stock-courtiers" },
+    { id: "stock-partenaires", label: "Stocks partenaires", route: "/stock-partenaires" },
+    { id: "stock-producteurs", label: "Stocks producteurs", route: "/stock-producteurs" },
   ],
   comptabilites: [
-    { id: "encaissements-primes", label: "Encaissements Primes", route: "/ventes" },
+    { id: "encaissements-primes", label: "Encaissements Primes", route: "/encaissements-primes" },
     { id: "operations-diverses", label: "Opérations diverses", route: "/operations-diverses" },
   ],
 
@@ -99,9 +102,13 @@ export default function AppHeaderDrawer({
     {
       souscriptions:
         pathname === "/clients" || pathname === "/vehicules" || pathname === "/contrats",
-      stocks: pathname === "/produits",
+      stocks:
+        pathname === "/stock-mon" ||
+        pathname === "/stock-courtiers" ||
+        pathname === "/stock-partenaires" ||
+        pathname === "/stock-producteurs",
       comptabilites:
-        pathname === "/ventes" || pathname === "/operations-diverses",
+        pathname === "/encaissements-primes" || pathname === "/operations-diverses",
       settings: false,
     },
   );
@@ -114,9 +121,15 @@ export default function AppHeaderDrawer({
         pathname === "/clients" || pathname === "/vehicules" || pathname === "/contrats"
           ? true
           : prev.souscriptions,
-      stocks: pathname === "/produits" ? true : prev.stocks,
+      stocks:
+        pathname === "/stock-mon" ||
+        pathname === "/stock-courtiers" ||
+        pathname === "/stock-partenaires" ||
+        pathname === "/stock-producteurs"
+          ? true
+          : prev.stocks,
       comptabilites:
-        pathname === "/ventes" || pathname === "/operations-diverses"
+        pathname === "/encaissements-primes" || pathname === "/operations-diverses"
           ? true
           : prev.comptabilites,
     }));

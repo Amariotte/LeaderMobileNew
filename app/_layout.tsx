@@ -92,11 +92,27 @@ function RootNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="(commerce)/proformas"
+        name="(commerce)/encaissements-primes"
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="(commerce)/produits"
+        name="(commerce)/operations-diverses"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/stock-mon"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/stock-courtiers"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/stock-partenaires"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/stock-producteurs"
         options={{ headerShown: false }}
       />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
