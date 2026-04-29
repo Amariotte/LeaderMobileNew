@@ -8,6 +8,7 @@ import { dataChart, itemDefaut, meta, stat } from "@/types/other.type";
 import { listProduits } from "@/types/produits.type";
 import { listPromotions } from "@/types/promotions.type";
 import { SoldeResponse } from "@/types/solde.type";
+import { stockCourtier, stockProducteur } from "@/types/stock.type";
 import { AuthResponse, user } from "@/types/user.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
 import { detailsVente, listVentes } from "@/types/ventes.type";
@@ -624,6 +625,66 @@ export const cotationsFakeData: listCotation = {
   data: cotations,
 };
 
+
+export const MonSoldeFakeData : stockProducteur [] = [
+  {
+    nomCompagnie: "Compagnie d'assurance XYZ",
+    nomPartenaire: "Agence Abidjan",
+    nomProducteur: "Ange mariotte",
+    typeAttestation: "Jaune",
+    qteDisponibles: 500000,
+    qteRecues: 1000000,
+    qteRetirees: 250000,
+    qteProduites: 750000,
+  },
+  {
+    nomCompagnie: "Compagnie d'assurance ABC",
+    nomPartenaire: "Agence Limete",
+    nomProducteur: "Jean Dupont",
+    typeAttestation: "Jaune",
+    qteDisponibles: 300000,
+    qteRecues: 500000,
+    qteRetirees: 100000,
+    qteProduites: 400000,
+  },
+  {
+    nomCompagnie: "Compagnie d'assurance DEF",
+    nomPartenaire: "Agence Gombe",
+    nomProducteur: "Alice Martin",  
+    typeAttestation: "Jaune",
+    qteDisponibles: 200000,
+    qteRecues: 300000,
+    qteRetirees: 50000,
+    qteProduites: 250000,
+  }
+];
+
+export const soldeCourtierFakeData : stockCourtier [] = [
+  {
+    nomCompagnie: "Compagnie d'assurance XYZ",
+    qteDisponibles: 500000,
+    qteRecues: 1000000,
+    qteRetirees: 250000,
+    qteRetireesAfterDistribuees: 0,
+    qteDistribuees: 750000,
+  },
+  {
+    nomCompagnie: "Compagnie d'assurance ABC",
+    qteDisponibles: 300000,
+    qteRecues: 500000,
+    qteRetirees: 100000,
+    qteRetireesAfterDistribuees: 0,
+    qteDistribuees: 400000,
+  },
+  {
+    nomCompagnie: "Compagnie d'assurance DEF",
+    qteDisponibles: 200000,
+    qteRecues: 300000,
+    qteRetirees: 50000,
+    qteRetireesAfterDistribuees: 0,
+    qteDistribuees: 250000,
+  }
+];
 
 export const clientsFakeData: listClients = {
   meta: metaFakeData,

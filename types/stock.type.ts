@@ -4,7 +4,7 @@ export type stockCourtier = {
   qteRecues?: number
   qteRetirees?: number
   qteDistribuees?: number
- qteRetireesAfterDistribuees?: number
+  qteRetireesAfterDistribuees?: number
   qteDisponibles?: number
 };
 

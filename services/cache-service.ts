@@ -11,6 +11,7 @@ export const VEHICULES_LIST_CACHE_KEY = "vehicules.list.cache.v1";
 export const STAT_DATA_CACHE_KEY = "statData.cache.v1";
 export const OPERATIONS_LIST_CACHE_KEY = "operations.list.cache.v1";
 export const STATISTIQUES_LIST_CACHE_KEY = "statistiques.list.cache.v1";
+export const STOCK_ME_CACHE_KEY = "stock.me.cache.v1";
 
 let currentUserCode: string | null = null;
 

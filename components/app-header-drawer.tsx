@@ -289,11 +289,11 @@ export default function AppHeaderDrawer({
                     />
                   </View>
                   <View>
-                    <ThemedText style={styles.drawerTitle}>eGaz</ThemedText>
+                    <ThemedText style={styles.drawerTitle}>Leader</ThemedText>
                     <ThemedText
                       style={[styles.drawerSubtitle, { color: mutedText }]}
                     >
-                      Gestion commerciale
+                      Gestion des courtages d'assurance
                     </ThemedText>
                   </View>
                 </View>
