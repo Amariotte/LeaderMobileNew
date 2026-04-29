@@ -6,45 +6,15 @@ import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from "react
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { contratsFakeData } from "@/data/datas.fake";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { formatDate } from "@/tools/tools";
 import { client } from "@/types/client.type";
-import { contrat } from "@/types/contrat.type";
+import { contrat, listContrats } from "@/types/contrat.type";
 import { vehicule } from "@/types/vehicule.type";
 
-const INITIAL_CONTRATS: contrat[] = [
-  {
-    id: 1,
-    numeroContrat: "CTR-2026-001",
-    categorie: "NOUVELLE AFFAIRE",
-    dateContrat: new Date(),
-    heureContrat: "10:13",
-    numeroPolice: "POL-001",
-    numeroAttestation: "ATT-001",
-    immatriculation: "AB-123-CD",
-    assureType: "PERSONNE PHYSIQUE",
-    assureNom: "Ange Mariotte",
-    assureTelephone: "0123456789",
-    assureEmail: "email@example.com",
-    assureBoitePostale: "Adresse 1",
-    assureProfession: "Commerçant",
-    souscripteurType: "PERSONNE PHYSIQUE",
-    souscripteurNom: "Ange Mariotte",
-    souscripteurTelephone: "0123456789",
-    souscripteurEmail: "email@example.com",
-    souscripteurBoitePostale: "Adresse 1",
-    agence: "SCA NOUVELLE ERE",
-    compagnie: "NSIA",
-    duree: "12 mois",
-    nombreJours: 0,
-    couverture: "RC Simple",
-    primeNette: 0,
-    accessoires: 0,
-    taxe: 0,
-    taxeFga: 0,
-    cedeao: 0,
-    netAPayer: 0,
-  },
-];
+
+const INITIAL_CONTRATS = contratsFakeData;
 
 export default function ContratsScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -76,7 +46,7 @@ export default function ContratsScreen() {
   }, [vehiculeData]);
 
   const [searchText, setSearchText] = useState("");
-  const [contratsList, setContratsList] = useState<contrat[]>(INITIAL_CONTRATS);
+  const [contratsList, setContratsList] = useState<listContrats>(INITIAL_CONTRATS);
   const lastPayloadRef = useRef<string>("");
 
   useEffect(() => {
@@ -106,29 +76,27 @@ export default function ContratsScreen() {
           numeroContrat: payload.numeroContrat,
           categorie: payload.categorie ?? "NOUVELLE AFFAIRE",
           dateContrat: payload.dateContrat ?? new Date(),
-          heureContrat: payload.heureContrat ?? "",
           numeroPolice: payload.numeroPolice ?? "",
           numeroAttestation: payload.numeroAttestation ?? "",
           immatriculation: payload.immatriculation,
           vehiculeId: payload.vehiculeId,
           assureType: payload.assureType ?? "PERSONNE PHYSIQUE",
           assureNom: payload.assureNom ?? "",
-          assureTelephone: payload.assureTelephone ?? "",
+          assureTel: payload.assureTel ?? "",
           assureEmail: payload.assureEmail ?? "",
-          assureBoitePostale: payload.assureBoitePostale ?? "",
+          assureBp: payload.assureBp ?? "",
           assureProfession: payload.assureProfession ?? "",
           souscripteurType: payload.souscripteurType ?? "PERSONNE PHYSIQUE",
           souscripteurNom: payload.souscripteurNom ?? "",
-          souscripteurTelephone: payload.souscripteurTelephone ?? "",
+          souscripteurTel: payload.souscripteurTel ?? "",
           souscripteurEmail: payload.souscripteurEmail ?? "",
-          souscripteurBoitePostale: payload.souscripteurBoitePostale ?? "",
+          souscripteurBp: payload.souscripteurBp ?? "",
           agence: payload.agence ?? "",
           compagnie: payload.compagnie ?? "",
           duree: payload.duree ?? "",
           nombreJours: payload.nombreJours ?? 0,
           couverture: payload.couverture ?? "",
           dateEffet: payload.dateEffet,
-          heureEffet: payload.heureEffet,
           dateEcheance: payload.dateEcheance,
           primeNette: payload.primeNette ?? 0,
           accessoires: payload.accessoires ?? 0,
@@ -233,7 +201,15 @@ export default function ContratsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.listContent}>
-        {filteredContrats.map((item) => (
+        {filteredContrats.map((item) => {
+          const contractMode = item.categorie?.toLowerCase().includes("flotte")
+            ? "Flotte"
+            : "Auto";
+          const status = item.categorie?.toLowerCase().includes("annul")
+            ? "Annulé"
+            : "Actif";
+
+          return (
           <View key={item.id} style={[styles.card, { backgroundColor: cardBackground, borderColor }]}> 
             <View style={styles.cardTop}>
               <View style={{ flex: 1 }}>
@@ -244,7 +220,7 @@ export default function ContratsScreen() {
                   {item.immatriculation} • {item.categorie}
                 </ThemedText>
                 <ThemedText style={{ color: mutedText, fontSize: 12 }}>
-                  Assuré: {item.assureNom}
+                  Souscripteur : {item.souscripteurNom || item.souscripteurTel || "-"}
                 </ThemedText>
               </View>
               <View style={styles.actionRow}>
@@ -257,20 +233,68 @@ export default function ContratsScreen() {
               </View>
             </View>
             <View style={styles.bottomRow}>
-              <View style={[styles.pill, { backgroundColor: softBlock }]}> 
-                <ThemedText style={{ color: mutedText, fontSize: 12 }}>{item.compagnie}</ThemedText>
+              <View style={styles.badgesRow}>
+                <View style={[styles.pill, { backgroundColor: softBlock }]}> 
+                  <ThemedText style={{ color: mutedText, fontSize: 12 }}>{contractMode}</ThemedText>
+                </View>
+                <View style={[styles.pill, { backgroundColor: status === "Annulé" ? "#FCE8E8" : "#E9F4EA" }]}> 
+                  <ThemedText
+                    style={{
+                      color: status === "Annulé" ? "#A11D1D" : "#146B40",
+                      fontSize: 12,
+                      fontWeight: "700",
+                    }}
+                  >
+                    {status}
+                  </ThemedText>
+                </View>
               </View>
-              <View style={[styles.pill, { backgroundColor: softBlock }]}> 
-                <ThemedText style={{ color: mutedText, fontSize: 12 }}>{item.couverture}</ThemedText>
+
+              <View style={styles.netBlock}>
+                <ThemedText style={[styles.netLabel, { color: mutedText }]}>Net à payer</ThemedText>
+                <ThemedText style={styles.netValue}>{item.netAPayer ?? 0}</ThemedText>
               </View>
-              <View style={[styles.pill, { backgroundColor: "#E9F4EA" }]}> 
-                <ThemedText style={{ color: "#146B40", fontSize: 12, fontWeight: "700" }}>
-                  Net: {item.netAPayer ?? 0}
+            </View>
+
+            <View style={[styles.detailsBlock, { backgroundColor: softBlock }]}> 
+               <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Compagnie</ThemedText>
+                <ThemedText style={styles.detailValue}>{item.compagnie}</ThemedText>
+              </View>
+               <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Couverture</ThemedText>
+                <ThemedText style={styles.detailValue}>{item.couverture}</ThemedText>
+              </View>
+             
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Date début</ThemedText>
+                <ThemedText style={styles.detailValue}>{formatDate(item.dateEffet)}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Date fin</ThemedText>
+                <ThemedText style={styles.detailValue}>{formatDate(item.dateEcheance)}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Police / Attestation</ThemedText>
+                <ThemedText style={styles.detailValue}>
+                  {(item.numeroPolice || "-")} / {(item.numeroAttestation || "-")}
+                </ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Agence / Durée</ThemedText>
+                <ThemedText style={styles.detailValue}>
+                  {(item.agence || "-")} / {(item.duree || "-")}
+                </ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.detailLabel, { color: mutedText }]}>Assuré</ThemedText>
+                <ThemedText style={styles.detailValue}>
+                  {(item.assureNom || "-")} ({item.assureTel || "-"})
                 </ThemedText>
               </View>
             </View>
           </View>
-        ))}
+        );})}
       </ScrollView>
     </ThemedView>
   );
@@ -310,13 +334,34 @@ const styles = StyleSheet.create({
   totalRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  badgesRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    flex: 1,
   },
   totalLabel: {
     fontSize: 16,
     fontWeight: "600",
   },
   countBadge: {
+  netBlock: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+    minWidth: 120,
+  },
+  netLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  netValue: {
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: "800",
+    color: "#146B40",
     minWidth: 20,
     height: 20,
     borderRadius: 10,
@@ -373,5 +418,26 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
+  },
+  detailsBlock: {
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  detailLabel: {
+    fontSize: 12,
+    minWidth: 110,
+  },
+  detailValue: {
+    fontSize: 12,
+    flex: 1,
+    textAlign: "right",
   },
 });

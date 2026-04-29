@@ -17,45 +17,35 @@ type Tile = {
 
 const QUICK_TILES: Tile[] = [
   {
-    id: "vente",
-    label: "Nouvelle vente",
+    id: "contrat",
+    label: "Nouveau contrat",
     icon: "point-of-sale",
     color: "#EAE8FF",
   },
   {
-    id: "reception",
-    label: "Nouvelle reception",
+    id: "vehicule",
+    label: "Nouveau véhicule",
     icon: "local-shipping",
     color: "#E4F7E8",
   },
-
   {
-    id: "decaissement",
-    label: "Enregistrer un décaissement",
-    icon: "inventory-2",
-    color: "#FFE9ED",
-  },
-  {
-    id: "reg-clients",
-    label: "Regl. clients",
+    id: "encaissement-primes",
+    label: "Encaissement primes",
     icon: "payments",
     color: "#E8F0FF",
+  },
+   {
+    id: "operation-diverse",
+    label: "Nouvelle op. diverse",
+    icon: "inventory-2",
+    color: "#FFE9ED",
   },
   {
     id: "reg-fourn",
     label: "Regl. fourn.",
     icon: "request-quote",
     color: "#FCE9FF",
-  },
-  { id: "clients", label: "Clients", icon: "groups", color: "#E8FAFF" },
-  {
-    id: "fournisseurs",
-    label: "Fournisseurs",
-    icon: "storefront",
-    color: "#FFF1E8",
-  },
-  { id: "stats", label: "Statistiques", icon: "bar-chart", color: "#EAF0FF" },
-  { id: "params", label: "Parametres", icon: "settings", color: "#EEF0F3" },
+  }
 ];
 
 const WEEK_DATA = [86, 18, 22, 61, 47, 73, 28];
