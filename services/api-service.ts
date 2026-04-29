@@ -1,26 +1,25 @@
 import apiConfig from "@/config/api";
 import {
   clientsFakeData,
+  contratsFakeData,
+  cotationsFakeData,
   dataChartsFakeData,
-  fournisseursFakeData,
   mouvementsFakeData,
   operationsFakeData,
-  produitsFakeData,
-  proformasFakeData,
   reglementsFakeData,
   soldeFake,
-  statsFake,
-  ventesFakeData,
+  statsFake
 } from "@/data/datas.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
 import { listClients } from "@/types/client.type";
+import { contrat, listContrats } from "@/types/contrat.type";
 import {
-  deleteDevisLigneEdit,
-  devis,
-  devisLigneEdit,
-  listDevis,
+  cotation,
+  cotationLigneEdit,
+  deleteCotationLigneEdit,
+  listCotation,
 } from "@/types/devis.type";
-import { fournisseur, listFournisseurs } from "@/types/fournisseur.type";
+import { encaissementPrime, listEncaissementsPrimes } from "@/types/encaissementPrime.type";
 import { listMouvements } from "@/types/mouvements.type";
 import { listOperations, operation } from "@/types/operations.type";
 import {
@@ -30,10 +29,7 @@ import {
   PaginationParams,
   stat,
 } from "@/types/other.type";
-import { listProduits } from "@/types/produits.type";
-import { listReglements, reglement } from "@/types/reglements-clients.type";
 import { SoldeResponse } from "@/types/solde.type";
-import { listVentes, vente } from "@/types/ventes.type";
 import { getJsonAuth, postJsonAuth } from "./api-client";
 
 const LIMIT_RECENT_TRANSACTIONS = process.env
@@ -186,38 +182,25 @@ export function getSoldeFromFakeData(): number {
   return parseSoldeValue(soldeFake.solde);
 }
 
-export async function fetchSoldeCompte(token: string): Promise<number> {
+export async function fetchMonStock(token: string): Promise<number> {
   if (isModeDemoEnabled()) {
     return getSoldeFromFakeData();
   }
 
   const payload = await getJsonAuth<SoldeResponse>(
-    apiConfig.endpoints.soldes,
+    apiConfig.endpoints.stockMe,
     token,
   );
   return parseSoldeValue(payload?.solde);
 }
 
-export async function getfetchProduits(
-  token: string,
-  params?: PaginationParams,
-): Promise<listProduits> {
-  const data = await fetchPaginatedList(
-    token,
-    `${apiConfig.endpoints.produits}`,
-    params,
-    produitsFakeData,
-  );
-  return data;
-}
-
-export async function getAllProduits(token: string): Promise<listProduits> {
+export async function getAllClients(token: string): Promise<listClients> {
   if (isModeDemoEnabled()) {
-    return produitsFakeData;
+    return clientsFakeData;
   }
 
-  const data = await getJsonAuth<listProduits>(
-    `${apiConfig.endpoints.produits}`,
+  const data = await getJsonAuth<listClients>(
+    `${apiConfig.endpoints.clients}`,
     token,
   );
 
@@ -237,20 +220,6 @@ export async function getfetchClients(token: string): Promise<listClients> {
   return data;
 }
 
-export async function getfetchFournisseurs(
-  token: string,
-): Promise<listFournisseurs> {
-  if (isModeDemoEnabled()) {
-    return fournisseursFakeData;
-  }
-
-  const data = await getJsonAuth<listFournisseurs>(
-    `${apiConfig.endpoints.fournisseurs}`,
-    token,
-  );
-  return data;
-}
-
 export async function getStats(token: string): Promise<stat> {
   if (isModeDemoEnabled()) {
     return statsFake;
@@ -260,44 +229,44 @@ export async function getStats(token: string): Promise<stat> {
   return payload;
 }
 
-export async function getfetchVentes(
+export async function getfetchContrats(
   token: string,
   params?: PaginationParams,
-): Promise<listVentes> {
+): Promise<listContrats> {
   const d = await fetchPaginatedList(
     token,
-    apiConfig.endpoints.ventes,
+    apiConfig.endpoints.contrats,
     params,
-    ventesFakeData,
+    contratsFakeData,
   );
   return d;
 }
 
-export async function getfetchDevis(token: string): Promise<listDevis> {
+export async function getfetchCotations(token: string): Promise<listCotation> {
   if (isModeDemoEnabled()) {
-    return proformasFakeData;
+    return cotationsFakeData;
   }
 
-  const data = await getJsonAuth<listDevis>(
-    `${apiConfig.endpoints.devis}`,
+  const data = await getJsonAuth<listCotation>(
+    `${apiConfig.endpoints.cotations}`,
     token,
   );
 
   return data;
 }
 
-export async function getfetchVenteById(
+export async function getfetchContratById(
   token: string,
-  id: string,
-): Promise<vente | null> {
+  id: number,
+): Promise<contrat | null> {
   if (isModeDemoEnabled()) {
-    return ventesFakeData.data.filter((v) => v.id === id).length > 0
-      ? ventesFakeData.data.filter((v) => v.id === id)[0]
+    return contratsFakeData.data.filter((c) => c.id === id).length > 0
+      ? contratsFakeData.data.filter((c) => c.id === id)[0]
       : null;
   }
 
-  const d = await getJsonAuth<vente>(
-    `${apiConfig.endpoints.ventes}/${id}`,
+  const d = await getJsonAuth<contrat>(
+    `${apiConfig.endpoints.contrats}/${id}`,
     token,
   );
 
@@ -323,10 +292,10 @@ export async function getfetchOperationById(
   return d;
 }
 
-export async function getfetchReglementClientById(
+export async function getfetchEncaissementPrimeById(
   token: string,
   id: string,
-): Promise<reglement | null> {
+): Promise<encaissementPrime | null> {
   if (isModeDemoEnabled()) {
     return reglementsFakeData.data.filter((reglement) => reglement.id === id)
       .length > 0
@@ -334,108 +303,68 @@ export async function getfetchReglementClientById(
       : null;
   }
 
-  const d = await getJsonAuth<reglement>(
-    `${apiConfig.endpoints.reglementsClients}/${id}`,
+  const d = await getJsonAuth<encaissementPrime>(
+    `${apiConfig.endpoints.encaissementsPrimes}/${id}`,
     token,
   );
 
   return d;
 }
 
-export async function getfetchReglementFournisseurById(
+
+export async function getfetchCotationById(
   token: string,
   id: string,
-): Promise<reglement | null> {
+): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
-    return reglementsFakeData.data.filter((reglement) => reglement.id === id)
-      .length > 0
-      ? reglementsFakeData.data.filter((reglement) => reglement.id === id)[0]
+    return cotationsFakeData.data.filter((cotation) => cotation.id === id).length > 0
+      ? cotationsFakeData.data.filter((cotation) => cotation.id === id)[0]
       : null;
   }
 
-  const d = await getJsonAuth<reglement>(
-    `${apiConfig.endpoints.reglementsFournisseurs}/${id}`,
+  const d = await getJsonAuth<cotation>(
+    `${apiConfig.endpoints.cotations}/${id}`,
     token,
   );
 
   return d;
 }
 
-export async function getfetchFournisseurById(
+export async function postCotationLigne(
   token: string,
-  id: string,
-): Promise<fournisseur | null> {
+  ligne: cotationLigneEdit,
+  cotationId?: string,
+): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
-    return fournisseursFakeData.data.filter(
-      (fournisseur) => fournisseur.id === id,
-    ).length > 0
-      ? fournisseursFakeData.data.filter(
-          (fournisseur) => fournisseur.id === id,
-        )[0]
-      : null;
-  }
-
-  const d = await getJsonAuth<fournisseur>(
-    `${apiConfig.endpoints.fournisseurs}/${id}`,
-    token,
-  );
-
-  return d;
-}
-
-export async function getfetchDevisById(
-  token: string,
-  id: string,
-): Promise<devis | null> {
-  if (isModeDemoEnabled()) {
-    return proformasFakeData.data.filter((devis) => devis.id === id).length > 0
-      ? proformasFakeData.data.filter((devis) => devis.id === id)[0]
-      : null;
-  }
-
-  const d = await getJsonAuth<devis>(
-    `${apiConfig.endpoints.devis}/${id}`,
-    token,
-  );
-
-  return d;
-}
-
-export async function postDevisLigne(
-  token: string,
-  ligne: devisLigneEdit,
-  devisId?: string,
-): Promise<devis | null> {
-  if (isModeDemoEnabled()) {
-    if (!devisId) {
+    if (!cotationId) {
       return null;
     }
 
-    const found = proformasFakeData.data.find((devis) => devis.id === devisId);
+    const found = cotationsFakeData.data.find((cotation) => cotation.id === cotationId);
     return found ?? null;
   }
 
-  const endpoint = devisId
-    ? `${apiConfig.endpoints.devis}/${devisId}`
-    : `${apiConfig.endpoints.devis}`;
+  const endpoint = cotationId
+    ? `${apiConfig.endpoints.cotations}/${cotationId}`
+    : `${apiConfig.endpoints.cotations}`;
 
-  const d = await postJsonAuth<devis, devisLigneEdit>(endpoint, token, ligne);
+  const d = await postJsonAuth<cotation, cotationLigneEdit>(endpoint, token, ligne);
   return d;
 }
 
-export async function updateDevisLigne(
+export async function updateCotationLigne(
   token: string,
-  devisId: string,
+  cotationId: string,
   ligneId: string,
-  ligne: devisLigneEdit,
-): Promise<devis | null> {
+  ligne: cotationLigneEdit,
+): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
-    const found = proformasFakeData.data.find((devis) => devis.id === devisId);
+    const found = cotationsFakeData.data.find((cotation) => cotation.id === cotationId);
     return found ?? null;
   }
 
-  const d = await postJsonAuth<devis, devisLigneEdit>(
-    `${apiConfig.endpoints.devis}/${devisId}/lignes/${ligneId}`,
+  const d = await postJsonAuth<cotation, cotationLigneEdit>(
+    `${apiConfig.endpoints.cotations}/${cotationId}/lignes/${ligneId}`,
     token,
     ligne,
   );
@@ -443,19 +372,19 @@ export async function updateDevisLigne(
   return d;
 }
 
-export async function deleteDevisLigne(
+export async function deleteCotationLigne(
   token: string,
-  devisId: string,
+  cotationId: string,
   ligneId: string,
-  ligne: deleteDevisLigneEdit,
-): Promise<devis | null> {
+  ligne: deleteCotationLigneEdit,
+): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
-    const found = proformasFakeData.data.find((devis) => devis.id === devisId);
+    const found = cotationsFakeData.data.find((cotation) => cotation.id === cotationId);
     return found ?? null;
   }
 
-  const endpoint = `${apiConfig.endpoints.devis}/${devisId}/lignes/${ligneId}/delete`;
-  const d = await postJsonAuth<devis, deleteDevisLigneEdit>(
+  const endpoint = `${apiConfig.endpoints.cotations}/${cotationId}/lignes/${ligneId}/delete`;
+  const d = await postJsonAuth<cotation, deleteCotationLigneEdit>(
     endpoint,
     token,
     ligne,
@@ -464,16 +393,16 @@ export async function deleteDevisLigne(
   return d;
 }
 
-export async function deleteDevis(token: string, id: string): Promise<boolean> {
+export async function deleteCotation(token: string, id: string): Promise<boolean> {
   if (isModeDemoEnabled()) {
-    const initialLength = proformasFakeData.data.length;
-    proformasFakeData.data = proformasFakeData.data.filter(
-      (devis) => devis.id !== id,
+    const initialLength = cotationsFakeData.data.length;
+    cotationsFakeData.data = cotationsFakeData.data.filter(
+      (cotation) => cotation.id !== id,
     );
-    return proformasFakeData.data.length < initialLength;
+    return cotationsFakeData.data.length < initialLength;
   }
 
-  await getJsonAuth<null>(`${apiConfig.endpoints.devis}/${id}/delete`, token);
+  await getJsonAuth<null>(`${apiConfig.endpoints.cotations}/${id}/delete`, token);
   return true;
 }
 
@@ -491,15 +420,15 @@ export async function getfetchOperations(
   return data;
 }
 
-export async function getfetchReglementsClients(
+export async function getfetchEncaissementsPrimes(
   token: string,
-): Promise<listReglements> {
+): Promise<listEncaissementsPrimes> {
   if (isModeDemoEnabled()) {
     return reglementsFakeData;
   }
 
-  const data = await getJsonAuth<listReglements>(
-    `${apiConfig.endpoints.reglementsClients}`,
+  const data = await getJsonAuth<listEncaissementsPrimes>(
+    `${apiConfig.endpoints.encaissementsPrimes}`,
     token,
   );
   return data;
@@ -553,43 +482,43 @@ export async function getfetchMouvements(
   return data;
 }
 
-export async function postValidateDevis(
+export async function postValidateCotation(
   token: string,
   id: string,
-): Promise<devis | null> {
+): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
-    const initialLength = proformasFakeData.data.length;
-    proformasFakeData.data = proformasFakeData.data.filter(
-      (devis) => devis.id !== id,
+    const initialLength = cotationsFakeData.data.length;
+    cotationsFakeData.data = cotationsFakeData.data.filter(
+      (cotation) => cotation.id !== id,
     );
-    return proformasFakeData.data.length < initialLength
-      ? (proformasFakeData.data.find((devis) => devis.id === id) ?? null)
+    return cotationsFakeData.data.length < initialLength
+      ? (cotationsFakeData.data.find((cotation) => cotation.id === id) ?? null)
       : null;
   }
 
-  const d = await getJsonAuth<devis>(
-    `${apiConfig.endpoints.devis}/${id}/validate`,
+  const d = await getJsonAuth<cotation>(
+    `${apiConfig.endpoints.cotations}/${id}/validate`,
     token,
   );
   return d;
 }
 
-export async function postSaveDevis(
+export async function postSaveCotation(
   token: string,
   id: string,
-): Promise<devis | null> {
+): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
-    const initialLength = proformasFakeData.data.length;
-    proformasFakeData.data = proformasFakeData.data.filter(
-      (devis) => devis.id !== id,
+    const initialLength = cotationsFakeData.data.length;
+    cotationsFakeData.data = cotationsFakeData.data.filter(
+      (cotation) => cotation.id !== id,
     );
-    return proformasFakeData.data.length < initialLength
-      ? (proformasFakeData.data.find((devis) => devis.id === id) ?? null)
+    return cotationsFakeData.data.length < initialLength
+      ? (cotationsFakeData.data.find((cotation) => cotation.id === id) ?? null)
       : null;
   }
 
-  const d = await getJsonAuth<devis>(
-    `${apiConfig.endpoints.devis}/${id}/save`,
+  const d = await getJsonAuth<cotation>(
+    `${apiConfig.endpoints.cotations}/${id}/save`,
     token,
   );
   return d;

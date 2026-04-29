@@ -12,7 +12,7 @@ export const statusDevisColorMap: Record<devisStatus, string> = {
 };
 
 
-export type devis = {
+export type cotation = {
   id: string;
   codeDevis: string;
   nomSousCompte?: string;
@@ -58,19 +58,19 @@ export type detailsDevis = {
   idProduit: string;
 }
 
-export type listDevis = {
+export type listCotation = {
   meta?:meta;
-  data: devis[];
+  data: cotation[];
 };
 
 
-export type devisLigneEdit = {
+export type cotationLigneEdit = {
   qte: number;
   produitId?: string;
   sousCompteId?: string;
 };
 
-export type deleteDevisLigneEdit = {
+export type deleteCotationLigneEdit = {
   sousCompteId?: string;
 };
 

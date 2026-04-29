@@ -8,7 +8,7 @@ export const statusEncaisseColorMap: Record<statusEncaisse, string> = {
   "Non encaissé": "#dc2626",
 };
 
-export type reglement = {
+export type encaissementPrime = {
   id: string;
   codeReg: string;
   nomSite?: string;
@@ -35,7 +35,7 @@ export type detailsTransaction = {
   typeDoc: typeDetails;
 };
 
-export type listReglements = {
+export type listEncaissementsPrimes = {
   meta?: meta;
-  data: reglement[];
+  data: encaissementPrime[];
 };

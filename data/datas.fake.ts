@@ -1,11 +1,12 @@
 import { client, listClients } from "@/types/client.type";
-import { devis, listDevis } from "@/types/devis.type";
+import { contrat, listContrats } from "@/types/contrat.type";
+import { cotation, listCotation } from "@/types/devis.type";
+import { encaissementPrime, listEncaissementsPrimes } from "@/types/encaissementPrime.type";
 import { listMouvements } from "@/types/mouvements.type";
 import { listOperations, operation } from "@/types/operations.type";
 import { dataChart, itemDefaut, meta, stat } from "@/types/other.type";
 import { listProduits } from "@/types/produits.type";
 import { listPromotions } from "@/types/promotions.type";
-import { listReglements, reglement } from "@/types/reglements-clients.type";
 import { SoldeResponse } from "@/types/solde.type";
 import { AuthResponse, user } from "@/types/user.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
@@ -286,7 +287,7 @@ export const mouvementsFakeData: listMouvements = {
   ],
 };
 
-export const reglements: reglement[] = [
+export const reglements: encaissementPrime[] = [
   {
     id: "reg-001",
     codeReg: "REG-2026-001",
@@ -362,7 +363,7 @@ export const operations: operation[] = [
   },
 ];
 
-export const proformas: devis[] = [];
+export const cotations: cotation[] = [];
 
 export const vehicules: vehicule[] = [
   
@@ -482,6 +483,86 @@ export const clients: client[] = [
 ];
 
 
+
+export const contrats: contrat[] = [
+
+  {
+    id: 1,
+  numeroContrat: "CONTRAT-001",
+  categorie: "Assurance auto",
+  dateContrat: new Date("2026-01-01"),
+  numeroPolice: "POLICE-001",
+  numeroAttestation: "ATTESTATION-001",
+  immatriculation: "AB-123-CD",
+  vehiculeId: 1,
+  clientId: 1,
+  assureType: "Particulier",
+  assureNom: "Ange mariotte",
+  assureTel: "0123456789",
+  assureEmail: "",
+  assureBp: "Boîte postale 123",
+  assureProfession: "Agriculteur",
+  souscripteurType: "Particulier",
+  souscripteurNom: "Ange mariotte",
+  souscripteurTel: "0123456789",
+  souscripteurEmail: "",
+  souscripteurBp: "Boîte postale 123",
+  agence: "Agence Abidjan",
+  compagnie: "Compagnie d'assurance XYZ",
+  duree: "1 an",
+  nombreJours: 365,
+  couverture: "Tous risques",
+  dateEffet: new Date("2026-01-01"),
+  dateEcheance: new Date("2026-12-31"),
+  primeNette: 20000,
+  accessoires: 5000,
+  taxe: 3000,
+  taxeFga: 1000,
+  cedeao: 500,
+  netAPayer: 28500,
+  client: clients[0],
+  vehicule: vehicules[0],
+  },
+  {
+    id: 2,
+  numeroContrat: "CONTRAT-002",
+  categorie: "Assurance auto",
+  dateContrat: new Date("2026-02-01"),
+  numeroPolice: "POLICE-002",
+  numeroAttestation: "ATTESTATION-002",
+  immatriculation: "EF-456-GH",
+  vehiculeId: 2,
+  clientId: 2,
+  assureType: "Particulier",
+  assureNom: "Jean Dupont",
+  assureTel: "0987654321",
+  assureEmail: "",
+  assureBp: "Boîte postale 456",
+  assureProfession: "Commerçant",
+  souscripteurType: "Particulier",
+  souscripteurNom: "Jean Dupont",
+  souscripteurTel: "0987654321",
+  souscripteurEmail: "",
+  souscripteurBp: "Boîte postale 456",
+  agence: "Agence Limete",
+  compagnie: "Compagnie d'assurance ABC",
+  duree: "1 an",
+  nombreJours: 365,
+  couverture: "Tiers",
+  dateEffet: new Date("2026-02-01"),
+  dateEcheance: new Date("2027-01-31"),
+  primeNette: 15000,
+  accessoires: 3000,
+  taxe: 2000,
+  taxeFga: 500,
+  cedeao: 200,
+  netAPayer: 20200,
+  client: clients[1],
+  vehicule: vehicules[1],
+  }
+ 
+];
+
 export const dataChartsFakeData: dataChart[] = [
   {
     mois: "Janvier",
@@ -515,7 +596,19 @@ export const dataChartsFakeData: dataChart[] = [
   },
 ];
 
-export const reglementsFakeData: listReglements = {
+
+reglements
+
+
+
+export const contratsFakeData: listContrats = {
+  meta: metaFakeData,
+  data: contrats,
+};
+
+
+
+export const reglementsFakeData: listEncaissementsPrimes = {
   meta: metaFakeData,
   data: reglements,
 };
@@ -526,9 +619,9 @@ export const operationsFakeData: listOperations = {
 };
 
 
-export const proformasFakeData: listDevis = {
+export const cotationsFakeData: listCotation = {
   meta: metaFakeData,
-  data: proformas,
+  data: cotations,
 };
 
 
@@ -758,6 +851,7 @@ export const categorieVehiculeFakeData: itemDefaut [] = [
     libelle: "Véhcule professionnel",
   },
 ];
+
 
 
 

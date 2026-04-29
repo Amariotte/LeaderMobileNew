@@ -1,4 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import type { Href } from "expo-router";
 import { router, usePathname } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -89,6 +90,14 @@ const SUB_MENU_ITEMS: Record<SubMenuKey, DrawerSubItem[]> = {
     { id: "settings-mode-paiement", label: "Mode de paiement" },
   ],
 };
+
+function toHref(route: AppRoute): Href {
+  if (route === "/" || route === "/profile") {
+    return route;
+  }
+
+  return `/(commerce)${route}` as Href;
+}
 
 export default function AppHeaderDrawer({
   title,
@@ -196,7 +205,7 @@ export default function AppHeaderDrawer({
     closeDrawer();
 
     if (pathname !== item.route) {
-      router.push(item.route);
+      router.push(toHref(item.route));
     }
   };
 
@@ -208,7 +217,7 @@ export default function AppHeaderDrawer({
     closeDrawer();
 
     if (pathname !== route) {
-      router.push(route);
+      router.push(toHref(route));
     }
   };
 
