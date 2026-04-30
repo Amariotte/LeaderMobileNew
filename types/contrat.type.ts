@@ -1,35 +1,29 @@
-import { client } from "./client.type";
 import { meta } from "./other.type";
-import { vehicule } from "./vehicule.type";
 
 export type contrat = {
   id: number;
   numeroContrat: string;
   categorie: string;
-  dateContrat: Date;
   numeroPolice: string;
-  numeroAttestation: string;
+  dateContrat: Date;
 
-  immatriculation: string;
-  vehiculeId?: number;
   clientId?: number;
+  agenceId?: number;
+  compagnieId?: number;
+  baremeId?: number;
+  couvertureId?: number;
 
-  assureType: string;
-  assureNom: string;
-  assureTel: string;
-  assureEmail: string;
-  assureBp: string;
-  assureProfession: string;
-
-  souscripteurType: string;
-  souscripteurNom: string;
-  souscripteurTel: string;
-  souscripteurEmail: string;
-  souscripteurBp: string;
+  souscripteur: {
+    typeId: number;
+    type: string;
+    nom: string;
+    tel: string;
+    email: string;
+    bp: string;
+  };
 
   agence: string;
   compagnie: string;
-  duree: string;
   nombreJours: number;
   couverture: string;
   dateEffet?: Date;
@@ -42,11 +36,41 @@ export type contrat = {
   cedeao?: number;
   netAPayer?: number;
 
-  client?: client;
-  vehicule?: vehicule;
+  contratVehicule?: contratVehicule[];
+
 };
 
 export type listContrats = {
   meta?: meta;
   data: contrat[];
+};
+
+
+export type contratVehicule = {
+  id: number;
+  vehiculeId?: number;
+  categorie: string;
+  numeroPolice: string;
+  numeroAttestation: string;
+
+  assure: {
+    typeId: number;
+    type: string;
+    nom: string;
+    tel: string;
+    email: string;
+    bp: string;
+    profession: string;
+  };
+
+
+  garanties?: garantieVehicule[];
+};
+
+
+
+export type garantieVehicule = {
+  id?: number;
+  nomGarantie: string;
+  codeGarantie: string;
 };
