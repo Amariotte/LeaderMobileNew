@@ -15,11 +15,15 @@ export type contrat = {
 
   souscripteur: {
     typeId: number;
+    professionId: number;
+
     type: string;
     nom: string;
     tel: string;
     email: string;
     bp: string;
+    profession: string;
+
   };
 
   agence: string;
@@ -55,6 +59,7 @@ export type contratVehicule = {
 
   assure: {
     typeId: number;
+    professionId: number;
     type: string;
     nom: string;
     tel: string;
