@@ -9,7 +9,7 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchStockPartenaires } from "@/services/api-service";
 import { formatNumber } from "@/tools/tools";
-import { stockPartenaire } from "@/types/stock.type";
+import { listStockPartenaire } from "@/types/stock.type";
 
 export default function StockPartenairesScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -26,26 +26,29 @@ export default function StockPartenairesScreen() {
   const retiredColor = isDark ? "#F8CFA4" : "#C2410C";
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
-  const [items, setItems] = useState<stockPartenaire[]>([]);
+  const [items, setItems] = useState<listStockPartenaire>({ data: [] });
   const [loading, setLoading] = useState(false);
   const { userToken } = useAuthContext();
   const [compagnieFilter, setCompagnieFilter] = useState("");
   const [attestationFilter, setAttestationFilter] = useState("");
-
+ 
   useEffect(() => {
     if (!userToken) return;
     setLoading(true);
     getfetchStockPartenaires(userToken)
       .then((data) => setItems(data))
+      .catch(() => setItems({ data: [] }))
       .finally(() => setLoading(false));
   }, [userToken]);
 
   const filteredItems = useMemo(
-    () => items.filter((item) => {
+    () => items.data.filter((item) => {
+      const compagnie = (item?.compagnieNom || "").toLowerCase();
+      const attestation = (item?.typeNom || "").toLowerCase();
       const byCompagnie = !compagnieFilter.trim()
-        || item.compagnieNom.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
+        || compagnie.includes(compagnieFilter.trim().toLowerCase());
       const byAttestation = !attestationFilter.trim()
-        || item.typeNom.toLowerCase().includes(attestationFilter.trim().toLowerCase());
+        || attestation.includes(attestationFilter.trim().toLowerCase());
       return byCompagnie && byAttestation;
     }),
     [attestationFilter, compagnieFilter, items],
@@ -108,10 +111,9 @@ export default function StockPartenairesScreen() {
                   <MaterialIcons name="verified" size={18} color="#1F8B82" />
                 </View>
                 <View style={styles.titleBlock}>
-                  <ThemedText style={styles.lib}>{item.compagnieNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Partenaire : {item.partenaireNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Producteur : {item.producteurNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Attestation : {item.typeNom}</ThemedText>
+                  <ThemedText style={styles.lib}>{item.compagnieNom || "Compagnie inconnue"}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Partenaire : {item.partenaireNom || "Non défini"}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Attestation : {item.typeNom || "Non défini"}</ThemedText>
                 </View>
               </View>
               <View style={[styles.qtyBadge, { backgroundColor: availableBg }]}> 
@@ -130,8 +132,8 @@ export default function StockPartenairesScreen() {
                 <ThemedText style={[styles.metricValue, { color: retiredColor }]}>{formatNumber(item.qteRetirees)}</ThemedText>
               </View>
               <View style={[styles.metricCard, { backgroundColor: producedBg }]}>
-                <ThemedText style={[styles.metricLabel, { color: mutedText }]}>Produites</ThemedText>
-                <ThemedText style={[styles.metricValue, { color: producedColor }]}>{formatNumber(item.qteProduites)}</ThemedText>
+                <ThemedText style={[styles.metricLabel, { color: mutedText }]}>Distribuées</ThemedText>
+                <ThemedText style={[styles.metricValue, { color: producedColor }]}>{formatNumber(item.qteDistribueesProducteur)}</ThemedText>
               </View>
             </View>
           </View>

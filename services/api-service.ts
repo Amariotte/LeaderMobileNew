@@ -6,11 +6,10 @@ import {
   dataChartsFakeData,
   mouvementsFakeData,
   operationsFakeData,
-  produitsFakeData,
   reglementsFakeData,
   soldeFake,
   statsFake,
-  vehiculesFakeData,
+  vehiculesFakeData
 } from "@/data/datas.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
 import { client, listClients } from "@/types/client.type";
@@ -31,9 +30,8 @@ import {
   PaginationParams,
   stat,
 } from "@/types/other.type";
-import { listProduits } from "@/types/produits.type";
 import { SoldeResponse } from "@/types/solde.type";
-import { stockCourtier, stockPartenaire, stockProducteur } from "@/types/stock.type";
+import { listStockCourtier, listStockPartenaire, listStockProducteur } from "@/types/stock.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
 import { getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
@@ -590,41 +588,40 @@ export async function getfetchVehicules(
   return data;
 }
 
-export async function getAllProduits(token: string): Promise<listProduits> {
+export async function getfetchMonStock(token: string): Promise<listStockProducteur> {
   if (isModeDemoEnabled()) {
-    return produitsFakeData;
+    return { data: [] };
   }
-  return getJsonAuth<listProduits>(apiConfig.endpoints.produits, token);
+  const payload = await getJsonAuth<listStockProducteur>(apiConfig.endpoints.stockMe, token);
+    return payload
 }
 
-export async function getfetchMonStock(token: string): Promise<stockProducteur[]> {
+export async function getfetchStockProducteurs(token: string): Promise<listStockProducteur> {
   if (isModeDemoEnabled()) {
-    return [];
+    return { data: [] };
   }
-  const data = await getJsonAuth<stockProducteur[]>(apiConfig.endpoints.stockMe, token);
-  return data ?? [];
+  
+  const payload = await getJsonAuth<listStockProducteur>(apiConfig.endpoints.stockProducteurs, token);
+  return payload
+
 }
 
-export async function getfetchStockProducteurs(token: string): Promise<stockProducteur[]> {
+export async function getfetchStockCourtiers(token: string): Promise<listStockCourtier> {
   if (isModeDemoEnabled()) {
-    return [];
+    return { data: [] };
   }
-  const data = await getJsonAuth<stockProducteur[]>(apiConfig.endpoints.stockProducteurs, token);
-  return data ?? [];
+
+  const payload = await getJsonAuth<listStockCourtier>(apiConfig.endpoints.stockCourtiers, token);
+  return payload
+  
 }
 
-export async function getfetchStockCourtiers(token: string): Promise<stockCourtier[]> {
+export async function getfetchStockPartenaires(token: string): Promise<listStockPartenaire> {
   if (isModeDemoEnabled()) {
-    return [];
+    return { data: [] };
   }
-  const data = await getJsonAuth<stockCourtier[]>(apiConfig.endpoints.stockCourtiers, token);
-  return data ?? [];
-}
+  
+  const payload = await getJsonAuth<listStockPartenaire>(apiConfig.endpoints.stockPartenaires, token);
+   return payload
 
-export async function getfetchStockPartenaires(token: string): Promise<stockPartenaire[]> {
-  if (isModeDemoEnabled()) {
-    return [];
-  }
-  const data = await getJsonAuth<stockPartenaire[]>(apiConfig.endpoints.stockPartenaires, token);
-  return data ?? [];
 }

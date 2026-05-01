@@ -1,5 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
@@ -9,7 +9,7 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchMonStock } from "@/services/api-service";
 import { formatNumber } from "@/tools/tools";
-import { stockProducteur } from "@/types/stock.type";
+import { listStockProducteur } from "@/types/stock.type";
 
 
 export default function StockMonScreen() {
@@ -27,7 +27,7 @@ export default function StockMonScreen() {
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
   const availableBg = isDark ? "#143B39" : "#DBF4F1";
-  const [items, setItems] = useState<stockProducteur[]>([]);
+  const [items, setItems] = useState<listStockProducteur>({ data: [] });
   const [loading, setLoading] = useState(false);
   const { userToken } = useAuthContext();
   const [compagnieFilter, setCompagnieFilter] = useState("");
@@ -38,16 +38,24 @@ export default function StockMonScreen() {
     setLoading(true);
     getfetchMonStock(userToken)
       .then((data) => setItems(data))
+      .catch(() => setItems({ data: [] }))
       .finally(() => setLoading(false));
   }, [userToken]);
 
-  const filteredItems = items.filter((item) => {
-    const byCompagnie = !compagnieFilter.trim()
-      || item.compagnieNom.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
-    const byAttestation = !attestationFilter.trim()
-      || item.typeNom.toLowerCase().includes(attestationFilter.trim().toLowerCase());
-    return byCompagnie && byAttestation;
-  });
+  const stockProducteurs = items.data ?? [];
+
+  const filteredItems = useMemo(
+    () => stockProducteurs.filter((item) => {
+      const compagnie = (item?.compagnieNom ?? "").toLowerCase();
+      const attestation = (item?.typeNom ?? "").toLowerCase();
+      const byCompagnie = !compagnieFilter.trim()
+        || compagnie.includes(compagnieFilter.trim().toLowerCase());
+      const byAttestation = !attestationFilter.trim()
+        || attestation.includes(attestationFilter.trim().toLowerCase());
+      return byCompagnie && byAttestation;
+    }),
+    [attestationFilter, compagnieFilter, stockProducteurs],
+  );
 
   
   return (
@@ -96,15 +104,15 @@ export default function StockMonScreen() {
         ) : filteredItems.length === 0 ? (
           <ThemedText style={{ textAlign: "center", color: mutedText, marginTop: 20 }}>Aucun stock disponible</ThemedText>
         ) : filteredItems.map((item, index) => (
-          <View key={`${item.compagnieId}-${item.partenaireId}-${item.producteurId}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
+          <View key={`${item.compagnieId ?? "c"}-${item.partenaireId ?? "p"}-${item.producteurId ?? "pr"}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
             <View style={styles.rowTop}>
               <View style={styles.leftRow}>
                 <View style={[styles.iconWrap, { backgroundColor: heroTint }]}> 
                   <MaterialIcons name="verified" size={18} color="#1F8B82" />
                 </View>
                 <View style={styles.titleBlock}>
-                  <ThemedText style={styles.lib}>{item.compagnieNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>{item.typeNom}</ThemedText>
+                  <ThemedText style={styles.lib}>{item.compagnieNom || "Compagnie inconnue"}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>{item.typeNom || "Type non défini"}</ThemedText>
                 </View>
               </View>
               <View style={[styles.qtyBadge, { backgroundColor: availableBg }]}>

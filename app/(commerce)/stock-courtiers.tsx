@@ -1,14 +1,15 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { soldeCourtierFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getfetchStockCourtiers } from "@/services/api-service";
 import { formatNumber } from "@/tools/tools";
-import { stockCourtier } from "@/types/stock.type";
+import { listStockCourtier } from "@/types/stock.type";
 
 
 export default function StockCourtiersScreen() {
@@ -26,15 +27,29 @@ export default function StockCourtiersScreen() {
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
   const availableBg = isDark ? "#143B39" : "#DBF4F1";
-  const items: stockCourtier[] = soldeCourtierFakeData;
+  const [items, setItems] = useState<listStockCourtier>({ data: [] });
+  const [loading, setLoading] = useState(false);
+  const { userToken } = useAuthContext();
   const [compagnieFilter, setCompagnieFilter] = useState("");
+ 
+  useEffect(() => {
+    if (!userToken) return;
+    setLoading(true);
+    getfetchStockCourtiers(userToken)
+      .then((data) => setItems(data))
+      .catch(() => setItems({ data: [] }))
+      .finally(() => setLoading(false));
+  }, [userToken]);
+
+  const stockCourtiers = items.data ?? [];
   const filteredItems = useMemo(
-    () => items.filter((item) => {
+    () => stockCourtiers.filter((item) => {
+      const compagnie = (item?.compagnieNom ?? "").toLowerCase();
       const byCompagnie = !compagnieFilter.trim()
-        || item.nomCompagnie.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
+        || compagnie.includes(compagnieFilter.trim().toLowerCase());
       return byCompagnie;
     }),
-    [compagnieFilter, items],
+    [compagnieFilter, stockCourtiers],
   );
 
   const totals = useMemo(
@@ -96,15 +111,19 @@ export default function StockCourtiersScreen() {
           </View>
         </View>
 
-        {filteredItems.map((item, index) => (
-          <View key={`${item.nomCompagnie}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
+        {loading ? (
+          <ActivityIndicator size="small" color="#1F8B82" style={{ marginTop: 20 }} />
+        ) : filteredItems.length === 0 ? (
+          <ThemedText style={{ textAlign: "center", color: mutedText, marginTop: 20 }}>Aucun stock disponible</ThemedText>
+        ) : filteredItems.map((item, index) => (
+          <View key={`${item.compagnieId ?? "c"}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
             <View style={styles.rowTop}>
               <View style={styles.leftRow}>
                 <View style={[styles.iconWrap, { backgroundColor: heroTint }]}> 
                   <MaterialIcons name="verified" size={18} color="#1F8B82" />
                 </View>
                 <View style={styles.titleBlock}>
-                  <ThemedText style={styles.lib}>{item.nomCompagnie}</ThemedText>
+                  <ThemedText style={styles.lib}>{item.compagnieNom || "Compagnie inconnue"}</ThemedText>
                   <ThemedText style={[styles.subText, { color: mutedText }]}>Stock courtier</ThemedText>
                 </View>
               </View>

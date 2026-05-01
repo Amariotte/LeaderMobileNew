@@ -1,3 +1,4 @@
+import { meta } from "./other.type";
 
 export type stockCourtier = {
   compagnieNom: string 
@@ -37,4 +38,20 @@ export type stockProducteur = {
   qteRetirees?: number
   qteProduites?: number
   qteDisponibles?: number
+};
+
+
+export type listStockProducteur = {      
+  meta?: meta;
+  data: stockProducteur[];
+};
+
+export type listStockPartenaire = {      
+  meta?: meta;
+  data: stockPartenaire[];
+};
+
+export type listStockCourtier = {      
+  meta?: meta;
+  data: stockCourtier[];
 };

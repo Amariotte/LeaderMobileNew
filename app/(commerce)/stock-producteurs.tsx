@@ -9,7 +9,7 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchStockProducteurs } from "@/services/api-service";
 import { formatNumber } from "@/tools/tools";
-import { stockProducteur } from "@/types/stock.type";
+import { listStockProducteur } from "@/types/stock.type";
 
 export default function StockProducteursScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -26,26 +26,30 @@ export default function StockProducteursScreen() {
   const retiredColor = isDark ? "#F8CFA4" : "#C2410C";
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
-  const [items, setItems] = useState<stockProducteur[]>([]);
+  const [items, setItems] = useState<listStockProducteur>({ data: [] });
   const [loading, setLoading] = useState(false);
   const { userToken } = useAuthContext();
   const [compagnieFilter, setCompagnieFilter] = useState("");
   const [attestationFilter, setAttestationFilter] = useState("");
+   
 
   useEffect(() => {
     if (!userToken) return;
     setLoading(true);
     getfetchStockProducteurs(userToken)
       .then((data) => setItems(data))
+      .catch(() => setItems({ data: [] }))
       .finally(() => setLoading(false));
   }, [userToken]);
 
   const filteredItems = useMemo(
-    () => items.filter((item) => {
+    () => items.data.filter((item) => {
+      const compagnie = (item?.compagnieNom || "").toLowerCase();
+      const attestation = (item?.typeNom || "").toLowerCase();
       const byCompagnie = !compagnieFilter.trim()
-        || item.compagnieNom.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
+        || compagnie.includes(compagnieFilter.trim().toLowerCase());
       const byAttestation = !attestationFilter.trim()
-        || item.typeNom.toLowerCase().includes(attestationFilter.trim().toLowerCase());
+        || attestation.includes(attestationFilter.trim().toLowerCase());
       return byCompagnie && byAttestation;
     }),
     [attestationFilter, compagnieFilter, items],
@@ -101,17 +105,17 @@ export default function StockProducteursScreen() {
         ) : filteredItems.length === 0 ? (
           <ThemedText style={{ textAlign: "center", color: mutedText, marginTop: 20 }}>Aucun stock disponible</ThemedText>
         ) : filteredItems.map((item, index) => (
-          <View key={`${item.compagnieNom}-${item.partenaireNom}-${item.producteurNom}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
+          <View key={`${item.compagnieId ?? "c"}-${item.partenaireId ?? "p"}-${item.producteurId ?? "pr"}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
             <View style={styles.rowTop}>
               <View style={styles.leftRow}>
                 <View style={[styles.iconWrap, { backgroundColor: heroTint }]}> 
                   <MaterialIcons name="verified" size={18} color="#1F8B82" />
                 </View>
                 <View style={styles.titleBlock}>
-                  <ThemedText style={styles.lib}>{item.compagnieNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Partenaire : {item.partenaireNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Producteur : {item.producteurNom}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Attestation : {item.typeNom}</ThemedText>
+                  <ThemedText style={styles.lib}>{item.compagnieNom || "Compagnie inconnue"}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Partenaire : {item.partenaireNom || "Non défini"}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Producteur : {item.producteurNom || "Non défini"}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Attestation : {item.typeNom || "Non défini"}</ThemedText>
                 </View>
               </View>
               <View style={[styles.qtyBadge, { backgroundColor: availableBg }]}> 
