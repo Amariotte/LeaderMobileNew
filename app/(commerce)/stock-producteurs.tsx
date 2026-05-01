@@ -1,12 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MonSoldeFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getfetchStockProducteurs } from "@/services/api-service";
 import { formatNumber } from "@/tools/tools";
 import { stockProducteur } from "@/types/stock.type";
 
@@ -25,16 +26,26 @@ export default function StockProducteursScreen() {
   const retiredColor = isDark ? "#F8CFA4" : "#C2410C";
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
-  const items: stockProducteur[] = MonSoldeFakeData;
+  const [items, setItems] = useState<stockProducteur[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { userToken } = useAuthContext();
   const [compagnieFilter, setCompagnieFilter] = useState("");
   const [attestationFilter, setAttestationFilter] = useState("");
+
+  useEffect(() => {
+    if (!userToken) return;
+    setLoading(true);
+    getfetchStockProducteurs(userToken)
+      .then((data) => setItems(data))
+      .finally(() => setLoading(false));
+  }, [userToken]);
 
   const filteredItems = useMemo(
     () => items.filter((item) => {
       const byCompagnie = !compagnieFilter.trim()
-        || item.nomCompagnie.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
+        || item.compagnieNom.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
       const byAttestation = !attestationFilter.trim()
-        || item.typeAttestation.toLowerCase().includes(attestationFilter.trim().toLowerCase());
+        || item.typeNom.toLowerCase().includes(attestationFilter.trim().toLowerCase());
       return byCompagnie && byAttestation;
     }),
     [attestationFilter, compagnieFilter, items],
@@ -85,18 +96,22 @@ export default function StockProducteursScreen() {
           </View>
         </View>
 
-        {filteredItems.map((item, index) => (
-          <View key={`${item.nomCompagnie}-${item.nomPartenaire}-${item.nomProducteur}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
+        {loading ? (
+          <ActivityIndicator size="small" color="#1F8B82" style={{ marginTop: 20 }} />
+        ) : filteredItems.length === 0 ? (
+          <ThemedText style={{ textAlign: "center", color: mutedText, marginTop: 20 }}>Aucun stock disponible</ThemedText>
+        ) : filteredItems.map((item, index) => (
+          <View key={`${item.compagnieNom}-${item.partenaireNom}-${item.producteurNom}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
             <View style={styles.rowTop}>
               <View style={styles.leftRow}>
                 <View style={[styles.iconWrap, { backgroundColor: heroTint }]}> 
                   <MaterialIcons name="verified" size={18} color="#1F8B82" />
                 </View>
                 <View style={styles.titleBlock}>
-                  <ThemedText style={styles.lib}>{item.nomCompagnie}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Partenaire : {item.nomPartenaire}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Producteur : {item.nomProducteur}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>Attestation : {item.typeAttestation}</ThemedText>
+                  <ThemedText style={styles.lib}>{item.compagnieNom}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Partenaire : {item.partenaireNom}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Producteur : {item.producteurNom}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>Attestation : {item.typeNom}</ThemedText>
                 </View>
               </View>
               <View style={[styles.qtyBadge, { backgroundColor: availableBg }]}> 

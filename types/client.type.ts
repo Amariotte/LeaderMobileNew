@@ -13,8 +13,8 @@ export type client = {
   tel: string;
   whatsapp: string;
   bP: string;
-  exoTaxe	: boolean
-	rccm: string;
+  exoTaxe?	: boolean
+	rccm?: string;
 
   libProfession?: string;
 };

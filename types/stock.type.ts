@@ -1,20 +1,26 @@
 
 export type stockCourtier = {
-  nomCompagnie: string 
+  compagnieNom: string 
+  compagnieId: number
   qteRecues?: number
   qteRetirees?: number
   qteDistribuees?: number
   qteRetireesAfterDistribuees?: number
   qteDisponibles?: number
+
 };
 
 export type stockPartenaire = {
-  nomCompagnie: string 
-  nomPartenaire: string
-  typeAttestation: string
+  compagnieNom: string 
+  compagnieId: number
+  partenaireNom: string
+  partenaireId: number
+  typeNom: string
+  typeId: number
   qteRecues?: number
   qteRetirees?: number
-  qteProduites?: number
+  qteRetireesProducteur?: number
+  qteDistribueesProducteur?: number
   qteDisponibles?: number
 };
 

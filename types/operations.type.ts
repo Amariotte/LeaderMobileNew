@@ -8,20 +8,24 @@ export const typeMouvementColorMap: Record<typeOperation, string> = {
 };
 
 export type operation = {
-  id: string;
-  codeOp: string;
-  dateOp: Date;
-  descOp: string;
-  solliciteurOp: string;
-  montantOp: number;
-  refOp?: string;
-  depoOrBene: string;
-  nomAgence?: string;
-  nomSousCompte?: string;
-  libRubrique?: string;
-  libType?: typeOperation;
-  nomModePaiement?: string;
+  id: number;
+  numero: string;
+  date: Date;
+  desc: string;
+  modeId: number;
+  agenceId: number;
+  banqueId: number;
+  modeNom?: string;
+  bEnc: boolean;
+  montant: number;
+  ref?: string;
+  beneOrDep: string;
+  operateurNom?: string;
+  agenceNom?: string;
+  banqueNom?: string;
+  objetOp?: string;
 };
+
 
 export type listOperations = {      
   meta?: meta;

@@ -13,7 +13,7 @@ export const statusDevisColorMap: Record<devisStatus, string> = {
 
 
 export type cotation = {
-  id: string;
+  id: number;
   codeDevis: string;
   nomSousCompte?: string;
   nomAgence?: string;

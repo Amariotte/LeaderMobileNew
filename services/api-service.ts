@@ -33,6 +33,7 @@ import {
 } from "@/types/other.type";
 import { listProduits } from "@/types/produits.type";
 import { SoldeResponse } from "@/types/solde.type";
+import { stockCourtier, stockPartenaire, stockProducteur } from "@/types/stock.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
 import { getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
@@ -279,7 +280,7 @@ export async function getfetchContratById(
 
 export async function getfetchOperationById(
   token: string,
-  id: string,
+  id: number,
 ): Promise<operation | null> {
   if (isModeDemoEnabled()) {
     return operationsFakeData.data.filter((operation) => operation.id === id)
@@ -298,7 +299,7 @@ export async function getfetchOperationById(
 
 export async function getfetchEncaissementPrimeById(
   token: string,
-  id: string,
+  id: number,
 ): Promise<encaissementPrime | null> {
   if (isModeDemoEnabled()) {
     return reglementsFakeData.data.filter((reglement) => reglement.id === id)
@@ -318,7 +319,7 @@ export async function getfetchEncaissementPrimeById(
 
 export async function getfetchCotationById(
   token: string,
-  id: string,
+  id: number,
 ): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
     return cotationsFakeData.data.filter((cotation) => cotation.id === id).length > 0
@@ -337,7 +338,7 @@ export async function getfetchCotationById(
 export async function postCotationLigne(
   token: string,
   ligne: cotationLigneEdit,
-  cotationId?: string,
+  cotationId?: number,
 ): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
     if (!cotationId) {
@@ -358,8 +359,8 @@ export async function postCotationLigne(
 
 export async function updateCotationLigne(
   token: string,
-  cotationId: string,
-  ligneId: string,
+  cotationId: number,
+  ligneId: number,
   ligne: cotationLigneEdit,
 ): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
@@ -378,8 +379,8 @@ export async function updateCotationLigne(
 
 export async function deleteCotationLigne(
   token: string,
-  cotationId: string,
-  ligneId: string,
+  cotationId: number,
+  ligneId: number,
   ligne: deleteCotationLigneEdit,
 ): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
@@ -397,7 +398,7 @@ export async function deleteCotationLigne(
   return d;
 }
 
-export async function deleteCotation(token: string, id: string): Promise<boolean> {
+export async function deleteCotation(token: string, id: number): Promise<boolean> {
   if (isModeDemoEnabled()) {
     const initialLength = cotationsFakeData.data.length;
     cotationsFakeData.data = cotationsFakeData.data.filter(
@@ -488,7 +489,7 @@ export async function getfetchMouvements(
 
 export async function postValidateCotation(
   token: string,
-  id: string,
+  id: number,
 ): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
     const initialLength = cotationsFakeData.data.length;
@@ -509,7 +510,7 @@ export async function postValidateCotation(
 
 export async function postSaveCotation(
   token: string,
-  id: string,
+  id: number,
 ): Promise<cotation | null> {
   if (isModeDemoEnabled()) {
     const initialLength = cotationsFakeData.data.length;
@@ -594,4 +595,36 @@ export async function getAllProduits(token: string): Promise<listProduits> {
     return produitsFakeData;
   }
   return getJsonAuth<listProduits>(apiConfig.endpoints.produits, token);
+}
+
+export async function getfetchMonStock(token: string): Promise<stockProducteur[]> {
+  if (isModeDemoEnabled()) {
+    return [];
+  }
+  const data = await getJsonAuth<stockProducteur[]>(apiConfig.endpoints.stockMe, token);
+  return data ?? [];
+}
+
+export async function getfetchStockProducteurs(token: string): Promise<stockProducteur[]> {
+  if (isModeDemoEnabled()) {
+    return [];
+  }
+  const data = await getJsonAuth<stockProducteur[]>(apiConfig.endpoints.stockProducteurs, token);
+  return data ?? [];
+}
+
+export async function getfetchStockCourtiers(token: string): Promise<stockCourtier[]> {
+  if (isModeDemoEnabled()) {
+    return [];
+  }
+  const data = await getJsonAuth<stockCourtier[]>(apiConfig.endpoints.stockCourtiers, token);
+  return data ?? [];
+}
+
+export async function getfetchStockPartenaires(token: string): Promise<stockPartenaire[]> {
+  if (isModeDemoEnabled()) {
+    return [];
+  }
+  const data = await getJsonAuth<stockPartenaire[]>(apiConfig.endpoints.stockPartenaires, token);
+  return data ?? [];
 }

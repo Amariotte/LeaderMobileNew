@@ -9,16 +9,25 @@ export const statusEncaisseColorMap: Record<statusEncaisse, string> = {
 };
 
 export type encaissementPrime = {
-  id: string;
-  codeReg: string;
-  nomSite?: string;
-  nomClient?: string;
-  nomUser?: string;
-  dateReg: Date;
-  montantReg: number;
-  descReg?: string;
-  refReg?: string;
-  nomModePaiement?: string;
+  id: Number ;
+  numero: string;
+  clientId: number;
+  agenceId: number;
+  banqueId: number;
+  modeId: number;
+
+  clientCode?: string;
+  clientNom?: string;
+  agenceNom?: string;
+  banqueNom?: string;
+  operateurNom?: string;
+  date: Date;
+  montant: number;
+  montantUtilise: number;
+  solde: number;
+  obs?: string;
+  ref?: string;
+  modeNom?: string;
   details?: detailsTransaction[];
 };
 

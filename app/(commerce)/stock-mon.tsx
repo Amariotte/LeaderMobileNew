@@ -1,12 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MonSoldeFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getfetchMonStock } from "@/services/api-service";
 import { formatNumber } from "@/tools/tools";
 import { stockProducteur } from "@/types/stock.type";
 
@@ -26,9 +27,19 @@ export default function StockMonScreen() {
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
   const availableBg = isDark ? "#143B39" : "#DBF4F1";
-  const items: stockProducteur[] = MonSoldeFakeData;
+  const [items, setItems] = useState<stockProducteur[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { userToken } = useAuthContext();
   const [compagnieFilter, setCompagnieFilter] = useState("");
   const [attestationFilter, setAttestationFilter] = useState("");
+
+  useEffect(() => {
+    if (!userToken) return;
+    setLoading(true);
+    getfetchMonStock(userToken)
+      .then((data) => setItems(data))
+      .finally(() => setLoading(false));
+  }, [userToken]);
 
   const filteredItems = items.filter((item) => {
     const byCompagnie = !compagnieFilter.trim()
@@ -80,7 +91,11 @@ export default function StockMonScreen() {
 
      
 
-        {filteredItems.map((item, index) => (
+        {loading ? (
+          <ActivityIndicator size="small" color="#1F8B82" style={{ marginTop: 20 }} />
+        ) : filteredItems.length === 0 ? (
+          <ThemedText style={{ textAlign: "center", color: mutedText, marginTop: 20 }}>Aucun stock disponible</ThemedText>
+        ) : filteredItems.map((item, index) => (
           <View key={`${item.compagnieId}-${item.partenaireId}-${item.producteurId}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
             <View style={styles.rowTop}>
               <View style={styles.leftRow}>

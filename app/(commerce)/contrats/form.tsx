@@ -2,12 +2,12 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -207,9 +207,9 @@ export default function ContratFormScreen() {
 
   const vehicleFromContract = useMemo<vehicule | undefined>(() => {
     if (!initialContract) return undefined;
-    if (initialContract.vehicule) return initialContract.vehicule;
+    if (initialContract.contratVehicule) return initialContract.contratVehicule;
     return vehiculesFakeData.data.find(
-      (v) => v.numImmatriculation === initialContract.immatriculation,
+      (v) => v.numImmatriculation === initialContract.N,
     );
   }, [initialContract]);
 
