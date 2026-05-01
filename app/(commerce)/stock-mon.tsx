@@ -32,9 +32,9 @@ export default function StockMonScreen() {
 
   const filteredItems = items.filter((item) => {
     const byCompagnie = !compagnieFilter.trim()
-      || item.nomCompagnie.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
+      || item.compagnieNom.toLowerCase().includes(compagnieFilter.trim().toLowerCase());
     const byAttestation = !attestationFilter.trim()
-      || item.typeAttestation.toLowerCase().includes(attestationFilter.trim().toLowerCase());
+      || item.typeNom.toLowerCase().includes(attestationFilter.trim().toLowerCase());
     return byCompagnie && byAttestation;
   });
 
@@ -81,15 +81,15 @@ export default function StockMonScreen() {
      
 
         {filteredItems.map((item, index) => (
-          <View key={`${item.nomCompagnie}-${item.nomPartenaire}-${item.nomProducteur}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
+          <View key={`${item.compagnieId}-${item.partenaireId}-${item.producteurId}-${index}`} style={[styles.card, { backgroundColor: cardBackground }]}> 
             <View style={styles.rowTop}>
               <View style={styles.leftRow}>
                 <View style={[styles.iconWrap, { backgroundColor: heroTint }]}> 
                   <MaterialIcons name="verified" size={18} color="#1F8B82" />
                 </View>
                 <View style={styles.titleBlock}>
-                  <ThemedText style={styles.lib}>{item.nomCompagnie}</ThemedText>
-                  <ThemedText style={[styles.subText, { color: mutedText }]}>{item.typeAttestation}</ThemedText>
+                  <ThemedText style={styles.lib}>{item.compagnieNom}</ThemedText>
+                  <ThemedText style={[styles.subText, { color: mutedText }]}>{item.typeNom}</ThemedText>
                 </View>
               </View>
               <View style={[styles.qtyBadge, { backgroundColor: availableBg }]}>

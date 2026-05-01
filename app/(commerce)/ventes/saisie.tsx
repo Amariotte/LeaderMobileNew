@@ -1,30 +1,25 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
-import { useCachedResource } from "@/hooks/use-cached-resource";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePopup } from "@/hooks/use-popup";
 import { getAllProduits, getfetchClients } from "@/services/api-service";
-import {
-    CLIENTS_LIST_CACHE_KEY,
-    PRODUITS_LIST_CACHE_KEY,
-} from "@/services/cache-service";
 import { formatNumber } from "@/tools/tools";
-import { listClients } from "@/types/client.type";
-import { listProduits } from "@/types/produits.type";
+import { client, listClients } from "@/types/client.type";
+import { listProduits, Produit } from "@/types/produits.type";
 
 type SaleLine = {
   id: string;
@@ -45,7 +40,7 @@ export default function VenteSaisieScreen() {
   const isDark = scheme === "dark";
   const { userToken } = useAuthContext();
 
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [saleLines, setSaleLines] = useState<SaleLine[]>([makeLine()]);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [productModalForLineId, setProductModalForLineId] = useState<
@@ -76,29 +71,20 @@ export default function VenteSaisieScreen() {
     [],
   );
 
-  const { data: clientsData } = useCachedResource<listClients>({
-    cacheKey: CLIENTS_LIST_CACHE_KEY,
-    initialData: initialClients,
-    enabled: Boolean(userToken),
-    fetcher: async () => getfetchClients(userToken ?? ""),
-    hasUsableCachedData: (cachedData) =>
-      Boolean(cachedData && Array.isArray(cachedData.data)),
-  });
+  const [clientsData, setClientsData] = useState<listClients>(initialClients);
+  const [produitsData, setProduitsData] = useState<listProduits>(initialProduits);
 
-  const { data: produitsData } = useCachedResource<listProduits>({
-    cacheKey: PRODUITS_LIST_CACHE_KEY,
-    initialData: initialProduits,
-    enabled: Boolean(userToken),
-    fetcher: async () => getAllProduits(userToken ?? ""),
-    hasUsableCachedData: (cachedData) =>
-      Boolean(cachedData && Array.isArray(cachedData.data)),
-  });
+  useEffect(() => {
+    if (!userToken) return;
+    getfetchClients(userToken).then(setClientsData);
+    getAllProduits(userToken).then(setProduitsData);
+  }, [userToken]);
 
   const selectedClient =
-    clientsData.data.find((c) => c.id === selectedClientId) ?? null;
+    clientsData.data.find((c: client) => c.id === selectedClientId) ?? null;
 
   const lineTotals = saleLines.map((line) => {
-    const produit = produitsData.data.find((p) => p.id === line.productId);
+    const produit = produitsData.data.find((p: Produit) => p.id === line.productId);
     const qty = Number(line.quantity);
     const safeQty = Number.isFinite(qty) && qty > 0 ? qty : 0;
 
@@ -107,7 +93,7 @@ export default function VenteSaisieScreen() {
 
   const totalVente = lineTotals.reduce((acc, value) => acc + value, 0);
 
-  const filteredClients = clientsData.data.filter((client) => {
+  const filteredClients = clientsData.data.filter((client: client) => {
     const query = clientQuery.trim().toLowerCase();
 
     if (!query) {
@@ -120,7 +106,7 @@ export default function VenteSaisieScreen() {
     );
   });
 
-  const filteredProduits = produitsData.data.filter((produit) => {
+  const filteredProduits = produitsData.data.filter((produit: Produit) => {
     const query = productQuery.trim().toLowerCase();
 
     if (!query) {
@@ -156,9 +142,11 @@ export default function VenteSaisieScreen() {
     });
   };
 
+  const { showMessage } = usePopup();
+
   const handleSave = () => {
     if (!selectedClientId) {
-      Alert.alert("Client requis", "Veuillez selectionner un client.");
+      showMessage("error", "Client requis", "Veuillez selectionner un client.");
       return;
     }
 
@@ -168,19 +156,12 @@ export default function VenteSaisieScreen() {
     });
 
     if (!hasValidLine) {
-      Alert.alert(
-        "Produits requis",
-        "Ajoutez au moins un produit avec une quantite valide.",
-      );
+      showMessage("error", "Produits requis", "Ajoutez au moins un produit avec une quantite valide.");
       return;
     }
 
-    Alert.alert("Vente enregistree", "La saisie de vente est prete.", [
-      {
-        text: "OK",
-        onPress: () => router.replace("/ventes"),
-      },
-    ]);
+    showMessage("success", "Vente enregistree", "La saisie de vente est prete.");
+    router.replace("/ventes");
   };
 
   return (
@@ -265,7 +246,7 @@ export default function VenteSaisieScreen() {
 
           {saleLines.map((line, index) => {
             const produit =
-              produitsData.data.find((p) => p.id === line.productId) ?? null;
+              produitsData.data.find((p: Produit) => p.id === line.productId) ?? null;
             const qtyNumber = Number(line.quantity);
             const safeQty =
               Number.isFinite(qtyNumber) && qtyNumber > 0 ? qtyNumber : 0;
@@ -389,7 +370,7 @@ export default function VenteSaisieScreen() {
               style={styles.sheetList}
               showsVerticalScrollIndicator={false}
             >
-              {filteredClients.map((client) => (
+              {filteredClients.map((client: client) => (
                 <View key={client.id} style={styles.sheetRow}>
                   <View style={styles.sheetRowTextWrap}>
                     <ThemedText style={styles.sheetRowTitle}>
@@ -457,7 +438,7 @@ export default function VenteSaisieScreen() {
               style={styles.sheetList}
               showsVerticalScrollIndicator={false}
             >
-              {filteredProduits.map((produit) => (
+              {filteredProduits.map((produit: Produit) => (
                 <View key={produit.id} style={styles.sheetRow}>
                   <View style={styles.sheetRowTextWrap}>
                     <ThemedText style={styles.sheetRowTitle}>

@@ -1,58 +1,55 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import ClientEditorModal from "@/components/client-editor-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
-import { useCachedResource } from "@/hooks/use-cached-resource";
 import { useClientEditorModal } from "@/hooks/use-client-editor-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getfetchClients } from "@/services/api-service";
-import { CLIENTS_LIST_CACHE_KEY } from "@/services/cache-service";
-import { client, listClients } from "@/types/client.type";
-import { useEffect, useMemo, useState } from "react";
+import { usePopup } from "@/hooks/use-popup";
+import { createClient, getfetchClients, updateClient } from "@/services/api-service";
+import { getLabelTypeClient } from "@/tools/tools";
+import { client } from "@/types/client.type";
+import { useEffect, useState } from "react";
+
+const AVATAR_COLORS = [
+  "#1F8B82", "#6B3CFF", "#E05252", "#E8872A", "#2A7BE8",
+  "#50C52A", "#A83CFF", "#2AC5C5", "#FF6B6B", "#3CB87A",
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 
 export default function ClientsScreen() {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
 
   const [customersList, setCustomersList] = useState<client[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const { showConfirm } = usePopup();
   const clientEditor = useClientEditorModal({
     createTitle: "Creer un nouveau client",
-    getEditTitle: (selectedClient) => `Modifier ${selectedClient.nom}`,
+    getEditTitle: (selectedClient) => `Modifier ${selectedClient.code} - ${selectedClient.nom} ${selectedClient.prenoms}`,
   });
-
-  const initialClients = useMemo<listClients>(
-    () => ({
-      meta: { page: 1, next: 1, totalPages: 1, total: 0, size: 0 },
-      data: [],
-    }),
-    [],
-  );
 
   const { userToken } = useAuthContext();
-  const { data: clients } = useCachedResource<listClients>({
-    cacheKey: CLIENTS_LIST_CACHE_KEY,
-    initialData: initialClients,
-    enabled: Boolean(userToken),
-    fetcher: async () => getfetchClients(userToken ?? ""),
-    hasUsableCachedData: (cachedData) =>
-      Boolean(
-        cachedData &&
-        Array.isArray(cachedData.data) &&
-        cachedData.data.length > 0,
-      ),
-  });
 
-  // Sync customers list when data changes
   useEffect(() => {
-    const customers = clients?.data ?? [];
-    setCustomersList(customers);
-  }, [clients]);
+    if (!userToken) return;
+    setIsLoading(true);
+    getfetchClients(userToken)
+      .then((res) => setCustomersList(res.data ?? []))
+      .finally(() => setIsLoading(false));
+  }, [userToken]);
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
@@ -74,51 +71,34 @@ export default function ClientsScreen() {
     });
   };
 
-  const getClientTypeLabel = (type?: number) => {
-    if (type === 2) return "Personne morale";
-    return "Personne physique";
-  };
 
-  const handleSubmitClient = (
+  const handleSubmitClient = async (
     data: Partial<client>,
     mode: "create" | "edit",
     selectedClient?: client,
-  ) => {
-    if (!data.nom || !data.prenom) {
-      Alert.alert("Erreur", "Le nom et le prénom sont obligatoires");
-      return;
+  ): Promise<void> => {
+    if (!data.nom || !data.prenoms) {
+      throw new Error("Le nom et le prénom sont obligatoires");
     }
 
     if (mode === "edit" && selectedClient) {
-      // Edit existing client
-      const updatedList = customersList.map((c) =>
-        c.id === selectedClient.id ? { ...c, ...data } : c
+      const updated = await updateClient(userToken ?? "", selectedClient.id, data);
+      setCustomersList((prev) =>
+        prev.map((c) => (c.id === selectedClient.id ? { ...c, ...updated } : c)),
       );
-      setCustomersList(updatedList);
     } else {
-      // Add new client
-      const newClient: client = {
-        id: Math.max(...customersList.map((c) => c.id), 0) + 1,
-        ...data,
-      } as client;
-      setCustomersList([...customersList, newClient]);
+      const created = await createClient(userToken ?? "", data);
+      setCustomersList((prev) => [created, ...prev]);
     }
   };
 
   const handleDeleteClient = (client: client) => {
-    Alert.alert(
-      "Confirmation",
-      `Êtes-vous sûr de vouloir supprimer ${client.nom}?`,
-      [
-        { text: "Annuler", onPress: () => {} },
-        {
-          text: "Supprimer",
-          onPress: () => {
-            setCustomersList(customersList.filter((c) => c.id !== client.id));
-          },
-          style: "destructive",
-        },
-      ]
+    showConfirm(
+      "error",
+      "Supprimer le client",
+      `Êtes-vous sûr de vouloir supprimer ${client.nom} ${client.prenoms} ?`,
+      () => setCustomersList((prev) => prev.filter((c) => c.id !== client.id)),
+      { confirmLabel: "Supprimer", cancelLabel: "Annuler" },
     );
   };
 
@@ -127,13 +107,13 @@ export default function ClientsScreen() {
     (c) =>
       c.nom.toLowerCase().includes(searchText.toLowerCase()) ||
       (c.code && c.code.toLowerCase().includes(searchText.toLowerCase())) ||
-      (c.prenom && c.prenom.toLowerCase().includes(searchText.toLowerCase()))
+      (c.prenoms && c.prenoms.toLowerCase().includes(searchText.toLowerCase()))
   );
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <View style={styles.headerWrap}>
-        <AppHeaderDrawer title="Customers" />
+        <AppHeaderDrawer title="Clients" />
       </View>
 
       <View style={[styles.searchBar, { backgroundColor: cardBackground }]}>
@@ -187,7 +167,32 @@ export default function ClientsScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       >
-        {filteredCustomers?.map((item) => {
+        {isLoading && customersList.length === 0 ? (
+          <View style={styles.centerState}>
+            <ActivityIndicator size="large" color="#1F8B82" />
+            <ThemedText style={[styles.centerStateText, { color: mutedText }]}>
+              Chargement des clients…
+            </ThemedText>
+          </View>
+        ) : filteredCustomers.length === 0 ? (
+          <View style={styles.centerState}>
+            <MaterialIcons name="people-outline" size={48} color={mutedText} />
+            <ThemedText style={[styles.centerStateText, { color: mutedText }]}>
+              {searchText.length > 0
+                ? "Aucun client ne correspond à votre recherche"
+                : "Aucun client pour le moment"}
+            </ThemedText>
+          </View>
+        ) : (
+        filteredCustomers.map((item) => {
+          const avatarColor = getAvatarColor(item.nom);
+          const initials = item.nom
+            .split(" ")
+            .map((p) => p[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+
           return (
             <View
               key={item.id}
@@ -205,34 +210,30 @@ export default function ClientsScreen() {
             >
               <View style={styles.cardTop}>
                 <View style={styles.companyRow}>
-                  <View style={[styles.logo, { borderColor: "#E6E8F1" }]}>
-                    <ThemedText style={styles.logoText}>
-                      {item.nom
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </ThemedText>
+                  <View style={[styles.logo, { backgroundColor: avatarColor }]}>
+                    <ThemedText style={styles.logoText}>{initials}</ThemedText>
                   </View>
-                  <View>
+                  <View style={styles.clientInfo}>
                     <ThemedText
                       type="defaultSemiBold"
                       style={styles.companyName}
+                      numberOfLines={1}
                     >
-                      {item.nom}
+                      {item.nom} {item.prenoms}
                     </ThemedText>
                     <View style={styles.companyMetaRow}>
                       <ThemedText
                         style={[styles.companyMeta, { color: mutedText }]}
                       >
-                        Code : {item.code}
+                        {item.code}
                       </ThemedText>
-                      <View style={[styles.typePill, { backgroundColor: softBlock }]}> 
-                        <ThemedText style={[styles.typePillText, { color: mutedText }]}> 
-                          {getClientTypeLabel(item.type)}
-                        </ThemedText>
-                      </View>
+                      {item.typeId ? (
+                        <View style={[styles.typePill, { backgroundColor: softBlock }]}>
+                          <ThemedText style={[styles.typePillText, { color: mutedText }]}>
+                            {getLabelTypeClient(item.typeId)}
+                          </ThemedText>
+                        </View>
+                      ) : null}
                     </View>
                   </View>
                 </View>
@@ -241,6 +242,7 @@ export default function ClientsScreen() {
                   <Pressable
                     style={[styles.actionIcon, { backgroundColor: softBlock }]}
                     onPress={() => handleOpenEditClient(item)}
+                    hitSlop={6}
                   >
                     <MaterialIcons
                       name="edit"
@@ -251,20 +253,22 @@ export default function ClientsScreen() {
                   <Pressable
                     style={[styles.actionIcon, { backgroundColor: softBlock }]}
                     onPress={() => handleDeleteClient(item)}
+                    hitSlop={6}
                   >
                     <MaterialIcons
                       name="delete-outline"
                       size={15}
-                      color={isDark ? "#DCE0F8" : "#707792"}
+                      color={isDark ? "#DCE0F8" : "#E05252"}
                     />
                   </Pressable>
                   <Pressable
                     style={[styles.actionIcon, { backgroundColor: softBlock }]}
                     onPress={() => handleOpenClientDetails(item)}
+                    hitSlop={6}
                   >
                     <MaterialIcons
-                      name="person-outline"
-                      size={15}
+                      name="chevron-right"
+                      size={17}
                       color={isDark ? "#DCE0F8" : "#707792"}
                     />
                   </Pressable>
@@ -273,27 +277,28 @@ export default function ClientsScreen() {
 
               <View style={[styles.contactBlock, { backgroundColor: softBlock }]}>
                 <View style={styles.contactRow}>
-                  <MaterialIcons name="email" size={14} color={mutedText} />
+                  <MaterialIcons name="email" size={13} color={mutedText} />
                   <ThemedText style={[styles.contactText, { color: mutedText }]}>
-                    {item.email || "-"}
+                    {item.email || "—"}
                   </ThemedText>
                 </View>
                 <View style={styles.contactRow}>
-                  <MaterialIcons name="phone" size={14} color={mutedText} />
+                  <MaterialIcons name="phone" size={13} color={mutedText} />
                   <ThemedText style={[styles.contactText, { color: mutedText }]}>
-                    {item.tel || "-"}
+                    {item.tel || "—"}
                   </ThemedText>
                 </View>
                 <View style={styles.contactRow}>
-                  <MaterialIcons name="smartphone" size={14} color={mutedText} />
+                  <MaterialIcons name="smartphone" size={13} color={mutedText} />
                   <ThemedText style={[styles.contactText, { color: mutedText }]}>
-                    {item.mobile || "-"}
+                    {item.mobile || "—"}
                   </ThemedText>
                 </View>
               </View>
             </View>
           );
-        })}
+        })
+        )}
       </ScrollView>
 
       <ClientEditorModal
@@ -385,6 +390,19 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 24,
     gap: 12,
+    flexGrow: 1,
+  },
+  centerState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 60,
+    gap: 12,
+  },
+  centerStateText: {
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 32,
   },
   card: {
     borderRadius: 14,
@@ -405,14 +423,16 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 10,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
   },
   logoText: {
     fontSize: 14,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  clientInfo: {
+    flex: 1,
   },
   companyName: {
     fontSize: 16,

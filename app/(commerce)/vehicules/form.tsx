@@ -1,7 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useMemo, useRef, useState } from "react";
-import { Alert, Animated, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import ClientFormModal from "@/components/client-form-modal";
@@ -10,10 +10,9 @@ import { ThemedView } from "@/components/themed-view";
 import { TYPES_PERSONNES } from "@/constants/constants";
 import { carroreseriesFakeData, categorieVehiculeFakeData, couleursFakeData, energiesFakeData, genresFakeData, marquesFakeData, professionsFakeData, sousCategoriesFakeData, UsagesFakeData, VehiculeTypesFakeData, villesFakeData, zonesFakeData } from "@/data/datas.fake";
 import { useAuthContext } from "@/hooks/auth-context";
-import { useCachedResource } from "@/hooks/use-cached-resource";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePopup } from "@/hooks/use-popup";
 import { getfetchClients } from "@/services/api-service";
-import { CLIENTS_LIST_CACHE_KEY } from "@/services/cache-service";
 import COLORS from "@/styles/colors";
 import { client, listClients } from "@/types/client.type";
 import { itemDefaut } from "@/types/other.type";
@@ -33,7 +32,7 @@ type VehicleSelectField =
   | "libTypeConducteur"
   | "libProfessionConducteur";
 
-type VehicleFormData = {
+type VehicleFormState = {
   numImmatriculation: string;
   dateImmatriculation: string;
   dateMiseEnCirculation: string;
@@ -44,10 +43,11 @@ type VehicleFormData = {
   libUsage: string;
   libCategorie: string;
   libSousCategorie: string;
-  libVille: string;
+  libGroupeZone: string;
   libZoneCirculation: string;
   libMarque: string;
   libCouleur: string;
+  libVille: string;
   numSerie: string;
   numCarteGrise: string;
   nbPlaces: string;
@@ -69,17 +69,10 @@ type VehicleFormData = {
   libProfessionConducteur: string;
 };
 
-
-
-function formatDate(value?: Date) {
-  if (!value) return "";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
-  const day = `${d.getDate()}`.padStart(2, "0");
-  const month = `${d.getMonth() + 1}`.padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
+const toNumber = (v: string | number): number => {
+  const n = Number(v);
+  return Number.isNaN(n) ? 0 : n;
+};
 
 function parseDate(value: string, fallback?: Date) {
   const parts = value.split("/");
@@ -95,10 +88,7 @@ function parseDate(value: string, fallback?: Date) {
   return fallback ?? new Date();
 }
 
-function toNumber(value: string, fallback = 0) {
-  const n = Number(value.replace(",", "."));
-  return Number.isFinite(n) ? n : fallback;
-}
+
 
 const GENRES: itemDefaut[] = genresFakeData;
 const USAGES: itemDefaut[] = UsagesFakeData;
@@ -145,7 +135,7 @@ export default function VehiculeFormScreen() {
     returnTo?: "vehicules" | "vehicule-details";
   }>();
 
-  const initialVehicle = useMemo<vehicule | undefined>(() => {
+  const initialVehicle = useMemo<vehicule>(() => {
     if (!vehiculeData) return undefined;
     try {
       return JSON.parse(vehiculeData);
@@ -171,14 +161,12 @@ export default function VehiculeFormScreen() {
     [],
   );
 
-  const { data: clientsData } = useCachedResource<listClients>({
-    cacheKey: CLIENTS_LIST_CACHE_KEY,
-    initialData: initialClients,
-    enabled: Boolean(userToken),
-    fetcher: async () => getfetchClients(userToken ?? ""),
-    hasUsableCachedData: (cachedData) =>
-      Boolean(cachedData && Array.isArray(cachedData.data)),
-  });
+  const [clientsData, setClientsData] = useState<listClients>(initialClients);
+
+  useEffect(() => {
+    if (!userToken) return;
+    getfetchClients(userToken).then(setClientsData);
+  }, [userToken]);
 
   const [selectedClient, setSelectedClient] = useState<client | undefined>(initialClient);
   const [localClients, setLocalClients] = useState<client[]>([]);
@@ -223,10 +211,14 @@ export default function VehiculeFormScreen() {
     title: "",
     options: [],
   });
-  const [formData, setFormData] = useState<VehicleFormData>({
+  const [formData, setFormData] = useState<VehicleFormState>({
     numImmatriculation: initialVehicle?.numImmatriculation ?? "",
-    dateImmatriculation: formatDate(initialVehicle?.dateImmatriculation),
-    dateMiseEnCirculation: formatDate(initialVehicle?.dateMiseEnCirculation),
+    dateImmatriculation: initialVehicle?.dateImmatriculation
+      ? new Date(initialVehicle.dateImmatriculation).toLocaleDateString("fr-FR")
+      : "",
+    dateMiseEnCirculation: initialVehicle?.dateMiseEnCirculation
+      ? new Date(initialVehicle.dateMiseEnCirculation).toLocaleDateString("fr-FR")
+      : "",
     libGenre: initialVehicle?.libGenre ?? getFirstOptionLabel(GENRES),
     libType: initialVehicle?.libType ?? getFirstOptionLabel(VEHICLE_TYPES),
     libCarrosserie: initialVehicle?.libCarrosserie ?? getFirstOptionLabel(CARROSSERIES),
@@ -234,30 +226,30 @@ export default function VehiculeFormScreen() {
     libUsage: initialVehicle?.libUsage ?? getFirstOptionLabel(USAGES),
     libCategorie: initialVehicle?.libCategorie ?? getFirstOptionLabel(CATEGORIES),
     libSousCategorie: initialVehicle?.libSousCategorie ?? getFirstOptionLabel(SOUS_CATEGORIES),
-    libVille: initialVehicle?.libVille ?? getFirstOptionLabel(VILLES),
+    libGroupeZone: initialVehicle?.libGroupeZone ?? getFirstOptionLabel(VILLES),
     libZoneCirculation: initialVehicle?.libZoneCirculation ?? getFirstOptionLabel(ZONES),
     libMarque: initialVehicle?.libMarque ?? getFirstOptionLabel(MARQUES),
     libCouleur: initialVehicle?.libCouleur ?? getFirstOptionLabel(COULEURS),
+    libVille: "",
     numSerie: initialVehicle?.numSerie ?? "",
     numCarteGrise: initialVehicle?.numCarteGrise ?? "",
-    nbPlaces: `${initialVehicle?.nbPlaces ?? 0}`,
-    chargeUtile: `${initialVehicle?.chargeUtile ?? 0}`,
-    cylindree: `${initialVehicle?.cylindree ?? 0}`,
-    puissance: `${initialVehicle?.puissance ?? 0}`,
-    valeurNeuve: `${initialVehicle?.valeurNeuve ?? 0}`,
-    valeurVenale: `${initialVehicle?.valeurVenale ?? 0}`,
+    nbPlaces: String(initialVehicle?.nbPlaces ?? ""),
+    chargeUtile: String(initialVehicle?.chargeUtile ?? ""),
+    cylindree: String(initialVehicle?.cylindree ?? ""),
+    puissance: String(initialVehicle?.puissance ?? ""),
+    valeurNeuve: String(initialVehicle?.valeurNeuve ?? ""),
+    valeurVenale: String(initialVehicle?.valeurVenale ?? ""),
     modele: initialVehicle?.modele ?? "",
     typeCommercial: initialVehicle?.typeCommercial ?? "",
-    nbCartes: `${initialVehicle?.nbCartes ?? 0}`,
+    nbCartes: String(initialVehicle?.nbCartes ?? ""),
     commentaires: initialVehicle?.commentaires ?? "",
-    conducteurLuiMeme: initialVehicle?.conducteurLuiMeme ?? true,
-    libTypeConducteur: initialVehicle?.libTypeConducteur ?? TYPES_PERSONNES[0],
-    nomConducteur: initialVehicle?.nomConducteur ?? "",
-    telConducteur: initialVehicle?.telConducteur ?? "",
-    emailConducteur: initialVehicle?.emailConducteur ?? "",
-    boitePostaleConducteur: initialVehicle?.boitePostaleConducteur ?? "",
-    libProfessionConducteur:
-      initialVehicle?.libProfessionConducteur ?? professionsFakeData[0]?.libelle ?? "",
+    conducteurLuiMeme: initialVehicle?.luiMemeAssure ?? true,
+    libTypeConducteur: "",
+    nomConducteur: initialVehicle?.assure?.nom ?? "",
+    telConducteur: initialVehicle?.assure?.tel ?? "",
+    emailConducteur: initialVehicle?.assure?.email ?? "",
+    boitePostaleConducteur: initialVehicle?.assure?.bP ?? "",
+    libProfessionConducteur: initialVehicle?.assure?.libProfession ?? "",
   });
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
@@ -267,12 +259,14 @@ export default function VehiculeFormScreen() {
   const labelColor = isDark ? "#A8AEC7" : "#61637A";
   const inputBg = isDark ? "#242735" : "#F4F5F9";
 
+  const { showMessage } = usePopup();
+
   const clientType = useMemo(() => {
     if (!selectedClient) return TYPES_PERSONNES[0];
-    return selectedClient.type === 2 ? TYPES_PERSONNES[1] : TYPES_PERSONNES[0];
+    return selectedClient.typeId === 2 ? TYPES_PERSONNES[1] : TYPES_PERSONNES[0];
   }, [selectedClient]);
 
-  const updateField = <K extends keyof VehicleFormData>(key: K, value: VehicleFormData[K]) => {
+  const updateField = <K extends keyof VehicleFormState>(key: K, value: VehicleFormState[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -304,7 +298,7 @@ export default function VehiculeFormScreen() {
 
   const selectPickerOption = (value: string) => {
     if (pickerState.field) {
-      updateField(pickerState.field, value as VehicleFormData[typeof pickerState.field]);
+      updateField(pickerState.field, value as VehicleFormState[typeof pickerState.field]);
     }
     closePicker();
   };
@@ -343,7 +337,7 @@ export default function VehiculeFormScreen() {
   const handleSubmit = () => {
     if (!formData.numImmatriculation.trim()) return;
     if (!selectedClient) {
-      Alert.alert("Client requis", "Veuillez sélectionner un client.");
+      showMessage("error", "Client requis", "Veuillez sélectionner un client.");
       return;
     }
 
@@ -371,17 +365,18 @@ export default function VehiculeFormScreen() {
       libUsage: formData.libUsage,
       libCategorie: formData.libCategorie,
       libSousCategorie: formData.libSousCategorie,
-      libVille: formData.libVille,
+      libGroupeZone: formData.libGroupeZone,
       libZoneCirculation: formData.libZoneCirculation,
       libMarque: formData.libMarque,
       libCouleur: formData.libCouleur,
-      conducteurLuiMeme: formData.conducteurLuiMeme,
-      libTypeConducteur: formData.libTypeConducteur,
-      nomConducteur: formData.nomConducteur,
-      telConducteur: formData.telConducteur,
-      emailConducteur: formData.emailConducteur,
-      boitePostaleConducteur: formData.boitePostaleConducteur,
-      libProfessionConducteur: formData.libProfessionConducteur,
+      luiMemeAssure: formData.conducteurLuiMeme,
+      assure: {
+        nom: formData.nomConducteur,
+        email: formData.emailConducteur,
+        tel: formData.telConducteur,
+        bP: formData.boitePostaleConducteur,
+        libProfession: formData.libProfessionConducteur,
+      },
       client: selectedClient,
     };
 
@@ -389,8 +384,8 @@ export default function VehiculeFormScreen() {
   };
 
   const handleCreateClient = (data: Partial<client>) => {
-    if (!data.nom?.trim() || !data.prenom?.trim()) {
-      Alert.alert("Champs requis", "Le nom et le prénom sont obligatoires.");
+    if (!data.nom?.trim()) {
+      showMessage("error", "Champs requis", "Le nom est obligatoire.");
       return;
     }
 
@@ -399,32 +394,31 @@ export default function VehiculeFormScreen() {
     const newClient: client = {
       id: newId,
       civilite: data.civilite ?? 1,
-      type: data.type ?? 1,
+      typeId: data.typeId ?? 1,
+      professionId: data.professionId ?? 0,
       code: buildClientCode(newId),
       nom: data.nom.trim(),
-      prenom: data.prenom.trim(),
+      prenoms: data.prenoms?.trim(),
       email: data.email ?? "",
       mobile: data.mobile ?? "",
       tel: data.tel ?? "",
       whatsapp: data.whatsapp ?? "",
-      boitePostale: data.boitePostale ?? "",
+      bP: data.bP ?? "",
+      exoTaxe: data.exoTaxe ?? false,
+      rccm: data.rccm ?? "",
       libProfession: data.libProfession,
-      libCivilite: data.libCivilite,
-      libtype: data.libtype,
-      statut: data.statut ?? "Active",
-      vehicules: [],
     };
 
     setLocalClients((prev) => [newClient, ...prev]);
     setSelectedClient(newClient);
     setIsClientCreateVisible(false);
     setIsClientPickerVisible(false);
-    Alert.alert("Succès", "Nouveau client créé et sélectionné.");
+    showMessage("success", "Succès", "Nouveau client créé et sélectionné.");
   };
 
   const handleEditClient = (data: Partial<client>) => {
     if (!selectedClient) {
-      Alert.alert("Client requis", "Veuillez sélectionner un client à modifier.");
+      showMessage("error", "Client requis", "Veuillez sélectionner un client à modifier.");
       return;
     }
 
@@ -432,7 +426,7 @@ export default function VehiculeFormScreen() {
       ...selectedClient,
       ...data,
       nom: data.nom?.trim() || selectedClient.nom,
-      prenom: data.prenom?.trim() || selectedClient.prenom,
+      prenoms: data.prenoms?.trim() || selectedClient.prenoms,
     };
 
     setLocalClients((prev) => {
@@ -447,12 +441,12 @@ export default function VehiculeFormScreen() {
     });
     setSelectedClient(updatedClient);
     setIsClientEditVisible(false);
-    Alert.alert("Succès", "Client modifié.");
+    showMessage("success", "Succès", "Client modifié.");
   };
 
   const handleOpenClientDetails = () => {
     if (!selectedClient) {
-      Alert.alert("Client requis", "Veuillez sélectionner un client à consulter.");
+      showMessage("error", "Client requis", "Veuillez sélectionner un client à consulter.");
       return;
     }
 
@@ -543,7 +537,7 @@ export default function VehiculeFormScreen() {
                 style={[styles.clientActionIconButton, { borderColor, backgroundColor: inputBg }]}
                 onPress={() => {
                   if (!selectedClient) {
-                    Alert.alert("Client requis", "Veuillez sélectionner un client à modifier.");
+                    showMessage("error", "Client requis", "Veuillez sélectionner un client à modifier.");
                     return;
                   }
                   setIsClientEditVisible(true);
@@ -564,7 +558,7 @@ export default function VehiculeFormScreen() {
           <View style={styles.row2}>
             {renderSelect(
               "Client",
-              selectedClient ? `${selectedClient.nom} ${selectedClient.prenom}`.trim() : "<Sélectionner ...>",
+              selectedClient ? `${selectedClient.nom} ${selectedClient.prenoms ?? ""}`.trim() : "<Sélectionner ...>",
               () => setIsClientPickerVisible(true),
               false,
             )}
@@ -855,7 +849,7 @@ export default function VehiculeFormScreen() {
                   <View key={currentClient.id} style={styles.clientPickerRow}>
                     <View style={styles.clientPickerRowTextWrap}>
                       <ThemedText style={styles.clientPickerRowTitle}>
-                        {`${currentClient.nom} ${currentClient.prenom}`.trim()}
+                        {`${currentClient.nom} ${currentClient.prenoms ?? ""}`.trim()}
                       </ThemedText>
                       <ThemedText style={styles.clientPickerRowCode}>
                         {currentClient.code}
@@ -886,14 +880,14 @@ export default function VehiculeFormScreen() {
       <ClientFormModal
         visible={isClientCreateVisible}
         onClose={() => setIsClientCreateVisible(false)}
-        onSubmit={handleCreateClient}
+        onSubmit={async (data) => handleCreateClient(data)}
         title="Créer un client"
       />
 
       <ClientFormModal
         visible={isClientEditVisible}
         onClose={() => setIsClientEditVisible(false)}
-        onSubmit={handleEditClient}
+        onSubmit={async (data) => handleEditClient(data)}
         initialClient={selectedClient}
         title={selectedClient ? `Modifier ${selectedClient.nom}` : "Modifier un client"}
       />

@@ -19,7 +19,7 @@ import { useAuthContext } from "@/hooks/auth-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function LoginScreen() {
-  const { signIn, userToken, isLoading } = useAuthContext();
+  const { signIn, userToken, isLoading, error: authError } = useAuthContext();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
@@ -28,9 +28,15 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (!isLoading && userToken) {
-      router.replace("/(tabs)");
+      router.replace({ pathname: "/(tabs)" });
     }
   }, [isLoading, userToken]);
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
 
   const handleSignIn = async () => {
     if (!username.trim() || !password.trim()) {
@@ -43,9 +49,13 @@ export default function LoginScreen() {
 
     try {
       await signIn(username.trim(), password);
-      router.replace("/(tabs)");
+      router.replace({ pathname: "/(tabs)" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Connexion impossible");
+      const errorMessage =
+        err instanceof Error && err.message
+          ? err.message
+          : authError || "Connexion impossible";
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }

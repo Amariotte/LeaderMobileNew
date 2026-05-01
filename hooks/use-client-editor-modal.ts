@@ -26,9 +26,9 @@ export function useClientEditorModal(
   const [mode, setMode] = useState<ClientEditorMode>("create");
   const [selectedClient, setSelectedClient] = useState<client | undefined>();
 
-  const createTitle = options?.createTitle ?? "Creer un client";
+  const createTitle = options?.createTitle ?? "Creer un nouveau client";
   const getEditTitle =
-    options?.getEditTitle ?? ((currentClient: client) => `Modifier ${currentClient.nom}`);
+    options?.getEditTitle ?? ((currentClient: client) => `Modifier ${currentClient.code} - ${currentClient.nom} ${currentClient.prenoms}`);
 
   const title = useMemo(() => {
     if (mode === "edit" && selectedClient) {

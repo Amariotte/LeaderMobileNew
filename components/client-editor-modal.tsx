@@ -1,7 +1,7 @@
 import ClientFormModal from "@/components/client-form-modal";
 import {
-    ClientEditorModalController,
-    ClientEditorMode,
+  ClientEditorModalController,
+  ClientEditorMode,
 } from "@/hooks/use-client-editor-modal";
 import { client } from "@/types/client.type";
 
@@ -11,7 +11,7 @@ type ClientEditorModalProps = {
     data: Partial<client>,
     mode: ClientEditorMode,
     selectedClient?: client,
-  ) => void;
+  ) => Promise<void>;
 };
 
 export default function ClientEditorModal({

@@ -6,12 +6,14 @@ import {
   dataChartsFakeData,
   mouvementsFakeData,
   operationsFakeData,
+  produitsFakeData,
   reglementsFakeData,
   soldeFake,
-  statsFake
+  statsFake,
+  vehiculesFakeData,
 } from "@/data/datas.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
-import { listClients } from "@/types/client.type";
+import { client, listClients } from "@/types/client.type";
 import { contrat, listContrats } from "@/types/contrat.type";
 import {
   cotation,
@@ -29,8 +31,10 @@ import {
   PaginationParams,
   stat,
 } from "@/types/other.type";
+import { listProduits } from "@/types/produits.type";
 import { SoldeResponse } from "@/types/solde.type";
-import { getJsonAuth, postJsonAuth } from "./api-client";
+import { listVehicules, vehicule } from "@/types/vehicule.type";
+import { getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
 const LIMIT_RECENT_TRANSACTIONS = process.env
   .EXPO_PUBLIC_NBRE_RECENT_TRANSACTIONS
@@ -522,4 +526,72 @@ export async function postSaveCotation(
     token,
   );
   return d;
+}
+
+export async function createClient(
+  token: string,
+  data: Partial<client>,
+): Promise<client> {
+  if (isModeDemoEnabled()) {
+    const newClient: client = {
+      id: Math.max(...clientsFakeData.data.map((c) => c.id), 0) + 1,
+      ...data,
+    } as client;
+    clientsFakeData.data.unshift(newClient);
+    return newClient;
+  }
+  return postJsonAuth<client, Partial<client>>(
+    apiConfig.endpoints.clients,
+    token,
+    data,
+  );
+}
+
+export async function updateClient(
+  token: string,
+  id: number,
+  data: Partial<client>,
+): Promise<client> {
+  if (isModeDemoEnabled()) {
+    const index = clientsFakeData.data.findIndex((c) => c.id === id);
+    if (index !== -1) {
+      clientsFakeData.data[index] = { ...clientsFakeData.data[index], ...data };
+      return clientsFakeData.data[index];
+    }
+    throw new Error("Client introuvable");
+  }
+  return putJsonAuth<client, Partial<client>>(
+    `${apiConfig.endpoints.clients}/${id}`,
+    token,
+    data,
+  );
+}
+
+export async function getfetchVehicules(
+  token: string,
+  clientId?: number,
+): Promise<listVehicules> {
+  if (isModeDemoEnabled()) {
+    if (clientId !== undefined) {
+      return {
+        ...vehiculesFakeData,
+        data: vehiculesFakeData.data.filter((v: vehicule) => v.clientId === clientId),
+      };
+    }
+    return vehiculesFakeData;
+  }
+
+  const endpoint = clientId !== undefined
+    ? `${apiConfig.endpoints.vehicules}?client=${clientId}`
+    : apiConfig.endpoints.vehicules;
+
+  const data = await getJsonAuth<listVehicules>(endpoint, token);
+  return data;
+}
+
+export async function getAllProduits(token: string): Promise<listProduits> {
+  if (isModeDemoEnabled()) {
+    return produitsFakeData;
+  }
+  return getJsonAuth<listProduits>(apiConfig.endpoints.produits, token);
 }

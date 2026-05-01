@@ -2,14 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const BALANCE_CACHE_KEY = "home.balance.cache.v1";
 export const RECENTS_MOUVEMENTS_CACHE_KEY = "home.mouvements.recents.cache.v1";
-export const TRANSACTIONS_LIST_CACHE_KEY = "transactions.list.cache.v1";
-export const CONTRATS_LIST_CACHE_KEY = "contrats.list.cache.v1";
-export const COTATIONS_LIST_CACHE_KEY = "cotations.list.cache.v1";
-export const ENCAISSEMENTS_PRIMES_LIST_CACHE_KEY = "encaissements-primes.list.cache.v1";
-export const CLIENTS_LIST_CACHE_KEY = "clients.list.cache.v1";
-export const VEHICULES_LIST_CACHE_KEY = "vehicules.list.cache.v1";
 export const STAT_DATA_CACHE_KEY = "statData.cache.v1";
-export const OPERATIONS_LIST_CACHE_KEY = "operations.list.cache.v1";
 export const STATISTIQUES_LIST_CACHE_KEY = "statistiques.list.cache.v1";
 export const STOCK_ME_CACHE_KEY = "stock.me.cache.v1";
 

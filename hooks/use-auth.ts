@@ -377,14 +377,12 @@ export function useAuth(): UseAuthReturn {
 
       // Call API
       await signOutApi(state.userToken ?? "");
-
-      clearAuthSession();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur lors de la déconnexion";
       setError(errorMessage);
-      setState((prev) => ({ ...prev, isLoading: false }));
-      throw err;
+    } finally {
+      clearAuthSession();
     }
   };
 

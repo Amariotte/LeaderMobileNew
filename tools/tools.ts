@@ -169,3 +169,37 @@ export const formatDate = (pDate: Date | string | null | undefined) => {
     ? date.toLocaleString("fr-FR")
     : date.toLocaleDateString("fr-FR");
 };
+
+
+export const getLabelCivilite = (
+  civ: number
+): string => {
+  switch (civ) {
+    case 1:
+      return "Monsieur";
+    case 2:
+      return "Madame";
+    case 3:
+      return "Mademoiselle";
+    case 4:
+      return "Société";
+    default:
+      return "—";
+  }
+};
+
+
+export const getLabelTypeClient = (
+  civ: number
+): string => {
+  switch (civ) {
+    case 1:
+      return "Personne physique";
+    case 2:
+      return "Personne morale";
+    default:
+      return "—";
+  }
+};
+
+  

@@ -1,13 +1,14 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { contratsFakeData } from "@/data/datas.fake";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePopup } from "@/hooks/use-popup";
 import { sharedStyles } from "@/styles/shared.js";
 import { formatAmount, formatDate } from "@/tools/tools";
 import { client } from "@/types/client.type";
@@ -272,15 +273,16 @@ export default function ContratsScreen() {
     });
   };
 
+  const { showConfirm } = usePopup();
+
   const handleDelete = (item: contrat) => {
-    Alert.alert("Supprimer", `Supprimer ${item.numeroContrat} ?`, [
-      { text: "Annuler" },
-      {
-        text: "Supprimer",
-        style: "destructive",
-        onPress: () => setContratsList((prev) => prev.filter((c) => c.id !== item.id)),
-      },
-    ]);
+    showConfirm(
+      "error",
+      "Supprimer le contrat",
+      `Supprimer ${item.numeroContrat} ?`,
+      () => setContratsList((prev) => prev.filter((c) => c.id !== item.id)),
+      { confirmLabel: "Supprimer", cancelLabel: "Annuler" },
+    );
   };
 
   return (

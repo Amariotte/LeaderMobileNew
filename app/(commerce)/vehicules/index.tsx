@@ -1,19 +1,22 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { clientsFakeData, vehiculesFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePopup } from "@/hooks/use-popup";
+import { getfetchVehicules } from "@/services/api-service";
 import { client } from "@/types/client.type";
 import { vehicule } from "@/types/vehicule.type";
 
 export default function VehiculesScreen() {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
+  const { userToken } = useAuthContext();
   const { action, savedVehiculeData, clientData } = useLocalSearchParams<{
     action?: "created" | "updated";
     savedVehiculeData?: string;
@@ -30,8 +33,22 @@ export default function VehiculesScreen() {
   }, [clientData]);
 
   const [searchText, setSearchText] = useState("");
-  const [vehiculesList, setVehiculesList] = useState<vehicule[]>(vehiculesFakeData.data);
+  const [vehiculesList, setVehiculesList] = useState<vehicule[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const lastPayloadRef = useRef<string>("");
+
+  const initialVehicules = useMemo(
+    () => ({ meta: { page: 1, next: 1, totalPages: 1, total: 0, size: 0 }, data: [] }),
+    [],
+  );
+
+  useEffect(() => {
+    if (!userToken) return;
+    setIsLoading(true);
+    getfetchVehicules(userToken, selectedClient?.id)
+      .then((res) => setVehiculesList(res.data ?? []))
+      .finally(() => setIsLoading(false));
+  }, [userToken, selectedClient?.id]);
 
   useEffect(() => {
     if (!savedVehiculeData || !action) {
@@ -56,11 +73,14 @@ export default function VehiculesScreen() {
         const nextId = Math.max(0, ...vehiculesList.map((item) => item.id)) + 1;
         const created: vehicule = {
           id: payload.id ?? nextId,
+          clientId: payload.clientId ?? selectedClient?.id ?? 0,
           numImmatriculation: payload.numImmatriculation,
           dateImmatriculation: payload.dateImmatriculation ?? new Date(),
           dateMiseEnCirculation: payload.dateMiseEnCirculation ?? new Date(),
           numSerie: payload.numSerie ?? "",
           numCarteGrise: payload.numCarteGrise ?? "",
+          numMoteur: payload.numMoteur ?? "",
+          groupeZoneId: payload.groupeZoneId ?? 1,
           nbPlaces: payload.nbPlaces ?? 0,
           chargeUtile: payload.chargeUtile ?? 0,
           cylindree: payload.cylindree ?? 0,
@@ -82,7 +102,7 @@ export default function VehiculesScreen() {
           sousCategorieId: payload.sousCategorieId ?? 1,
           villeId: payload.villeId ?? 1,
           zoneCirculationId: payload.zoneCirculationId ?? 1,
-          conducteurLuiMeme: payload.conducteurLuiMeme ?? true,
+          luiMemeAssure: payload.luiMemeAssure ?? true,
           libGenre: payload.libGenre,
           libType: payload.libType,
           libCarrosserie: payload.libCarrosserie,
@@ -92,16 +112,17 @@ export default function VehiculesScreen() {
           libUsage: payload.libUsage,
           libCategorie: payload.libCategorie,
           libSousCategorie: payload.libSousCategorie,
-          libVille: payload.libVille,
+          libGroupeZone: payload.libGroupeZone,
           libZoneCirculation: payload.libZoneCirculation,
-          typeConducteur: payload.typeConducteur,
-          idProfessionConducteur: payload.idProfessionConducteur,
-          libTypeConducteur: payload.libTypeConducteur,
-          nomConducteur: payload.nomConducteur,
-          emailConducteur: payload.emailConducteur,
-          telConducteur: payload.telConducteur,
-          boitePostaleConducteur: payload.boitePostaleConducteur,
-          libProfessionConducteur: payload.libProfessionConducteur,
+          assure : {
+              nom: payload.assure?.nom ?? "",
+              email: payload.assure?.email ?? "",
+              typeId: payload.assure?.typeId ? Number(payload.assure.typeId) : undefined,
+              professionId: payload.assure?.professionId ? Number(payload.assure.professionId) : undefined,
+              tel: payload.assure?.tel ?? "",
+              bP: payload.assure?.bP ?? "",
+              libProfession: payload.assure?.libProfession ?? "",
+          },
           client: selectedClient,
         };
 
@@ -139,18 +160,15 @@ export default function VehiculesScreen() {
     });
   };
 
+  const { showConfirm } = usePopup();
+
   const handleDelete = (item: vehicule) => {
-    Alert.alert(
-      "Supprimer",
+    showConfirm(
+      "error",
+      "Supprimer le véhicule",
       `Supprimer le véhicule ${item.numImmatriculation} ?`,
-      [
-        { text: "Annuler" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: () => setVehiculesList((prev) => prev.filter((v) => v.id !== item.id)),
-        },
-      ],
+      () => setVehiculesList((prev) => prev.filter((v) => v.id !== item.id)),
+      { confirmLabel: "Supprimer", cancelLabel: "Annuler" },
     );
   };
 
@@ -171,14 +189,10 @@ export default function VehiculesScreen() {
   });
 
   const findClientName = (item: vehicule) => {
-    if (item.client) return `${item.client.nom} ${item.client.prenom}`.trim();
-
-    const owner = clientsFakeData.data.find((c) =>
-      c.vehicules?.some((vehiculeItem) => vehiculeItem.id === item.id),
-    );
-
-    if (!owner) return "Non assigné";
-    return `${owner.nom} ${owner.prenom}`.trim();
+    if (item.client) return `${item.client.nom} ${item.client.prenoms ?? ""}`.trim();
+    if (selectedClient && item.clientId === selectedClient.id)
+      return `${selectedClient.nom} ${selectedClient.prenoms ?? ""}`.trim();
+    return "Non assigné";
   };
 
   return (
@@ -216,7 +230,24 @@ export default function VehiculesScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {filteredVehicules.map((item) => (
+        {isLoading && vehiculesList.length === 0 ? (
+          <View style={styles.centerState}>
+            <ActivityIndicator size="large" color="#1F8B82" />
+            <ThemedText style={[styles.centerStateText, { color: mutedText }]}>
+              Chargement des véhicules…
+            </ThemedText>
+          </View>
+        ) : filteredVehicules.length === 0 ? (
+          <View style={styles.centerState}>
+            <MaterialIcons name="directions-car" size={48} color={mutedText} />
+            <ThemedText style={[styles.centerStateText, { color: mutedText }]}>
+              {searchText.length > 0
+                ? "Aucun véhicule ne correspond à votre recherche"
+                : "Aucun véhicule pour le moment"}
+            </ThemedText>
+          </View>
+        ) : (
+        filteredVehicules.map((item) => (
           <View key={item.id} style={[styles.card, { backgroundColor: cardBackground, borderColor }]}> 
             <View style={styles.cardTop}>
               <View style={styles.idBlock}>
@@ -285,7 +316,8 @@ export default function VehiculesScreen() {
               </View>
             </View>
           </View>
-        ))}
+        ))
+        )}
       </ScrollView>
 
     </ThemedView>
@@ -357,6 +389,19 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 24,
     gap: 12,
+    flexGrow: 1,
+  },
+  centerState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 60,
+    gap: 12,
+  },
+  centerStateText: {
+    fontSize: 14,
+    textAlign: "center",
+    paddingHorizontal: 32,
   },
   card: {
     borderRadius: 14,

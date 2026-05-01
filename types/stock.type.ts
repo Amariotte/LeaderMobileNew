@@ -19,10 +19,14 @@ export type stockPartenaire = {
 };
 
 export type stockProducteur = {
-  nomCompagnie: string 
-  nomPartenaire: string
-  nomProducteur: string
-  typeAttestation: string
+  compagnieNom: string 
+  compagnieId: number
+  partenaireId: number
+  producteurId: number
+  partenaireNom: string
+  producteurNom: string
+  typeNom: string
+  typeId: number
   qteRecues?: number
   qteRetirees?: number
   qteProduites?: number

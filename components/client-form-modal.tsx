@@ -1,13 +1,14 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -20,10 +21,27 @@ import { client } from "@/types/client.type";
 type ClientFormModalProps = {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (client: Partial<client>) => void;
+  onSubmit: (client: Partial<client>) => Promise<void>;
   initialClient?: client;
   title: string;
 };
+
+function buildInitialFormData(c?: client): Partial<client> {
+  return {
+    typeId: c?.typeId ?? 1,
+    civilite: c?.civilite ?? 1,
+    nom: c?.nom ?? "",
+    prenoms: c?.prenoms ?? "",
+    professionId: c?.professionId,
+    libProfession: c?.libProfession ?? "",
+    tel: c?.tel ?? "",
+    mobile: c?.mobile ?? "",
+    whatsapp: c?.whatsapp ?? "",
+    email: c?.email ?? "",
+    bP: c?.bP ?? "",
+    rccm: c?.rccm ?? "",
+  };
+}
 
 
 
@@ -38,19 +56,23 @@ export default function ClientFormModal({
   const isDark = scheme === "dark";
 
   const [showProfessionMenu, setShowProfessionMenu] = useState(false);
-  const [formData, setFormData] = useState<Partial<client>>({
-    type: initialClient?.type ?? 1,
-    civilite: initialClient?.civilite ?? 1,
-    nom: initialClient?.nom ?? "",
-    prenom: initialClient?.prenom ?? "",
-    libProfession: initialClient?.libProfession ?? "",
-    tel: initialClient?.tel ?? "",
-    mobile: initialClient?.mobile ?? "",
-    whatsapp: initialClient?.whatsapp ?? "",
-    email: initialClient?.email ?? "",
-    boitePostale: initialClient?.boitePostale ?? "",
-  });
+  const [formData, setFormData] = useState<Partial<client>>(
+    buildInitialFormData(initialClient),
+  );
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const dropdownAnimation = useRef(new Animated.Value(0)).current;
+
+  // Re-fill form each time the modal opens (critical for edit mode)
+  useEffect(() => {
+    if (visible) {
+      setFormData(buildInitialFormData(initialClient));
+      setValidationError(null);
+    }
+  }, [visible, initialClient]);
+
+  const update = (patch: Partial<client>) =>
+    setFormData((prev) => ({ ...prev, ...patch }));
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
@@ -59,9 +81,27 @@ export default function ClientFormModal({
   const labelColor = isDark ? "#A8AEC7" : "#61637A";
   const inputBg = isDark ? "#242735" : "#F9F9FC";
 
-  const handleSubmit = () => {
-    onSubmit(formData);
-    onClose();
+  const handleSubmit = async () => {
+    if (!formData.nom?.trim()) {
+      setValidationError("Le nom est obligatoire.");
+      return;
+    }
+    if (!formData.prenoms?.trim()) {
+      setValidationError("Le prénom est obligatoire.");
+      return;
+    }
+    setValidationError(null);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      setValidationError(
+        err instanceof Error ? err.message : "Une erreur est survenue.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const openProfessionDropdown = () => {
@@ -93,13 +133,8 @@ export default function ClientFormModal({
         >
           {/* Header */}
           <View style={styles.header}>
-            <ThemedText
-              type="subtitle"
-              style={styles.title}
-            >
-              {title}
-            </ThemedText>
-            <Pressable onPress={onClose} style={styles.headerCloseBtn}>
+            <ThemedText style={styles.title}>{title}</ThemedText>
+            <Pressable onPress={onClose} style={styles.headerCloseBtn} disabled={isSubmitting}>
               <MaterialIcons name="close" size={22} color="#FFFFFF" />
             </Pressable>
           </View>
@@ -108,300 +143,216 @@ export default function ClientFormModal({
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            {/* Section Title */}
-            <ThemedText
-              type="defaultSemiBold"
-              style={[styles.sectionTitle, { color: textColor }]}
-            >
-              Informations du client
-            </ThemedText>
+            {/* ── Type de personne ── */}
+            <ThemedText style={[styles.label, { color: labelColor }]}>Type de personne</ThemedText>
+            <View style={styles.pillRow}>
+              {TYPES_PERSONNES.map((lbl, idx) => {
+                const val = idx + 1;
+                const active = formData.typeId === val;
+                return (
+                  <Pressable
+                    key={val}
+                    style={[
+                      styles.pill,
+                      { borderColor: active ? COLORS.primaryColor : borderColor },
+                      active && { backgroundColor: COLORS.primaryColor },
+                    ]}
+                    onPress={() => update({ typeId: val })}
+                  >
+                    <ThemedText style={[styles.pillText, { color: active ? "#FFFFFF" : labelColor }]}>
+                      {lbl}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-            {/* Type and Civilité Row */}
-            <View style={styles.rowContainer}>
+            {/* ── Civilité ── */}
+            <ThemedText style={[styles.label, { color: labelColor, marginTop: 10 }]}>Civilité</ThemedText>
+            <View style={[styles.pillRow, { marginBottom: 14 }]}>
+              {CIVILITES.map((lbl, idx) => {
+                const val = idx + 1;
+                const active = formData.civilite === val;
+                return (
+                  <Pressable
+                    key={val}
+                    style={[
+                      styles.pill,
+                      { borderColor: active ? COLORS.primaryColor : borderColor },
+                      active && { backgroundColor: COLORS.primaryColor },
+                    ]}
+                    onPress={() => update({ civilite: val })}
+                  >
+                    <ThemedText style={[styles.pillText, { color: active ? "#FFFFFF" : labelColor }]}>
+                      {lbl}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* ── Nom / Prénom ── */}
               <View style={styles.formField}>
-                <ThemedText
-                  style={[styles.label, { color: labelColor }]}
-                >
-                  Type
+                <ThemedText style={[styles.label, { color: labelColor }]}>
+                  Nom <ThemedText style={styles.required}>*</ThemedText>
                 </ThemedText>
-                <View
-                  style={[
-                    styles.selectContainer,
-                    { backgroundColor: inputBg, borderColor },
-                  ]}
-                >
-                  <ThemedText style={{ color: textColor, flex: 1 }}>
-                    {TYPES_PERSONNES[formData.type ? formData.type - 1 : 0]}
-                  </ThemedText>
-                  <MaterialIcons name="expand-more" size={20} color={labelColor} />
-                </View>
-              </View>
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
+                  placeholder="Nom"
+                  placeholderTextColor={labelColor}
+                  value={formData.nom}
+                  onChangeText={(t) => update({ nom: t })}
+                  autoCapitalize="characters"
+                />
+            
+            </View>
 
               <View style={styles.formField}>
-                <ThemedText
-                  style={[styles.label, { color: labelColor }]}
-                >
-                  Civilité
+              
+                <ThemedText style={[styles.label, { color: labelColor }]}>
+                  Prénom(s) <ThemedText style={styles.required}>*</ThemedText>
                 </ThemedText>
-                <View
-                  style={[
-                    styles.selectContainer,
-                    { backgroundColor: inputBg, borderColor },
-                  ]}
-                >
-                  <ThemedText style={{ color: textColor, flex: 1 }}>
-                    {CIVILITES[formData.civilite ? formData.civilite - 1 : 0]}
-                  </ThemedText>
-                  <MaterialIcons name="expand-more" size={20} color={labelColor} />
-                </View>
-              </View>
-            </View>
-
-            {/* Nom Field */}
-            <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>
-                Nom <ThemedText style={styles.required}>*</ThemedText>
-              </ThemedText>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  { backgroundColor: inputBg, borderColor, color: textColor },
-                ]}
-                placeholder="Entrez le nom"
-                placeholderTextColor={labelColor}
-                value={formData.nom}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({ ...prev, nom: text }))
-                }
-              />
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
+                  placeholder="Prénom(s)"
+                  placeholderTextColor={labelColor}
+                  value={formData.prenoms}
+                  onChangeText={(t) => update({ prenoms: t })}
+                />
             </View>
 
 
-
-            {/* Prénom Field */}
+            {/* ── Profession ── */}
             <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>
-                Prénom(s) <ThemedText style={styles.required}>*</ThemedText>
-              </ThemedText>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  { backgroundColor: inputBg, borderColor, color: textColor },
-                ]}
-                placeholder="Entrez le prénom"
-                placeholderTextColor={labelColor}
-                value={formData.prenom}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({ ...prev, prenom: text }))
-                }
-              />
-            </View>
-
-            {/* Profession Field */}
-            <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>
-                Profession
-              </ThemedText>
+              <ThemedText style={[styles.label, { color: labelColor }]}>Profession</ThemedText>
               <Pressable
                 onPress={openProfessionDropdown}
-                style={[
-                  styles.selectContainer,
-                  { backgroundColor: inputBg, borderColor },
-                ]}
+                style={[styles.selectContainer, { backgroundColor: inputBg, borderColor }]}
               >
                 <ThemedText
-                  style={{ color: formData.libProfession ? textColor : labelColor, flex: 1 }}
+                  style={{ color: formData.libProfession ? textColor : labelColor, flex: 1, fontSize: 14 }}
                 >
-                  {formData.libProfession || "<Sélectionner ...>"}
+                  {formData.libProfession || "Sélectionner…"}
                 </ThemedText>
                 <MaterialIcons name="expand-more" size={20} color={labelColor} />
               </Pressable>
             </View>
 
-            {/* Téléphone and Mobile Row */}
-            <View style={styles.rowContainer}>
-              <View style={styles.formField}>
-                <ThemedText style={[styles.label, { color: labelColor }]}>
-                  Téléphone
-                </ThemedText>
+            {/* ── Téléphone / Mobile ── */}
+            <View style={styles.formField}>
+                <ThemedText style={[styles.label, { color: labelColor }]}>Téléphone</ThemedText>
                 <TextInput
-                  style={[
-                    styles.textInput,
-                    { backgroundColor: inputBg, borderColor, color: textColor },
-                  ]}
+                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
                   placeholder="+225 xx xx xx xx"
                   placeholderTextColor={labelColor}
                   value={formData.tel}
-                  onChangeText={(text) =>
-                    setFormData((prev) => ({ ...prev, tel: text }))
-                  }
+                  onChangeText={(t) => update({ tel: t })}
                   keyboardType="phone-pad"
                 />
               </View>
+              
 
-              <View style={styles.formField}>
-                <ThemedText style={[styles.label, { color: labelColor }]}>
-                  Mobile
-                </ThemedText>
+<View style={styles.formField}>
+            
+                <ThemedText style={[styles.label, { color: labelColor }]}>Mobile</ThemedText>
                 <TextInput
-                  style={[
-                    styles.textInput,
-                    { backgroundColor: inputBg, borderColor, color: textColor },
-                  ]}
+                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
                   placeholder="+225 xx xx xx xx"
                   placeholderTextColor={labelColor}
                   value={formData.mobile}
-                  onChangeText={(text) =>
-                    setFormData((prev) => ({ ...prev, mobile: text }))
-                  }
+                  onChangeText={(t) => update({ mobile: t })}
                   keyboardType="phone-pad"
                 />
               </View>
-            </View>
 
-            {/* Mobile WhatsApp Field */}
+            {/* ── WhatsApp ── */}
             <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>
-                Mobile WhatsApp
-              </ThemedText>
+              <ThemedText style={[styles.label, { color: labelColor }]}>WhatsApp</ThemedText>
               <TextInput
-                style={[
-                  styles.textInput,
-                  { backgroundColor: inputBg, borderColor, color: textColor },
-                ]}
+                style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
                 placeholder="+225 xx xx xx xx"
                 placeholderTextColor={labelColor}
                 value={formData.whatsapp}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({ ...prev, whatsapp: text }))
-                }
+                onChangeText={(t) => update({ whatsapp: t })}
                 keyboardType="phone-pad"
               />
             </View>
 
-            {/* Email Field */}
+            {/* ── Email ── */}
             <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>
-                Email
-              </ThemedText>
+              <ThemedText style={[styles.label, { color: labelColor }]}>Email</ThemedText>
               <TextInput
-                style={[
-                  styles.textInput,
-                  { backgroundColor: inputBg, borderColor, color: textColor },
-                ]}
+                style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
                 placeholder="email@example.com"
                 placeholderTextColor={labelColor}
                 value={formData.email}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({ ...prev, email: text }))
-                }
+                onChangeText={(t) => update({ email: t })}
                 keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
 
-            {/* Boîte Postale Field */}
-            <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>
-                Boîte postale
-              </ThemedText>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  { backgroundColor: inputBg, borderColor, color: textColor },
-                ]}
-                placeholder="BP xxxxx"
-                placeholderTextColor={labelColor}
-                value={formData.boitePostale}
-                onChangeText={(text) =>
-                  setFormData((prev) => ({ ...prev, boitePostale: text }))
-                }
-              />
-            </View>
+            {/* ── BP / RCCM ── */}
+              <View style={styles.formField}>
+                <ThemedText style={[styles.label, { color: labelColor }]}>Boîte postale</ThemedText>
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
+                  placeholder="BP xxxxx"
+                  placeholderTextColor={labelColor}
+                  value={formData.bP}
+                  onChangeText={(t) => update({ bP: t })}
+                />
+              </View>
+             
+              <View style={styles.formField}>
+                <ThemedText style={[styles.label, { color: labelColor }]}>RCCM</ThemedText>
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
+                  placeholder="RCCM n°"
+                  placeholderTextColor={labelColor}
+                  value={formData.rccm}
+                  onChangeText={(t) => update({ rccm: t })}
+                />
+              </View>
 
-            {/* Vehicles Section */}
-            {initialClient?.vehicules && initialClient.vehicules.length > 0 && (
-              <>
-                <ThemedText
-                  type="defaultSemiBold"
-                  style={[styles.sectionTitle, { color: textColor, marginTop: 20 }]}
-                >
-                  Véhicules ({initialClient.vehicules.length})
-                </ThemedText>
+          
 
-                <View style={styles.vehiclesList}>
-                  {initialClient.vehicules.map((vehicle) => (
-                    <View
-                      key={vehicle.id}
-                      style={[
-                        styles.vehicleItem,
-                        { backgroundColor: inputBg, borderColor },
-                      ]}
-                    >
-                      <View style={styles.vehicleItemHeader}>
-                        <View>
-                          <ThemedText
-                            type="defaultSemiBold"
-                            style={{ color: textColor, fontSize: 13 }}
-                          >
-                            {vehicle.modele || "Sans modèle"}
-                          </ThemedText>
-                          <ThemedText style={{ color: labelColor, fontSize: 11, marginTop: 2 }}>
-                            {vehicle.numImmatriculation}
-                          </ThemedText>
-                        </View>
-                        <View style={styles.vehicleItemDetails}>
-                          <View style={styles.vehicleDetail}>
-                            <ThemedText style={{ color: labelColor, fontSize: 10 }}>
-                              Puissance
-                            </ThemedText>
-                            <ThemedText style={{ color: textColor, fontSize: 12, fontWeight: "600" }}>
-                              {vehicle.puissance ? `${vehicle.puissance} ch` : "—"}
-                            </ThemedText>
-                          </View>
-                          <View style={styles.vehicleDetail}>
-                            <ThemedText style={{ color: labelColor, fontSize: 10 }}>
-                              Places
-                            </ThemedText>
-                            <ThemedText style={{ color: textColor, fontSize: 12, fontWeight: "600" }}>
-                              {vehicle.nbPlaces ?? "—"}
-                            </ThemedText>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
+            {/* ── Erreur ── */}
+            {validationError ? (
+              <View style={styles.errorBox}>
+                <MaterialIcons name="error-outline" size={16} color="#EF4444" />
+                <ThemedText style={styles.errorText}>{validationError}</ThemedText>
+              </View>
+            ) : null}
           </ScrollView>
 
-          {/* Divider */}
-          {/* Action Buttons */}
-          <View style={styles.footer}>
+          {/* Footer */}
+          <View style={[styles.footer, { borderTopColor: borderColor }]}>
             <Pressable
-              style={[
-                styles.button,
-                { backgroundColor: cardBackground, borderColor },
-              ]}
+              style={[styles.button, { backgroundColor: cardBackground, borderColor }]}
               onPress={onClose}
+              disabled={isSubmitting}
             >
-              <ThemedText style={[styles.buttonText, { color: labelColor }]}>
-                Annuler
-              </ThemedText>
+              <ThemedText style={[styles.buttonText, { color: labelColor }]}>Annuler</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.button, { backgroundColor: COLORS.primaryColor }]}
+              style={[styles.button, { backgroundColor: COLORS.primaryColor }, isSubmitting && styles.buttonDisabled]}
               onPress={handleSubmit}
+              disabled={isSubmitting}
             >
-              <ThemedText style={[styles.buttonText, { color: "#FFFFFF" }]}>
-                Enregistrer
-              </ThemedText>
+              {isSubmitting ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <ThemedText style={[styles.buttonText, { color: "#FFFFFF" }]}>Enregistrer</ThemedText>
+              )}
             </Pressable>
           </View>
         </View>
       </View>
       </Modal>
+
 
       {/* Profession Dropdown Modal */}
       <Modal visible={showProfessionMenu} transparent animationType="none">
@@ -444,10 +395,7 @@ export default function ClientFormModal({
                 <Pressable
                   key={profession.id}
                   onPress={() => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      libProfession: profession.libelle,
-                    }));
+                    update({ professionId: profession.id, libProfession: profession.libelle });
                     closeProfessionDropdown();
                   }}
                   style={[
@@ -596,7 +544,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 4,
+    borderTopWidth: 1,
   },
   button: {
     flex: 1,
@@ -610,6 +560,39 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  pillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  pillText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FEF2F2",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+  },
+  errorText: {
+    color: "#EF4444",
+    fontSize: 13,
+    flex: 1,
   },
   vehiclesList: {
     gap: 10,

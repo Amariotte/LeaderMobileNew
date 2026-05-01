@@ -5,11 +5,18 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import "react-native-reanimated";
 
 import { AuthProvider, useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { PopupProvider, usePopup } from "@/hooks/use-popup";
+import {
+  setApiErrorPopupHandler,
+  setTokenRefreshHandler,
+  setUnauthorizedHandler,
+} from "@/services/api-client";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -21,15 +28,39 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <RootNavigator />
-        <StatusBar style="auto" />
+        <PopupProvider>
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </PopupProvider>
       </ThemeProvider>
     </AuthProvider>
   );
 }
 
 function RootNavigator() {
-  const { isLoading, userToken } = useAuthContext();
+  const { isLoading, userToken, clearAuthSession, refreshAccessToken } =
+    useAuthContext();
+  const { showMessage } = usePopup();
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearAuthSession();
+    });
+
+    setTokenRefreshHandler(async () => {
+      return refreshAccessToken();
+    });
+
+    setApiErrorPopupHandler(({ title, message }) => {
+      showMessage("error", title, message);
+    });
+
+    return () => {
+      setUnauthorizedHandler(null);
+      setTokenRefreshHandler(null);
+      setApiErrorPopupHandler(null);
+    };
+  }, [clearAuthSession, refreshAccessToken]);
 
   if (isLoading) {
     return (

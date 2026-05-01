@@ -1,19 +1,23 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  View,
+  View
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import ClientEditorModal from "@/components/client-editor-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useClientEditorModal } from "@/hooks/use-client-editor-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getfetchVehicules } from "@/services/api-service";
+import { getLabelCivilite } from "@/tools/tools";
 import { client } from "@/types/client.type";
 import { vehicule } from "@/types/vehicule.type";
 
@@ -24,10 +28,21 @@ export default function ClientDetailsScreen() {
   const [selectedClient, setSelectedClient] = useState<client | undefined>(
     clientData ? JSON.parse(clientData) : undefined
   );
+  const [vehiclesList, setVehiclesList] = useState<vehicule[]>([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const { userToken } = useAuthContext();
   const clientEditor = useClientEditorModal({
     createTitle: "Creer un client",
     getEditTitle: (currentClient) => `Modifier ${currentClient.nom}`,
   });
+
+  useEffect(() => {
+    if (!userToken || !selectedClient?.id) return;
+    setVehiclesLoading(true);
+    getfetchVehicules(userToken, selectedClient.id)
+      .then((res) => setVehiclesList(res.data ?? []))
+      .finally(() => setVehiclesLoading(false));
+  }, [userToken, selectedClient?.id]);
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
@@ -87,6 +102,8 @@ export default function ClientDetailsScreen() {
       </ThemedView>
     );
   }
+
+  const vehiclesClient = vehiclesList;
 
   const InfoRow = ({
     icon,
@@ -155,7 +172,7 @@ export default function ClientDetailsScreen() {
                 type="defaultSemiBold"
                 style={[styles.nameText, { color: textColor }]}
               >
-                {selectedClient.nom}
+                {selectedClient.nom} {selectedClient.prenoms}
               </ThemedText>
               <ThemedText style={[styles.codeText, { color: labelColor }]}>
                 Code : {selectedClient.code}
@@ -207,10 +224,19 @@ export default function ClientDetailsScreen() {
         >
           <InfoRow
             icon="person"
-            label="Prénom"
-            value={selectedClient.prenom}
+            label="Nom"
+            value={selectedClient.nom}
           />
           <View style={[styles.cardDivider, { borderColor }]} />
+          
+          {selectedClient.prenoms && (
+            <InfoRow
+              icon="person"
+              label="Prénom"
+              value={selectedClient.prenoms}
+            />
+          )}
+
           <InfoRow
             icon="badge"
             label="Profession"
@@ -220,9 +246,10 @@ export default function ClientDetailsScreen() {
           <InfoRow
             icon="wc"
             label="Civilité"
-            value={selectedClient.libCivilite}
+            value={getLabelCivilite(selectedClient.civilite)}
           />
         </View>
+
 
         {/* Contact Section */}
         <ThemedText
@@ -280,7 +307,7 @@ export default function ClientDetailsScreen() {
           <InfoRow
             icon="mail"
             label="Boîte postale"
-            value={selectedClient.boitePostale}
+            value={selectedClient.bP}
           />
         </View>
 
@@ -290,7 +317,7 @@ export default function ClientDetailsScreen() {
             type="defaultSemiBold"
             style={[styles.sectionTitle, { color: textColor, marginBottom: 0 }]}
           >
-            Véhicules ({selectedClient.vehicules?.length ?? 0})
+            Véhicules {!vehiclesLoading && `(${vehiclesList.length})`}
           </ThemedText>
           <Pressable
             style={[styles.addVehicleButton, { backgroundColor: "#1F8B82" }]}
@@ -300,9 +327,13 @@ export default function ClientDetailsScreen() {
           </Pressable>
         </View>
 
-        {selectedClient.vehicules && selectedClient.vehicules.length > 0 ? (
+        {vehiclesLoading ? (
+          <View style={[styles.emptyVehiclesContainer, { backgroundColor: cardBackground, borderColor }]}>
+            <ActivityIndicator size="small" color="#1F8B82" />
+          </View>
+        ) : vehiclesClient.length > 0 ? (
           <View style={styles.vehiclesList}>
-            {selectedClient.vehicules.map((vehicle) => (
+            {vehiclesClient.map((vehicle) => (
               <View
                 key={vehicle.id}
                 style={[
@@ -388,7 +419,7 @@ export default function ClientDetailsScreen() {
 
       <ClientEditorModal
         controller={clientEditor}
-        onSubmit={(data) => handleSubmitEdit(data)}
+        onSubmit={async (data) => handleSubmitEdit(data)}
       />
     </ThemedView>
   );

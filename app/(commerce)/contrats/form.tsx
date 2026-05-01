@@ -2,7 +2,6 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-    Alert,
     Modal,
     Pressable,
     ScrollView,
@@ -15,6 +14,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { vehiculesFakeData } from "@/data/datas.fake";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePopup } from "@/hooks/use-popup";
 import COLORS from "@/styles/colors";
 import { client } from "@/types/client.type";
 import { contrat } from "@/types/contrat.type";
@@ -286,13 +286,15 @@ export default function ContratFormScreen() {
     options: [],
   });
 
+  const { showMessage } = usePopup();
+
   const update = <K extends keyof ContratFormData>(key: K, value: ContratFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   // ─── Navigation ───────────────────────────────────────────────────────────────
   const goNext = () => {
     if (step === 1 && !form.vehicule) {
-      Alert.alert("Véhicule requis", "Veuillez sélectionner ou créer un véhicule.");
+      showMessage("error", "Véhicule requis", "Veuillez sélectionner ou créer un véhicule.");
       return;
     }
     if (step < 5) setStep((s) => s + 1);
@@ -829,7 +831,7 @@ export default function ContratFormScreen() {
 
   const handleValidate = () => {
     if (!form.vehicule?.numImmatriculation) {
-      Alert.alert("Validation", "Veuillez sélectionner un véhicule.");
+      showMessage("error", "Validation", "Veuillez sélectionner un véhicule.");
       return;
     }
 

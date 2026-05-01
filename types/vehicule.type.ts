@@ -8,6 +8,7 @@ export type vehicule = {
   dateMiseEnCirculation: Date;
   numSerie: string;
   numCarteGrise: string;
+  numMoteur: string;
   nbPlaces: number;
   chargeUtile: number;
   cylindree: number;
@@ -20,6 +21,7 @@ export type vehicule = {
   commentaires :  string;
 
   usageId: number;
+  groupeZoneId: number;
   genreId : number;
   typeId : number;
   carrosserieId : number;
@@ -29,9 +31,11 @@ export type vehicule = {
   categorieId: number;
   sousCategorieId: number;
   villeId: number;
+  clientId: number;
   zoneCirculationId: number;
 
   libGenre?: string;
+  libGroupeZone?: string;
   libType?: string;
   libCarrosserie?: string;
   libEnergie?: string;
@@ -40,18 +44,19 @@ export type vehicule = {
   libUsage?: string;
   libCategorie?: string;
   libSousCategorie?: string;
-  libVille?: string;
   libZoneCirculation?: string;
 
-  conducteurLuiMeme: boolean;
-  typeConducteur?: number;
-  idProfessionConducteur?: number;
-  libTypeConducteur?: string;
-  nomConducteur?: string;
-  emailConducteur?: string;
-  telConducteur?: string;
-  boitePostaleConducteur?: string;
-  libProfessionConducteur?: string;
+  luiMemeAssure: boolean;
+
+  assure? : {
+    nom: string;
+    email: string;
+    typeId?: number;
+    professionId?: number;
+    tel?: string;
+    bP?: string;
+    libProfession?: string;
+  }
 
   client? : client;
 };
