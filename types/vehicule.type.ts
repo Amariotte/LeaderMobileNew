@@ -61,6 +61,51 @@ export type vehicule = {
   client? : client;
 };
 
+export type VehicleFormData = {
+  numImmatriculation: string;
+  dateImmatriculation?: Date;
+  dateMiseEnCirculation?: Date;
+  numMoteur?: string;
+  numSerie: string;
+  numCarteGrise: string;
+  nbPlaces: number;
+  chargeUtile: number;
+  cylindree: number;
+  puissance: number;
+  valeurNeuve: number;
+  valeurVenale: number;
+  modele: string;
+  typeCommercial: string;
+  nbCartes: number;
+  commentaires: string;
+  luiMemeAssure: boolean;
+
+  usageId: number;
+  groupeZoneId: number;
+  genreId : number;
+  typeId : number;
+  carrosserieId : number;
+  energieId : number;
+  marqueId : number;
+  couleurId : number;
+  categorieId: number;
+  sousCategorieId: number;
+  villeId: number;
+  clientId: number;
+  zoneCirculationId: number;
+
+  assure? : {
+    nom: string;
+    email: string;
+    typeId?: number;
+    professionId?: number;
+    tel?: string;
+    bP?: string;
+    libProfession?: string;
+  }
+};
+
+
 export type listVehicules = {
   meta?: meta;
   data: vehicule[];

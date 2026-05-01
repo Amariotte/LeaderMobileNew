@@ -82,7 +82,7 @@ export default function ClientsScreen() {
     }
 
     if (mode === "edit" && selectedClient) {
-      const updated = await updateClient(userToken ?? "", selectedClient.id, data);
+      const updated = await updateClient(userToken ?? "", selectedClient?.id ?? 0, data);
       setCustomersList((prev) =>
         prev.map((c) => (c.id === selectedClient.id ? { ...c, ...updated } : c)),
       );

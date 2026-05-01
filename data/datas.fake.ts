@@ -4,14 +4,11 @@ import { cotation, listCotation } from "@/types/devis.type";
 import { encaissementPrime, listEncaissementsPrimes } from "@/types/encaissementPrime.type";
 import { listMouvements } from "@/types/mouvements.type";
 import { listOperations, operation } from "@/types/operations.type";
-import { dataChart, itemDefaut, meta, stat } from "@/types/other.type";
-import { listProduits } from "@/types/produits.type";
-import { listPromotions } from "@/types/promotions.type";
+import { dataChart, itemDefaut, meta, parametresData, stat } from "@/types/other.type";
 import { SoldeResponse } from "@/types/solde.type";
 import { stockCourtier, stockProducteur } from "@/types/stock.type";
 import { AuthResponse, user } from "@/types/user.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
-import { detailsVente, listVentes } from "@/types/ventes.type";
 
 export const soldeFake: SoldeResponse = {
   solde: 100000,
@@ -36,72 +33,6 @@ export const statsFake: stat = {
   },
   promotionActive: 5,
   sousCompte: 10,
-};
-
-export const produitsFakeData: listProduits = {
-  meta: metaFakeData,
-  data: [
-    {
-      id: "prod-001",
-      designation: "Ciment gris 50kg",
-      reference: "CIM-50-001",
-      nomfamille: "Construction",
-      prixVenteTTC: 18500,
-      stockMini: 10,
-      stockMaxi: 100,
-      stock: 25,
-    },
-    {
-      id: "prod-002",
-      designation: "Peinture acrylique 5L",
-      reference: "PEI-5L-002",
-      nomfamille: "Peinture",
-      prixVenteTTC: 45000,
-      stockMini: 5,
-      stockMaxi: 50,
-      stock: 20,
-    },
-    {
-      id: "prod-003",
-      designation: "Fer à béton 12mm",
-      reference: "FER-12-003",
-      nomfamille: "Construction",
-      prixVenteTTC: 750000,
-      stockMini: 20,
-      stockMaxi: 200,
-      stock: 150,
-    },
-    {
-      id: "prod-004",
-      designation: "Interrupteur simple",
-      reference: "INT-S-004",
-      nomfamille: "Électricité",
-      prixVenteTTC: 1500,
-      stockMini: 10,
-      stockMaxi: 100,
-      stock: 30,
-    },
-    {
-      id: "prod-005",
-      designation: "Prise électrique double",
-      reference: "PRI-D-005",
-      nomfamille: "Électricité",
-      prixVenteTTC: 2500,
-      stockMini: 5,
-      stockMaxi: 50,
-      stock: 20,
-    },
-    {
-      id: "prod-006",
-      designation: "Vernis bois 1L",
-      reference: "VER-1L-006",
-      nomfamille: "Peinture",
-      prixVenteTTC: 30000,
-      stockMini: 5,
-      stockMaxi: 50,
-      stock: 100,
-    },
-  ],
 };
 
 export const userDataFake: user = {
@@ -133,114 +64,6 @@ export const userDataFakeAuthResponse: AuthResponse = {
   user: userDataFake,
 };
 
-export const fallbackItems: detailsVente[] = [
-  {
-    id: "1",
-    qteLivree: 0,
-    prixVenteTTC: 0,
-    prixVenteHT: 0,
-    qteVendue: 0,
-    txTaxe: 0,
-    txRemise: 0,
-    remisePrix: 0,
-    montantRemiseHT: 0,
-    montantRemiseTTC: 0,
-    montantTTC: 0,
-    montantHT: 0,
-    montantBrutHT: 0,
-    montantBrutTTC: 0,
-    montantTaxe: 0,
-    qteGratuite: 0,
-    reference: "",
-    descPackage: "",
-    designation: "",
-  },
-];
-
-export const ventesFakeData: listVentes = {
-  meta: metaFakeData,
-  data: [
-    {
-      id: "fac-001",
-      codeVente: "FAC-2026-001",
-      descVente: "Vente de matériaux de construction",
-      nomClient: "Ets Mavungu Construction",
-      nomSite: "Agence Gombe",
-      nomUser: "M. Ilunga",
-      dateVente: new Date("2026-03-17"),
-      dateEchVente: new Date("2026-04-17"),
-      dateLivSouhaite: new Date("2026-03-25"),
-      lieuLivSouhaite: "Chantier Mavungu, Gombe",
-      soldeVente: 50000,
-      nbProduits: 3,
-      totalHT: 125000,
-      totalTaxe: 25000,
-      totalNetPayer: 150000,
-      totalBrutHT: 125000,
-      totalBrutTTC: 150000,
-      totalRemCialeHT: 0,
-      totalRemCialeTTC: 0,
-      status: "Non soldée",
-      details: fallbackItems,
-    },
-    {
-      id: "fac-002",
-      codeVente: "FAC-2026-002",
-      descVente: "Vente de peintures et accessoires",
-      nomClient: "Société Lumière Services",
-      nomSite: "Agence Limete",
-      nomUser: "Mme Kanku",
-      dateVente: new Date("2026-03-16"),
-      dateEchVente: new Date("2026-04-16"),
-      dateLivSouhaite: new Date("2026-03-26"),
-      lieuLivSouhaite: "Bureau Lumière Services, Limete",
-      soldeVente: 0,
-      nbProduits: 5,
-      totalHT: 200000,
-      totalTaxe: 40000,
-      totalNetPayer: 240000,
-      totalBrutHT: 200000,
-      totalBrutTTC: 240000,
-      totalRemCialeHT: 0,
-      totalRemCialeTTC: 0,
-      status: "Soldée",
-      details: fallbackItems,
-    },
-  ],
-};
-
-export const promotionsFakeData: listPromotions = {
-  meta: metaFakeData,
-  data: [
-    {
-      id: "promo-001",
-      description: "Promotion spéciale sur les produits de construction",
-      nomProduit: "Ciment gris 50kg",
-      dateDebut: new Date("2026-03-01"),
-      dateFin: new Date("2026-03-31"),
-      nbMax: 100,
-      status: "En cours",
-    },
-    {
-      id: "promo-002",
-      description: "Offre de printemps sur les peintures",
-      nomProduit: "Peinture blanche 20L",
-      dateDebut: new Date("2026-04-01"),
-      dateFin: new Date("2026-04-30"),
-      nbMax: 50,
-      status: "A venir",
-    },
-    {
-      id: "promo-003",
-      description: "Remise sur les équipements électriques",
-      nomProduit: "Interrupteur double",
-      dateDebut: new Date("2026-03-15"),
-      dateFin: new Date("2026-03-25"),
-      nbMax: 200,
-      status: "En cours",
-    },
-  ],
-};
 
 export const mouvementsFakeData: listMouvements = {
   meta: metaFakeData,
@@ -705,7 +528,7 @@ export const VehiculeTypesFakeData: itemDefaut [] = [
   },
 ];
 
-export const villesFakeData: itemDefaut [] = [
+export const zonesFakeData: itemDefaut [] = [
    {
     id: 1,
     code: "Abidjan",
@@ -763,7 +586,7 @@ export const sousCategoriesFakeData: itemDefaut [] = [
   },
 ];
 
-export const zonesFakeData: itemDefaut [] = [
+export const GroupesZonesFakeData: itemDefaut [] = [
   {
     id: 1,
     code: "Urbain",
@@ -781,3 +604,19 @@ export const zonesFakeData: itemDefaut [] = [
   },
 ];
 
+
+export const parametresFakeData: parametresData = {
+  couvertures: { data: [] },
+  baremes: { data: UsagesFakeData },
+  types: { data: VehiculeTypesFakeData },
+  genres: { data: genresFakeData },
+  carrosseries: { data: carroreseriesFakeData },
+  marques: { data: marquesFakeData },
+  energies: { data: energiesFakeData },
+  usages: { data: UsagesFakeData },
+  couleurs: { data: couleursFakeData },
+  professions: { data: professionsFakeData },
+  zonesCirculations: { data: zonesFakeData },
+  groupesZones: { data: GroupesZonesFakeData },
+  motifsAnnulations: { data: [] }
+}

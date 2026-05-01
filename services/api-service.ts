@@ -6,6 +6,7 @@ import {
   dataChartsFakeData,
   mouvementsFakeData,
   operationsFakeData,
+  parametresFakeData,
   reglementsFakeData,
   soldeFake,
   statsFake,
@@ -34,7 +35,7 @@ import {
 } from "@/types/other.type";
 import { SoldeResponse } from "@/types/solde.type";
 import { listStockCourtier, listStockPartenaire, listStockProducteur } from "@/types/stock.type";
-import { listVehicules, vehicule } from "@/types/vehicule.type";
+import { listVehicules, VehicleFormData, vehicule } from "@/types/vehicule.type";
 import { getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
 const LIMIT_RECENT_TRANSACTIONS = process.env
@@ -535,7 +536,6 @@ export async function createClient(
 ): Promise<client> {
   if (isModeDemoEnabled()) {
     const newClient: client = {
-      id: Math.max(...clientsFakeData.data.map((c) => c.id), 0) + 1,
       ...data,
     } as client;
     clientsFakeData.data.unshift(newClient);
@@ -590,6 +590,81 @@ export async function getfetchVehicules(
   return data;
 }
 
+export async function createVehicule(
+  token: string,
+  data: VehicleFormData,
+): Promise<vehicule> {
+  if (isModeDemoEnabled()) {
+    const newVehicule: vehicule = {
+      id: Math.max(...vehiculesFakeData.data.map((v) => v.id), 0) + 1,
+      clientId: data.clientId ?? 0,
+      numImmatriculation: data.numImmatriculation ?? "",
+      dateImmatriculation: data.dateImmatriculation ?? new Date(),
+      dateMiseEnCirculation: data.dateMiseEnCirculation ?? new Date(),
+      numSerie: data.numSerie ?? "",
+      numCarteGrise: data.numCarteGrise ?? "",
+      numMoteur: data.numMoteur ?? "",
+      nbPlaces: data.nbPlaces ?? 0,
+      chargeUtile: data.chargeUtile ?? 0,
+      cylindree: data.cylindree ?? 0,
+      puissance: data.puissance ?? 0,
+      nbCartes: data.nbCartes ?? 0,
+      valeurNeuve: data.valeurNeuve ?? 0,
+      valeurVenale: data.valeurVenale ?? 0,
+      modele: data.modele ?? "",
+      typeCommercial: data.typeCommercial ?? "",
+      commentaires: data.commentaires ?? "",
+      usageId: data.usageId ?? 0,
+      groupeZoneId: data.groupeZoneId ?? 0,
+      genreId: data.genreId ?? 0,
+      typeId: data.typeId ?? 0,
+      carrosserieId: data.carrosserieId ?? 0,
+      energieId: data.energieId ?? 0,
+      marqueId: data.marqueId ?? 0,
+      couleurId: data.couleurId ?? 0,
+      categorieId: data.categorieId ?? 0,
+      sousCategorieId: data.sousCategorieId ?? 0,
+      villeId: data.villeId ?? 0,
+      zoneCirculationId: data.zoneCirculationId ?? 0,
+      luiMemeAssure: data.luiMemeAssure ?? true,
+      assure: data.assure
+    };
+
+    vehiculesFakeData.data.unshift(newVehicule);
+    return newVehicule;
+  }
+  const d = await postJsonAuth<vehicule, VehicleFormData>( apiConfig.endpoints.vehicules, token, data);
+
+  return d ;
+}
+
+export async function updateVehicule(
+  token: string,
+  id: number,
+  data: VehicleFormData,
+): Promise<vehicule> {
+  if (isModeDemoEnabled()) {
+    const index = vehiculesFakeData.data.findIndex((v) => v.id === id);
+    if (index === -1) {
+      throw new Error("Véhicule introuvable");
+    }
+
+    vehiculesFakeData.data[index] = {
+      ...vehiculesFakeData.data[index],
+      ...data,
+      id,
+    };
+
+    return vehiculesFakeData.data[index];
+  }
+
+  return putJsonAuth<vehicule, VehicleFormData>(
+    `${apiConfig.endpoints.vehicules}/${id}`,
+    token,
+    data,
+  );
+}
+
 export async function getfetchMonStock(token: string): Promise<listStockProducteur> {
   if (isModeDemoEnabled()) {
     return { data: [] };
@@ -631,7 +706,7 @@ export async function getfetchStockPartenaires(token: string): Promise<listStock
 
 export async function getfetchParametres(token: string,tabParams: params[]): Promise<parametresData> {
   if (isModeDemoEnabled()) {
-    return { };
+    return parametresFakeData;
   }
 
   const url = apiConfig.endpoints.parametres + "?";

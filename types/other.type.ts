@@ -72,18 +72,18 @@ export type dataChart = {
   
 
 export type parametresData = {
-  couvertures?: itemDefaut[];
-  baremes?: itemDefaut[];
-  types?: itemDefaut[];
-  genres?: itemDefaut[];
-  carrosseries?: itemDefaut[];
-  marques?: itemDefaut[];
-  energies?: itemDefaut[];
-  usages?: itemDefaut[];
-  couleurs?: itemDefaut[];
-  professions?: itemDefaut[];
-  zonesCirculations?: itemDefaut[];
-  groupesZones?: itemDefaut[];
-  motifsAnnulations?: itemDefaut[];
+  couvertures? : { data: itemDefaut[] };
+  baremes?: { data: itemDefaut[] };
+  types?: { data: itemDefaut[] };
+  genres?: { data: itemDefaut[] };
+  carrosseries?: { data: itemDefaut[] };
+  marques?: { data: itemDefaut[] };
+  energies?: { data: itemDefaut[] };
+  usages?: { data: itemDefaut[] };
+  couleurs?: { data: itemDefaut[] };
+  professions?: { data: itemDefaut[] };
+  zonesCirculations?: { data: itemDefaut[] };
+  groupesZones?: { data: itemDefaut[] };
+  motifsAnnulations?: { data: itemDefaut[] };
 
 };
