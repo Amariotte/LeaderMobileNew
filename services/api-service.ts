@@ -28,6 +28,8 @@ import {
   meta,
   PaginatedResponse,
   PaginationParams,
+  parametresData,
+  params,
   stat,
 } from "@/types/other.type";
 import { SoldeResponse } from "@/types/solde.type";
@@ -624,4 +626,18 @@ export async function getfetchStockPartenaires(token: string): Promise<listStock
   const payload = await getJsonAuth<listStockPartenaire>(apiConfig.endpoints.stockPartenaires, token);
    return payload
 
+}
+
+
+export async function getfetchParametres(token: string,tabParams: params[]): Promise<parametresData> {
+  if (isModeDemoEnabled()) {
+    return { };
+  }
+
+  const url = apiConfig.endpoints.parametres + "?";
+  const query = tabParams.map((param) => `param=${param}`).join("&");
+  const finalUrl = url + query;
+
+  const payload = await getJsonAuth<parametresData>(finalUrl, token);
+    return payload
 }

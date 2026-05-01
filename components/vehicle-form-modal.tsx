@@ -1,19 +1,23 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import { TYPES_PERSONNES } from "@/constants/constants";
 import { professionsFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { getfetchParametres } from "@/services/api-service";
 import COLORS from "@/styles/colors";
 import { client } from "@/types/client.type";
+import { params } from "@/types/other.type";
 import { vehicule } from "@/types/vehicule.type";
 
 type VehicleFormModalProps = {
@@ -63,19 +67,28 @@ type VehicleFormData = {
   libProfessionConducteur: string;
 };
 
-const CLIENT_TYPES = ["PERSONNE PHYSIQUE", "PERSONNE MORALE"];
-const GENRES = ["Tourisme", "Utilitaire", "Camion", "Moto"];
-const VEHICLE_TYPES = ["VP", "VUL", "PL", "Moto"];
-const CARROSSERIES = ["Berline", "SUV", "Break", "Pickup"];
-const ENERGIES = ["Essence", "Diesel", "Hybride", "Electrique"];
-const USAGES = ["Affaire", "Personnel", "Transport", "Mixte"];
-const CATEGORIES = ["Nouvelle affaire", "Renouvellement", "Avenant"];
-const SOUS_CATEGORIES = ["Standard", "Premium", "Entreprise"];
-const VILLES = ["Abidjan", "Yamoussoukro", "Bouake"];
-const ZONES = ["Urbain", "Inter-urbain", "National"];
-const MARQUES = ["Toyota", "Hyundai", "Peugeot", "Renault"];
-const COULEURS = ["Blanc", "Noir", "Gris", "Bleu"];
-const CONDUCTEUR_TYPES = ["PERSONNE PHYSIQUE", "PERSONNE MORALE"];
+const CLIENT_TYPES = TYPES_PERSONNES;
+const GENRES: string[] = [];
+const VEHICLE_TYPES: string[] = [];
+const CARROSSERIES: string[] = [];
+const ENERGIES: string[] = [];
+const USAGES: string[] = [];
+const CATEGORIES: string[] = [];
+const SOUS_CATEGORIES: string[] = [];
+const VILLES: string[] = [];
+const ZONES: string[] = [];
+const MARQUES: string[] = [];
+const COULEURS: string[] = [];
+const PROFESSIONS: string[] = [];
+
+function toLabels(options?: { libelle: string }[]) {
+  if (!options || options.length === 0) return [];
+  return options.map((option) => option.libelle).filter((label) => !!label?.trim());
+}
+
+function withFallbackOptions(options: string[], fallback: string[]) {
+  return options.length > 0 ? options : fallback;
+}
 
 function formatDate(value?: Date) {
   if (!value) return "";
@@ -117,23 +130,34 @@ export default function VehicleFormModal({
 }: VehicleFormModalProps) {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
+  const { userToken } = useAuthContext();
   const [activeTab, setActiveTab] = useState<VehicleFormTab>("caracteristiques");
+  const [genreOptions, setGenreOptions] = useState<string[]>(GENRES);
+  const [typeOptions, setTypeOptions] = useState<string[]>(VEHICLE_TYPES);
+  const [carrosserieOptions, setCarrosserieOptions] = useState<string[]>(CARROSSERIES);
+  const [energieOptions, setEnergieOptions] = useState<string[]>(ENERGIES);
+  const [usageOptions, setUsageOptions] = useState<string[]>(USAGES);
+  const [villeOptions, setVilleOptions] = useState<string[]>(VILLES);
+  const [zoneOptions, setZoneOptions] = useState<string[]>(ZONES);
+  const [marqueOptions, setMarqueOptions] = useState<string[]>(MARQUES);
+  const [couleurOptions, setCouleurOptions] = useState<string[]>(COULEURS);
+  const [professionOptions, setProfessionOptions] = useState<string[]>(PROFESSIONS);
 
   const [formData, setFormData] = useState<VehicleFormData>({
     numImmatriculation: initialVehicle?.numImmatriculation ?? "",
     dateImmatriculation: formatDate(initialVehicle?.dateImmatriculation),
     dateMiseEnCirculation: formatDate(initialVehicle?.dateMiseEnCirculation),
-    libGenre: initialVehicle?.libGenre ?? GENRES[0],
-    libType: initialVehicle?.libType ?? VEHICLE_TYPES[0],
-    libCarrosserie: initialVehicle?.libCarrosserie ?? CARROSSERIES[0],
-    libEnergie: initialVehicle?.libEnergie ?? ENERGIES[0],
-    libUsage: initialVehicle?.libUsage ?? USAGES[0],
-    libCategorie: initialVehicle?.libCategorie ?? CATEGORIES[0],
-    libSousCategorie: initialVehicle?.libSousCategorie ?? SOUS_CATEGORIES[0],
-    libVille: initialVehicle?.libVille ?? VILLES[0],
-    libZoneCirculation: initialVehicle?.libZoneCirculation ?? ZONES[0],
-    libMarque: initialVehicle?.libMarque ?? MARQUES[0],
-    libCouleur: initialVehicle?.libCouleur ?? COULEURS[0],
+    libGenre: initialVehicle?.libGenre ?? "",
+    libType: initialVehicle?.libType ?? "",
+    libCarrosserie: initialVehicle?.libCarrosserie ?? "",
+    libEnergie: initialVehicle?.libEnergie ?? "",
+    libUsage: initialVehicle?.libUsage ?? "",
+    libCategorie: initialVehicle?.libCategorie ?? "",
+    libSousCategorie: initialVehicle?.libSousCategorie ?? "",
+    libVille: initialVehicle?.libGroupeZone ?? "",
+    libZoneCirculation: initialVehicle?.libZoneCirculation ?? "",
+    libMarque: initialVehicle?.libMarque ?? "",
+    libCouleur: initialVehicle?.libCouleur ?? "",
     numSerie: initialVehicle?.numSerie ?? "",
     numCarteGrise: initialVehicle?.numCarteGrise ?? "",
     nbPlaces: `${initialVehicle?.nbPlaces ?? 0}`,
@@ -146,15 +170,89 @@ export default function VehicleFormModal({
     typeCommercial: initialVehicle?.typeCommercial ?? "",
     nbCartes: `${initialVehicle?.nbCartes ?? 0}`,
     commentaires: initialVehicle?.commentaires ?? "",
-    conducteurLuiMeme: initialVehicle?.conducteurLuiMeme ?? true,
-    libTypeConducteur: initialVehicle?.libTypeConducteur ?? CONDUCTEUR_TYPES[0],
-    nomConducteur: initialVehicle?.nomConducteur ?? "",
-    telConducteur: initialVehicle?.telConducteur ?? "",
-    emailConducteur: initialVehicle?.emailConducteur ?? "",
-    boitePostaleConducteur: initialVehicle?.boitePostaleConducteur ?? "",
+    conducteurLuiMeme: initialVehicle?.luiMemeAssure ?? true,
+    libTypeConducteur:
+      initialVehicle?.assure?.typeId === 2 ? TYPES_PERSONNES[1] : TYPES_PERSONNES[0],
+    nomConducteur: initialVehicle?.assure?.nom ?? "",
+    telConducteur: initialVehicle?.assure?.tel ?? "",
+    emailConducteur: initialVehicle?.assure?.email ?? "",
+    boitePostaleConducteur: initialVehicle?.assure?.bP ?? "",
     libProfessionConducteur:
-      initialVehicle?.libProfessionConducteur ?? professionsFakeData[0]?.libelle ?? "",
+      initialVehicle?.assure?.libProfession ?? professionsFakeData[0]?.libelle ?? "",
   });
+
+  useEffect(() => {
+    if (!visible || !userToken) return;
+
+    getfetchParametres(userToken, [
+      params.GENRES,
+      params.TYPES,
+      params.CARROSSERIES,
+      params.ENERGIES,
+      params.USAGES,
+      params.MARQUES,
+      params.COULEURS,
+      params.PROFESSIONS,
+      params.ZONES_CIRCULATIONS,
+      params.GROUPES_ZONES,
+    ])
+      .then((payload) => {
+        setGenreOptions(withFallbackOptions(toLabels(payload?.genres), GENRES));
+        setTypeOptions(withFallbackOptions(toLabels(payload?.types), VEHICLE_TYPES));
+        setCarrosserieOptions(withFallbackOptions(toLabels(payload?.carrosseries), CARROSSERIES));
+        setEnergieOptions(withFallbackOptions(toLabels(payload?.energies), ENERGIES));
+        setUsageOptions(withFallbackOptions(toLabels(payload?.usages), USAGES));
+        setMarqueOptions(withFallbackOptions(toLabels(payload?.marques), MARQUES));
+        setCouleurOptions(withFallbackOptions(toLabels(payload?.couleurs), COULEURS));
+        setProfessionOptions(
+          withFallbackOptions(toLabels(payload?.professions), professionsFakeData.map((p) => p.libelle)),
+        );
+        setZoneOptions(withFallbackOptions(toLabels(payload?.zonesCirculations), ZONES));
+        setVilleOptions(withFallbackOptions(toLabels(payload?.groupesZones), VILLES));
+      })
+      .catch(() => {
+        setGenreOptions(GENRES);
+        setTypeOptions(VEHICLE_TYPES);
+        setCarrosserieOptions(CARROSSERIES);
+        setEnergieOptions(ENERGIES);
+        setUsageOptions(USAGES);
+        setMarqueOptions(MARQUES);
+        setCouleurOptions(COULEURS);
+        setProfessionOptions(PROFESSIONS)
+        setZoneOptions(ZONES);
+        setVilleOptions(VILLES);
+      });
+  }, [userToken, visible]);
+
+  useEffect(() => {
+    const withFallback = (value: string, options: string[]) =>
+      options.length === 0 ? value : options.includes(value) ? value : options[0];
+
+    setFormData((prev) => ({
+      ...prev,
+      libGenre: withFallback(prev.libGenre, genreOptions),
+      libType: withFallback(prev.libType, typeOptions),
+      libCarrosserie: withFallback(prev.libCarrosserie, carrosserieOptions),
+      libEnergie: withFallback(prev.libEnergie, energieOptions),
+      libUsage: withFallback(prev.libUsage, usageOptions),
+      libVille: withFallback(prev.libVille, villeOptions),
+      libZoneCirculation: withFallback(prev.libZoneCirculation, zoneOptions),
+      libMarque: withFallback(prev.libMarque, marqueOptions),
+      libCouleur: withFallback(prev.libCouleur, couleurOptions),
+      libProfessionConducteur: withFallback(prev.libProfessionConducteur, professionOptions),
+    }));
+  }, [
+    carrosserieOptions,
+    couleurOptions,
+    energieOptions,
+    genreOptions,
+    marqueOptions,
+    professionOptions,
+    typeOptions,
+    usageOptions,
+    villeOptions,
+    zoneOptions,
+  ]);
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
@@ -165,7 +263,7 @@ export default function VehicleFormModal({
 
   const clientType = useMemo(() => {
     if (!selectedClient) return CLIENT_TYPES[0];
-    return selectedClient.type === 2 ? CLIENT_TYPES[1] : CLIENT_TYPES[0];
+    return selectedClient.typeId === 2 ? CLIENT_TYPES[1] : CLIENT_TYPES[0];
   }, [selectedClient]);
 
   const updateField = <K extends keyof VehicleFormData>(key: K, value: VehicleFormData[K]) => {
@@ -209,21 +307,159 @@ export default function VehicleFormModal({
       libUsage: formData.libUsage,
       libCategorie: formData.libCategorie,
       libSousCategorie: formData.libSousCategorie,
-      libVille: formData.libVille,
+      libGroupeZone: formData.libVille,
       libZoneCirculation: formData.libZoneCirculation,
       libMarque: formData.libMarque,
       libCouleur: formData.libCouleur,
-      conducteurLuiMeme: formData.conducteurLuiMeme,
-      libTypeConducteur: formData.libTypeConducteur,
-      nomConducteur: formData.nomConducteur,
-      telConducteur: formData.telConducteur,
-      emailConducteur: formData.emailConducteur,
-      boitePostaleConducteur: formData.boitePostaleConducteur,
-      libProfessionConducteur: formData.libProfessionConducteur,
+      luiMemeAssure: formData.conducteurLuiMeme,
+      assure: {
+        nom: formData.nomConducteur,
+        email: formData.emailConducteur,
+        typeId: formData.libTypeConducteur === TYPES_PERSONNES[1] ? 2 : 1,
+        tel: formData.telConducteur,
+        bP: formData.boitePostaleConducteur,
+        libProfession: formData.libProfessionConducteur,
+      },
       client: selectedClient,
     });
     onClose();
   };
+
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  const styles = StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 16,
+    },
+    modal: {
+      flex: 1,
+      borderRadius: 10,
+      overflow: "hidden",
+    },
+    header: {
+      height: 46,
+      paddingHorizontal: 14,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    headerTitle: {
+      color: "#FFFFFF",
+      fontSize: 18,
+      fontWeight: "700",
+    },
+    content: {
+      padding: 12,
+      gap: 10,
+    },
+    topPanel: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 10,
+      gap: 8,
+    },
+    tabsRow: {
+      flexDirection: "row",
+      gap: 6,
+    },
+    tabButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
+      paddingVertical: 10,
+      alignItems: "center",
+    },
+    tabPanel: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 10,
+      gap: 8,
+    },
+    row2: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    row3: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    field: {
+      flex: 1,
+      gap: 4,
+    },
+    label: {
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    input: {
+      height: 40,
+      borderWidth: 1,
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      fontSize: 13,
+    },
+    select: {
+      height: 40,
+      borderWidth: 1,
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    textArea: {
+      minHeight: 110,
+      borderWidth: 1,
+      borderRadius: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 10,
+      textAlignVertical: "top",
+    },
+    checkboxRow: {
+      flex: 1,
+      height: 40,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginTop: 20,
+    },
+    checkbox: {
+      width: 18,
+      height: 18,
+      borderWidth: 1,
+      borderRadius: 3,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    checkboxDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 2,
+      backgroundColor: COLORS.primaryColor,
+    },
+    footer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 10,
+      paddingVertical: 10,
+      borderTopWidth: 1,
+    },
+    footerButton: {
+      minWidth: 130,
+      height: 36,
+      borderRadius: 6,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 18,
+    },
+    footerButtonText: {
+      color: "#FFFFFF",
+      fontSize: 15,
+      fontWeight: "700",
+    },
+  });
 
   const renderTabButton = (tab: VehicleFormTab, label: string) => {
     const active = activeTab === tab;
@@ -308,7 +544,7 @@ export default function VehicleFormModal({
               </View>
               {renderInput(
                 "Nom et prénom(s)",
-                selectedClient ? `${selectedClient.nom} ${selectedClient.prenom}`.trim() : "",
+                selectedClient ? `${selectedClient.nom} ${selectedClient.prenoms ?? ""}`.trim() : "",
                 () => {},
                 "",
               )}
@@ -328,16 +564,16 @@ export default function VehicleFormModal({
                     {renderInput("Date d'immatriculation *", formData.dateImmatriculation, (v) => updateField("dateImmatriculation", v), "jj/mm/aaaa")}
                   </View>
                   <View style={styles.row2}>
-                    {renderSelect("Genre", formData.libGenre, () => cycleOption("libGenre", GENRES))}
-                    {renderSelect("Type", formData.libType, () => cycleOption("libType", VEHICLE_TYPES))}
+                    {renderSelect("Genre", formData.libGenre, () => cycleOption("libGenre", genreOptions))}
+                    {renderSelect("Type", formData.libType, () => cycleOption("libType", typeOptions))}
                   </View>
                   <View style={styles.row2}>
-                    {renderSelect("Carrosserie", formData.libCarrosserie, () => cycleOption("libCarrosserie", CARROSSERIES))}
-                    {renderSelect("Energie", formData.libEnergie, () => cycleOption("libEnergie", ENERGIES))}
+                    {renderSelect("Carrosserie", formData.libCarrosserie, () => cycleOption("libCarrosserie", carrosserieOptions))}
+                    {renderSelect("Energie", formData.libEnergie, () => cycleOption("libEnergie", energieOptions))}
                   </View>
                   <View style={styles.row2}>
                     {renderInput("Date 1re mise en circulation *", formData.dateMiseEnCirculation, (v) => updateField("dateMiseEnCirculation", v), "jj/mm/aaaa")}
-                    {renderSelect("Marque", formData.libMarque, () => cycleOption("libMarque", MARQUES))}
+                    {renderSelect("Marque", formData.libMarque, () => cycleOption("libMarque", marqueOptions))}
                   </View>
                   <View style={styles.row2}>
                     {renderInput("Numéro de série", formData.numSerie, (v) => updateField("numSerie", v))}
@@ -363,15 +599,15 @@ export default function VehicleFormModal({
               {activeTab === "parametres" && (
                 <>
                   <View style={styles.row2}>
-                    {renderSelect("Usage", formData.libUsage, () => cycleOption("libUsage", USAGES))}
+                    {renderSelect("Usage", formData.libUsage, () => cycleOption("libUsage", usageOptions))}
                     {renderSelect("Catégorie", formData.libCategorie, () => cycleOption("libCategorie", CATEGORIES))}
                   </View>
                   <View style={styles.row2}>
                     {renderSelect("S/Catégorie", formData.libSousCategorie, () => cycleOption("libSousCategorie", SOUS_CATEGORIES))}
-                    {renderSelect("Ville de circulation", formData.libVille, () => cycleOption("libVille", VILLES))}
+                    {renderSelect("Ville de circulation", formData.libVille, () => cycleOption("libVille", villeOptions))}
                   </View>
                   <View style={styles.row2}>
-                    {renderSelect("Zone de circulation", formData.libZoneCirculation, () => cycleOption("libZoneCirculation", ZONES))}
+                    {renderSelect("Zone de circulation", formData.libZoneCirculation, () => cycleOption("libZoneCirculation", zoneOptions))}
                     {renderInput("Nombre de cartes", formData.nbCartes, (v) => updateField("nbCartes", v), "0", "numeric")}
                   </View>
                   <View style={styles.field}>
@@ -390,7 +626,7 @@ export default function VehicleFormModal({
               {activeTab === "conducteur" && (
                 <>
                   <View style={styles.row2}>
-                    {renderSelect("Type", formData.libTypeConducteur, () => cycleOption("libTypeConducteur", CONDUCTEUR_TYPES))}
+                    {renderSelect("Type", formData.libTypeConducteur, () => cycleOption("libTypeConducteur", TYPES_PERSONNES))}
                     <Pressable
                       style={styles.checkboxRow}
                       onPress={() => updateField("conducteurLuiMeme", !formData.conducteurLuiMeme)}
@@ -412,10 +648,7 @@ export default function VehicleFormModal({
                   {renderSelect(
                     "Profession",
                     formData.libProfessionConducteur,
-                    () => {
-                      const options = professionsFakeData.map((p) => p.libelle);
-                      cycleOption("libProfessionConducteur", options.length > 0 ? options : [""]);
-                    },
+                    () => cycleOption("libProfessionConducteur", professionOptions.length > 0 ? professionOptions : [""]),
                   )}
                 </>
               )}
@@ -436,137 +669,4 @@ export default function VehicleFormModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 16,
-  },
-  modal: {
-    flex: 1,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  header: {
-    height: 46,
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  headerTitle: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  content: {
-    padding: 12,
-    gap: 10,
-  },
-  topPanel: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    gap: 8,
-  },
-  tabsRow: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  tabButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  tabPanel: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    gap: 8,
-  },
-  row2: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  row3: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  field: {
-    flex: 1,
-    gap: 4,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  input: {
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    fontSize: 13,
-  },
-  select: {
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  textArea: {
-    minHeight: 110,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    textAlignVertical: "top",
-  },
-  checkboxRow: {
-    flex: 1,
-    height: 40,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 20,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderWidth: 1,
-    borderRadius: 3,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-    backgroundColor: COLORS.primaryColor,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-  },
-  footerButton: {
-    minWidth: 130,
-    height: 36,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  footerButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-});
+

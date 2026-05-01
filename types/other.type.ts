@@ -1,3 +1,24 @@
+
+
+export enum Params {
+  BAREMES = "BAREMES",
+  COUVERTURES = "COUVERTURES",
+  TYPES = "TYPES",
+  GENRES = "GENRES",
+  CARROSSERIES = "CARROSSERIES",
+  MARQUES = "MARQUES",
+  ENERGIES = "ENERGIES",
+  USAGES = "USAGES",
+  COULEURS = "COULEURS",
+  PROFESSIONS = "PROFESSIONS",
+  ZONES_CIRCULATIONS = "ZONES_CIRCULATIONS",
+  GROUPES_ZONES = "GROUPES_ZONES",
+  MOTIFS_ANNULATIONS = "MOTIF_ANNULATIONS",
+}
+
+export { Params as params };
+
+
 export type meta = {
   page: number;
   next: number;
@@ -49,3 +70,20 @@ export type dataChart = {
   sortie: number;
 };
   
+
+export type parametresData = {
+  couvertures?: itemDefaut[];
+  baremes?: itemDefaut[];
+  types?: itemDefaut[];
+  genres?: itemDefaut[];
+  carrosseries?: itemDefaut[];
+  marques?: itemDefaut[];
+  energies?: itemDefaut[];
+  usages?: itemDefaut[];
+  couleurs?: itemDefaut[];
+  professions?: itemDefaut[];
+  zonesCirculations?: itemDefaut[];
+  groupesZones?: itemDefaut[];
+  motifsAnnulations?: itemDefaut[];
+
+};

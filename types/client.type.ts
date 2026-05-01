@@ -5,7 +5,7 @@ export type client = {
   civilite: number;
   typeId: number;
   professionId: number;
-  code: string;
+  code?: string;
   nom: string;
   prenoms?: string;
   email: string;

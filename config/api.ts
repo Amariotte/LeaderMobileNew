@@ -21,7 +21,7 @@ const apiConfig = {
     cotations: "/cotations",
     clients: "/clients",
     vehicules: "/vehicules",
-    produits: "/produits",
+    parametres: "/parametres",
     statistiques: "/statistiques",
   },
 };

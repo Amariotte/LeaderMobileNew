@@ -1,7 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Animated, Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import ClientFormModal from "@/components/client-form-modal";
@@ -12,10 +12,10 @@ import { carroreseriesFakeData, categorieVehiculeFakeData, couleursFakeData, ene
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { getfetchClients } from "@/services/api-service";
+import { getfetchClients, getfetchParametres } from "@/services/api-service";
 import COLORS from "@/styles/colors";
 import { client, listClients } from "@/types/client.type";
-import { itemDefaut } from "@/types/other.type";
+import { itemDefaut, params } from "@/types/other.type";
 import { vehicule } from "@/types/vehicule.type";
 
 type VehicleSelectField =
@@ -114,11 +114,6 @@ function normalizeOptions(options: (string | itemDefaut)[]) {
   return options.map(getOptionLabel);
 }
 
-function buildClientCode(nextIndex: number) {
-  return `CL-${`${nextIndex}`.padStart(4, "0")}`;
-}
-
-
 export default function VehiculeFormScreen() {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
@@ -162,10 +157,61 @@ export default function VehiculeFormScreen() {
   );
 
   const [clientsData, setClientsData] = useState<listClients>(initialClients);
+  const [genresOptions, setGenresOptions] = useState<itemDefaut[]>(GENRES);
+  const [usagesOptions, setUsagesOptions] = useState<itemDefaut[]>(USAGES);
+  const [vehicleTypesOptions, setVehicleTypesOptions] = useState<itemDefaut[]>(VEHICLE_TYPES);
+  const [carrosseriesOptions, setCarrosseriesOptions] = useState<itemDefaut[]>(CARROSSERIES);
+  const [energiesOptions, setEnergiesOptions] = useState<itemDefaut[]>(ENERGIES);
+  const [marquesOptions, setMarquesOptions] = useState<itemDefaut[]>(MARQUES);
+  const [couleursOptions, setCouleursOptions] = useState<itemDefaut[]>(COULEURS);
+  const [zonesOptions, setZonesOptions] = useState<itemDefaut[]>(ZONES);
+  const [villesOptions, setVillesOptions] = useState<itemDefaut[]>(VILLES);
+  const [professionsOptions, setProfessionsOptions] = useState<itemDefaut[]>(professionsFakeData);
 
   useEffect(() => {
     if (!userToken) return;
     getfetchClients(userToken).then(setClientsData);
+  }, [userToken]);
+
+  useEffect(() => {
+    if (!userToken) return;
+
+    getfetchParametres(userToken, [
+      params.GENRES,
+      params.TYPES,
+      params.CARROSSERIES,
+      params.ENERGIES,
+      params.USAGES,
+      params.MARQUES,
+      params.COULEURS,
+      params.PROFESSIONS,
+      params.ZONES_CIRCULATIONS,
+      params.GROUPES_ZONES,
+    ])
+      .then((payload) => {
+        setGenresOptions(payload?.genres && payload.genres.length > 0 ? payload.genres : GENRES);
+        setVehicleTypesOptions(payload?.types && payload.types.length > 0 ? payload.types : VEHICLE_TYPES);
+        setCarrosseriesOptions(payload?.carrosseries && payload.carrosseries.length > 0 ? payload.carrosseries : CARROSSERIES);
+        setEnergiesOptions(payload?.energies && payload.energies.length > 0 ? payload.energies : ENERGIES);
+        setUsagesOptions(payload?.usages && payload.usages.length > 0 ? payload.usages : USAGES);
+        setMarquesOptions(payload?.marques && payload.marques.length > 0 ? payload.marques : MARQUES);
+        setCouleursOptions(payload?.couleurs && payload.couleurs.length > 0 ? payload.couleurs : COULEURS);
+        setProfessionsOptions(payload?.professions && payload.professions.length > 0 ? payload.professions : professionsFakeData);
+        setZonesOptions(payload?.zonesCirculations && payload.zonesCirculations.length > 0 ? payload.zonesCirculations : ZONES);
+        setVillesOptions(payload?.groupesZones && payload.groupesZones.length > 0 ? payload.groupesZones : VILLES);
+      })
+      .catch(() => {
+        setGenresOptions(GENRES);
+        setVehicleTypesOptions(VEHICLE_TYPES);
+        setCarrosseriesOptions(CARROSSERIES);
+        setEnergiesOptions(ENERGIES);
+        setUsagesOptions(USAGES);
+        setMarquesOptions(MARQUES);
+        setCouleursOptions(COULEURS);
+        setProfessionsOptions(professionsFakeData);
+        setZonesOptions(ZONES);
+        setVillesOptions(VILLES);
+      });
   }, [userToken]);
 
   const [selectedClient, setSelectedClient] = useState<client | undefined>(initialClient);
@@ -196,7 +242,7 @@ export default function VehiculeFormScreen() {
 
     return allClients.filter((currentClient) =>
       currentClient.nom.toLowerCase().includes(query) ||
-      currentClient.code.toLowerCase().includes(query),
+      currentClient.code?.toLowerCase().includes(query),
     );
   }, [clientSearchText, allClients]);
 
@@ -251,6 +297,33 @@ export default function VehiculeFormScreen() {
     boitePostaleConducteur: initialVehicle?.assure?.bP ?? "",
     libProfessionConducteur: initialVehicle?.assure?.libProfession ?? "",
   });
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      libGenre: prev.libGenre || getFirstOptionLabel(genresOptions),
+      libType: prev.libType || getFirstOptionLabel(vehicleTypesOptions),
+      libCarrosserie: prev.libCarrosserie || getFirstOptionLabel(carrosseriesOptions),
+      libEnergie: prev.libEnergie || getFirstOptionLabel(energiesOptions),
+      libUsage: prev.libUsage || getFirstOptionLabel(usagesOptions),
+      libMarque: prev.libMarque || getFirstOptionLabel(marquesOptions),
+      libCouleur: prev.libCouleur || getFirstOptionLabel(couleursOptions),
+      libVille: prev.libVille || getFirstOptionLabel(villesOptions),
+      libZoneCirculation: prev.libZoneCirculation || getFirstOptionLabel(zonesOptions),
+      libProfessionConducteur: prev.libProfessionConducteur || getFirstOptionLabel(professionsOptions),
+    }));
+  }, [
+    carrosseriesOptions,
+    couleursOptions,
+    energiesOptions,
+    genresOptions,
+    marquesOptions,
+    professionsOptions,
+    usagesOptions,
+    vehicleTypesOptions,
+    villesOptions,
+    zonesOptions,
+  ]);
 
   const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
@@ -396,7 +469,6 @@ export default function VehiculeFormScreen() {
       civilite: data.civilite ?? 1,
       typeId: data.typeId ?? 1,
       professionId: data.professionId ?? 0,
-      code: buildClientCode(newId),
       nom: data.nom.trim(),
       prenoms: data.prenoms?.trim(),
       email: data.email ?? "",
@@ -595,25 +667,25 @@ export default function VehiculeFormScreen() {
 
 
           <View style={styles.row2}>
-            {renderSelect("Genre", formData.libGenre, () => openPicker("libGenre", "Choisir un genre", GENRES))}
+            {renderSelect("Genre", formData.libGenre, () => openPicker("libGenre", "Choisir un genre", genresOptions))}
           </View>
 
 
   <View style={styles.row2}>
-            {renderSelect("Type", formData.libType, () => openPicker("libType", "Choisir un type", VEHICLE_TYPES))}
+            {renderSelect("Type", formData.libType, () => openPicker("libType", "Choisir un type", vehicleTypesOptions))}
           </View>
 
 
   <View style={styles.row2}>
-            {renderSelect("Carrosserie", formData.libCarrosserie, () => openPicker("libCarrosserie", "Choisir une carrosserie", CARROSSERIES))}
+            {renderSelect("Carrosserie", formData.libCarrosserie, () => openPicker("libCarrosserie", "Choisir une carrosserie", carrosseriesOptions))}
           </View>
 
           <View style={styles.row2}>
-            {renderSelect("Energie", formData.libEnergie, () => openPicker("libEnergie", "Choisir une énergie", ENERGIES))}
+            {renderSelect("Energie", formData.libEnergie, () => openPicker("libEnergie", "Choisir une énergie", energiesOptions))}
           </View>
 
           <View style={styles.row2}>
-            {renderSelect("Marque", formData.libMarque, () => openPicker("libMarque", "Choisir une marque", MARQUES))}
+            {renderSelect("Marque", formData.libMarque, () => openPicker("libMarque", "Choisir une marque", marquesOptions))}
           </View>
 
           <View style={styles.row2}>
@@ -649,7 +721,7 @@ export default function VehiculeFormScreen() {
           {renderSectionHeader("settings", "Paramètres Techniques Assurances")}
 
           <View style={styles.row2}>
-            {renderSelect("Usage", formData.libUsage, () => openPicker("libUsage", "Choisir un usage", USAGES))}
+            {renderSelect("Usage", formData.libUsage, () => openPicker("libUsage", "Choisir un usage", usagesOptions))}
           </View>
 
            <View style={styles.row2}>
@@ -659,11 +731,11 @@ export default function VehiculeFormScreen() {
             {renderSelect("S/Catégorie", formData.libSousCategorie, () => openPicker("libSousCategorie", "Choisir une sous-catégorie", SOUS_CATEGORIES))}
           </View>
           <View style={styles.row2}>
-            {renderSelect("Ville de circulation", formData.libVille, () => openPicker("libVille", "Choisir une ville", VILLES))}
+            {renderSelect("Ville de circulation", formData.libVille, () => openPicker("libVille", "Choisir une ville", villesOptions))}
           </View>
 
            <View style={styles.row2}>
-            {renderSelect("Zone de circulation", formData.libZoneCirculation, () => openPicker("libZoneCirculation", "Choisir une zone", ZONES))}
+            {renderSelect("Zone de circulation", formData.libZoneCirculation, () => openPicker("libZoneCirculation", "Choisir une zone", zonesOptions))}
           </View>
           
           <View style={styles.field}>
@@ -705,7 +777,7 @@ export default function VehiculeFormScreen() {
           <View style={styles.row2}>
             {renderInput("Boite postale", formData.boitePostaleConducteur, (v) => updateField("boitePostaleConducteur", v))}
           </View>
-          {renderSelect("Profession", formData.libProfessionConducteur, () => openPicker("libProfessionConducteur", "Choisir une profession", professionsFakeData))}
+          {renderSelect("Profession", formData.libProfessionConducteur, () => openPicker("libProfessionConducteur", "Choisir une profession", professionsOptions))}
         </View>
       </ScrollView>
 
@@ -895,355 +967,4 @@ export default function VehiculeFormScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 12,
-  },
-  headerWrap: {
-    marginTop: -16,
-    marginHorizontal: -12,
-    marginBottom: 10,
-  },
-  content: {
-    paddingBottom: 16,
-    gap: 10,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    marginBottom: 2,
-    color: "#D64545",
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 6,
-  },
-  topPanel: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
-    shadowColor: "#10131F",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 3,
-  },
-  clientHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 2,
-  },
-  clientHeaderTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  clientActionIconsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  clientActionIconButton: {
-    width: 34,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabPanel: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
-    shadowColor: "#10131F",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 3,
-  },
-  formSectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 10,
-    marginBottom: 2,
-  },
-  formSectionIconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  formSectionTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  row2: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  row3: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  field: {
-    flex: 1,
-    gap: 4,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  input: {
-    height: 44,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    fontSize: 14,
-  },
-  select: {
-    height: 44,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  textArea: {
-    minHeight: 110,
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    textAlignVertical: "top",
-  },
-  checkboxRow: {
-    flex: 1,
-    minHeight: 44,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 4,
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderWidth: 1,
-    borderRadius: 3,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-    backgroundColor: COLORS.primaryColor,
-  },
-  footer: {
-    flexDirection: "row",
-    gap: 10,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    backgroundColor: "rgba(255,255,255,0.02)",
-  },
-  footerButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  footerButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  pickerOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  pickerSheet: {
-    borderRadius: 12,
-    borderWidth: 1,
-    maxHeight: "70%",
-    minHeight: 250,
-    overflow: "hidden",
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  pickerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  pickerList: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  pickerItem: {
-    minHeight: 46,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    marginVertical: 4,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  dropdownItemCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  clientPickerBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(18, 20, 30, 0.42)",
-    justifyContent: "flex-end",
-  },
-  clientPickerOverlayTouch: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  clientPickerSheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: "78%",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 16,
-    shadowColor: "#10131F",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 12,
-  },
-  clientPickerHandle: {
-    alignSelf: "center",
-    width: 56,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "#E3E6EE",
-    marginBottom: 12,
-  },
-  clientPickerHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  clientPickerHeaderActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  clientHeaderAdd: {
-    width: 28,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clientPickerTitle: {
-    fontSize: 22,
-    color: "#22273A",
-  },
-  clientPickerSearchWrap: {
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E2E5ED",
-    backgroundColor: "#F8F9FC",
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  clientPickerSearchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 15,
-    color: "#2D3348",
-  },
-  clientPickerList: {
-    maxHeight: 430,
-  },
-  clientPickerEmptyState: {
-    minHeight: 90,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  clientPickerEmptyText: {
-    fontSize: 13,
-    color: "#7B8198",
-  },
-  clientPickerRow: {
-    minHeight: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E9EBF3",
-    paddingVertical: 8,
-  },
-  clientPickerRowTextWrap: {
-    flex: 1,
-    paddingRight: 10,
-  },
-  clientPickerRowTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1E2336",
-  },
-  clientPickerRowCode: {
-    fontSize: 15,
-    color: COLORS.primaryColor,
-    fontWeight: "700",
-    marginTop: 2,
-  },
-  clientPickerAddButton: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  inlineInfo: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  inlineInfoText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-});
+
