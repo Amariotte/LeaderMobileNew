@@ -16,7 +16,7 @@ const apiConfig = {
     changePassword: "/auth/update-password",
     contrats: "/contrats",
     stats: "/stats",
-    encaissementsPrimes : "/encaissements-primes",
+    encaissementsPrimes : "/reglements",
     operations: "/operations",
     cotations: "/cotations",
     clients: "/clients",

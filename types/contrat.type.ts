@@ -5,6 +5,7 @@ export type contrat = {
   numeroContrat: string;
   categorie: string;
   numeroPolice: string;
+  numeroAttestation?: string;
   dateContrat: Date;
 
   clientId?: number;
@@ -12,22 +13,41 @@ export type contrat = {
   compagnieId?: number;
   baremeId?: number;
   couvertureId?: number;
+  vehiculeId?: number;
 
-  souscripteur: {
+  // Flat vehicle field
+  immatriculation?: string;
+
+  // Flat assure fields
+  assureType?: string;
+  assureNom?: string;
+  assureTel?: string;
+  assureEmail?: string;
+  assureBp?: string;
+  assureProfession?: string;
+
+  // Flat souscripteur fields
+  souscripteurType?: string;
+  souscripteurNom?: string;
+  souscripteurTel?: string;
+  souscripteurEmail?: string;
+  souscripteurBp?: string;
+
+  // Nested souscripteur (API format)
+  souscripteur?: {
     typeId: number;
     professionId: number;
-
     type: string;
     nom: string;
     tel: string;
     email: string;
     bp: string;
     profession: string;
-
   };
 
   agence: string;
   compagnie: string;
+  duree?: string;
   nombreJours: number;
   couverture: string;
   dateEffet?: Date;
@@ -40,8 +60,11 @@ export type contrat = {
   cedeao?: number;
   netAPayer?: number;
 
-  contratVehicule?: contratVehicule[];
+  // Linked objects
+  client?: Record<string, unknown>;
+  vehicule?: Record<string, unknown>;
 
+  contratVehicule?: contratVehicule[];
 };
 
 export type listContrats = {
