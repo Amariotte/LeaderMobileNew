@@ -1,17 +1,20 @@
 import apiConfig from "@/config/api";
 import {
+  agencesFakeData,
   clientsFakeData,
   contratsFakeData,
   cotationsFakeData,
   mouvementsFakeData,
   operationsFakeData,
   parametresFakeData,
+  professionsFakeData,
   reglementsFakeData,
   soldeFake,
   statsFake,
   vehiculesFakeData
 } from "@/data/datas.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
+import { listAgences } from "@/types/agences";
 import { client, listClients } from "@/types/client.type";
 import { contrat, listContrats } from "@/types/contrat.type";
 import {
@@ -24,6 +27,7 @@ import { encaissementPrime, listEncaissementsPrimes } from "@/types/encaissement
 import { listMouvements } from "@/types/mouvements.type";
 import { listOperations, operation } from "@/types/operations.type";
 import {
+  itemDefaut,
   meta,
   PaginatedResponse,
   PaginationParams,
@@ -299,7 +303,7 @@ export async function annulerPolice(
   );
 }
 
-
+export async function getfetchOperationById(
   token: string,
   id: number,
 ): Promise<operation | null> {
@@ -854,4 +858,22 @@ export async function getfetchParametres(token: string,tabParams: params[]): Pro
 
   const payload = await getJsonAuth<parametresData>(finalUrl, token);
     return payload
+}
+
+export async function getfetchProfessions(token: string): Promise<itemDefaut[]> {
+  if (isModeDemoEnabled()) {
+    return professionsFakeData;
+  }
+
+  const payload = await getfetchParametres(token, [params.PROFESSIONS]);
+  return payload.professions?.data ?? [];
+}
+
+
+export async function getfetchAgences(token: string, type: params): Promise<listAgences> {
+  if (isModeDemoEnabled()) {
+    return  agencesFakeData;
+  } 
+  const payload = await getJsonAuth<listAgences>(`${apiConfig.endpoints.agences}`, token);
+  return payload
 }

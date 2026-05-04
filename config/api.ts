@@ -23,6 +23,8 @@ const apiConfig = {
     vehicules: "/vehicules",
     parametres: "/parametres",
     statistiques: "/statistiques",
+    agences: "/agences",
+    parternaires: "/partenaires",
   },
 };
 

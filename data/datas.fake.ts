@@ -1,3 +1,4 @@
+import { agence, listAgences } from "@/types/agences";
 import { client, listClients } from "@/types/client.type";
 import { contrat, listContrats } from "@/types/contrat.type";
 import { cotation, listCotation } from "@/types/devis.type";
@@ -696,6 +697,25 @@ export const categorieVehiculeFakeData: itemDefaut [] = [
 
 
 
+export const agences: agence [] = [
+  {
+    id: 1,
+    nom: "Standard",
+    email: "standard@example.com",
+  },
+  {
+    id: 2,
+    nom: "Premium",
+    email: "premium@example.com",
+  },
+  {
+    id: 3,
+    nom: "Entreprise",
+    email: "entreprise@example.com",
+  },
+]
+
+
 
 export const sousCategoriesFakeData: itemDefaut [] = [
   {
@@ -732,6 +752,13 @@ export const GroupesZonesFakeData: itemDefaut [] = [
     libelle: "National",
   },
 ];
+
+export const agencesFakeData: listAgences = {
+  meta: metaFakeData,
+  data: agences,
+};
+
+
 
 
 export const parametresFakeData: parametresData = {

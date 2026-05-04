@@ -1,8 +1,7 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Animated,
   Modal,
   Pressable,
   ScrollView,
@@ -14,9 +13,11 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { CIVILITES, TYPES_PERSONNES } from "@/constants/constants";
 import { professionsFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import COLORS from "@/styles/colors";
+import { getfetchProfessions } from "@/services/api-service";
 import { client } from "@/types/client.type";
+import { itemDefaut } from "@/types/other.type";
 
 type ClientFormModalProps = {
   visible: boolean;
@@ -43,8 +44,6 @@ function buildInitialFormData(c?: client): Partial<client> {
   };
 }
 
-
-
 export default function ClientFormModal({
   visible,
   onClose,
@@ -54,41 +53,78 @@ export default function ClientFormModal({
 }: ClientFormModalProps) {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
+  const { userToken } = useAuthContext();
 
-  const [showProfessionMenu, setShowProfessionMenu] = useState(false);
+  const [openPicker, setOpenPicker] = useState<"profession" | null>(null);
   const [formData, setFormData] = useState<Partial<client>>(
     buildInitialFormData(initialClient),
   );
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const dropdownAnimation = useRef(new Animated.Value(0)).current;
+  const [professionOptions, setProfessionOptions] = useState<itemDefaut[]>(
+    professionsFakeData,
+  );
+  const [loadingProfessions, setLoadingProfessions] = useState(false);
 
-  // Re-fill form each time the modal opens (critical for edit mode)
   useEffect(() => {
     if (visible) {
       setFormData(buildInitialFormData(initialClient));
       setValidationError(null);
+      setOpenPicker(null);
     }
   }, [visible, initialClient]);
+
+  useEffect(() => {
+    // Réinitialiser civilité si elle n'est pas valide pour le typeId sélectionné
+    if (formData.typeId === 2 && formData.civilite !== 4) {
+      setFormData((prev) => ({ ...prev, civilite: 4 }));
+    } else if (formData.typeId === 1 && formData.civilite === 4) {
+      setFormData((prev) => ({ ...prev, civilite: 1 }));
+    }
+  }, [formData.typeId]);
+
+  useEffect(() => {
+    if (!visible || !userToken) {
+      return;
+    }
+
+    setLoadingProfessions(true);
+    getfetchProfessions(userToken)
+      .then((data) => {
+        setProfessionOptions(data.length > 0 ? data : professionsFakeData);
+      })
+      .catch(() => {
+        setProfessionOptions(professionsFakeData);
+      })
+      .finally(() => setLoadingProfessions(false));
+  }, [visible, userToken]);
 
   const update = (patch: Partial<client>) =>
     setFormData((prev) => ({ ...prev, ...patch }));
 
-  const pageBackground = isDark ? "#11131A" : "#F4F4F7";
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
+  const softBlock = isDark ? "#242735" : "#F2F3F8";
   const borderColor = isDark ? "#363A4C" : "#E7EAF5";
   const textColor = isDark ? "#FFFFFF" : "#2D3142";
   const labelColor = isDark ? "#A8AEC7" : "#61637A";
   const inputBg = isDark ? "#242735" : "#F9F9FC";
+  const primaryColor = "#1F8B82";
 
   const handleSubmit = async () => {
     if (!formData.nom?.trim()) {
       setValidationError("Le nom est obligatoire.");
       return;
     }
-    if (!formData.prenoms?.trim()) {
-      setValidationError("Le prénom est obligatoire.");
-      return;
+    if (formData.typeId === 2) {
+      if (!formData.rccm?.trim()) {
+        setValidationError("Le RCCM est obligatoire pour une personne morale.");
+        return;
+      }
+    } else {
+      if (!formData.prenoms?.trim()) {
+        setValidationError("Le prénom est obligatoire.");
+        return;
+      }
     }
     setValidationError(null);
     setIsSubmitting(true);
@@ -104,566 +140,357 @@ export default function ClientFormModal({
     }
   };
 
-  const openProfessionDropdown = () => {
-    setShowProfessionMenu(true);
-    Animated.timing(dropdownAnimation, {
-      toValue: 1,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeProfessionDropdown = () => {
-    Animated.timing(dropdownAnimation, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => setShowProfessionMenu(false));
-  };
+  const renderInput = (
+    label: string,
+    value: string | undefined,
+    onChangeText: (value: string) => void,
+    icon: React.ComponentProps<typeof MaterialIcons>["name"],
+    options?: {
+      placeholder?: string;
+      keyboardType?:
+        | "default"
+        | "email-address"
+        | "phone-pad"
+        | "numeric"
+        | "numbers-and-punctuation";
+      autoCapitalize?: "none" | "sentences" | "words" | "characters";
+      multiline?: boolean;
+      numberOfLines?: number;
+    },
+  ) => (
+    <View style={styles.fieldGroup}>
+      <ThemedText style={[styles.label, { color: labelColor }]}>{label}</ThemedText>
+      <View
+        style={[
+          styles.inputRow,
+          options?.multiline && styles.textareaRow,
+          { backgroundColor: inputBg, borderColor },
+        ]}
+      >
+        <MaterialIcons name={icon} size={16} color={labelColor} />
+        <TextInput
+          style={[
+            styles.input,
+            { color: textColor },
+            options?.multiline && styles.textarea,
+          ]}
+          value={value ?? ""}
+          onChangeText={onChangeText}
+          placeholder={options?.placeholder ?? "Saisir..."}
+          placeholderTextColor={labelColor}
+          keyboardType={options?.keyboardType ?? "default"}
+          autoCapitalize={options?.autoCapitalize ?? "none"}
+          multiline={options?.multiline}
+          numberOfLines={options?.numberOfLines}
+        />
+      </View>
+    </View>
+  );
 
   return (
-    <>
-      <Modal visible={visible} transparent animationType="slide">
-        <View style={[styles.container, { backgroundColor: "rgba(0,0,0,0.6)" }]}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: pageBackground },
-          ]}
-        >
-          {/* Header */}
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <View style={[styles.sheet, { backgroundColor: cardBackground }]}>
           <View style={styles.header}>
-            <ThemedText style={styles.title}>{title}</ThemedText>
-            <Pressable onPress={onClose} style={styles.headerCloseBtn} disabled={isSubmitting}>
-              <MaterialIcons name="close" size={22} color="#FFFFFF" />
+            <ThemedText style={styles.headerTitle}>{title}</ThemedText>
+            <Pressable onPress={onClose} disabled={isSubmitting}>
+              <MaterialIcons name="close" size={22} color={labelColor} />
             </Pressable>
           </View>
 
-          {/* Form Content */}
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* ── Type de personne ── */}
-            <ThemedText style={[styles.label, { color: labelColor }]}>Type de personne</ThemedText>
-            <View style={styles.pillRow}>
-              {TYPES_PERSONNES.map((lbl, idx) => {
-                const val = idx + 1;
-                const active = formData.typeId === val;
-                return (
-                  <Pressable
-                    key={val}
-                    style={[
-                      styles.pill,
-                      { borderColor: active ? COLORS.primaryColor : borderColor },
-                      active && { backgroundColor: COLORS.primaryColor },
-                    ]}
-                    onPress={() => update({ typeId: val })}
-                  >
-                    <ThemedText style={[styles.pillText, { color: active ? "#FFFFFF" : labelColor }]}>
-                      {lbl}
-                    </ThemedText>
-                  </Pressable>
-                );
+            <View style={styles.fieldGroup}>
+              <ThemedText style={[styles.label, { color: labelColor }]}>Type de personne</ThemedText>
+              <View style={styles.chipRow}>
+                {TYPES_PERSONNES.map((label, idx) => {
+                  const value = idx + 1;
+                  const active = formData.typeId === value;
+                  return (
+                    <Pressable
+                      key={value}
+                      style={[
+                        styles.chip,
+                        {
+                          borderColor: active ? primaryColor : borderColor,
+                          backgroundColor: active ? primaryColor + "1A" : inputBg,
+                        },
+                      ]}
+                      onPress={() => update({ typeId: value })}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.chipText,
+                          { color: active ? primaryColor : labelColor, fontWeight: active ? "700" : "500" },
+                        ]}
+                      >
+                        {label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <ThemedText style={[styles.label, { color: labelColor }]}>Civilité</ThemedText>
+              <View style={styles.chipRow}>
+                {(formData.typeId === 1
+                  ? CIVILITES.slice(0, 3)
+                  : ["Société"]
+                ).map((label, idx) => {
+                  const value = formData.typeId === 1 ? idx + 1 : 4;
+                  const active = formData.civilite === value;
+                  return (
+                    <Pressable
+                      key={value}
+                      style={[
+                        styles.chip,
+                        {
+                          borderColor: active ? primaryColor : borderColor,
+                          backgroundColor: active ? primaryColor + "1A" : inputBg,
+                        },
+                      ]}
+                      onPress={() => update({ civilite: value })}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.chipText,
+                          { color: active ? primaryColor : labelColor, fontWeight: active ? "700" : "500" },
+                        ]}
+                      >
+                        {label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {renderInput("Nom *", formData.nom, (v) => update({ nom: v }), "badge", {
+              placeholder: "Nom",
+              autoCapitalize: "characters",
+            })}
+
+            {formData.typeId !== 2 &&
+              renderInput("Prénom(s) *", formData.prenoms, (v) => update({ prenoms: v }), "person", {
+                placeholder: "Prénom(s)",
+                autoCapitalize: "words",
               })}
-            </View>
 
-            {/* ── Civilité ── */}
-            <ThemedText style={[styles.label, { color: labelColor, marginTop: 10 }]}>Civilité</ThemedText>
-            <View style={[styles.pillRow, { marginBottom: 14 }]}>
-              {CIVILITES.map((lbl, idx) => {
-                const val = idx + 1;
-                const active = formData.civilite === val;
-                return (
-                  <Pressable
-                    key={val}
-                    style={[
-                      styles.pill,
-                      { borderColor: active ? COLORS.primaryColor : borderColor },
-                      active && { backgroundColor: COLORS.primaryColor },
-                    ]}
-                    onPress={() => update({ civilite: val })}
-                  >
-                    <ThemedText style={[styles.pillText, { color: active ? "#FFFFFF" : labelColor }]}>
-                      {lbl}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* ── Nom / Prénom ── */}
-              <View style={styles.formField}>
-                <ThemedText style={[styles.label, { color: labelColor }]}>
-                  Nom <ThemedText style={styles.required}>*</ThemedText>
-                </ThemedText>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                  placeholder="Nom"
-                  placeholderTextColor={labelColor}
-                  value={formData.nom}
-                  onChangeText={(t) => update({ nom: t })}
-                  autoCapitalize="characters"
-                />
-            
-            </View>
-
-              <View style={styles.formField}>
-              
-                <ThemedText style={[styles.label, { color: labelColor }]}>
-                  Prénom(s) <ThemedText style={styles.required}>*</ThemedText>
-                </ThemedText>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                  placeholder="Prénom(s)"
-                  placeholderTextColor={labelColor}
-                  value={formData.prenoms}
-                  onChangeText={(t) => update({ prenoms: t })}
-                />
-            </View>
-
-
-            {/* ── Profession ── */}
-            <View style={styles.formField}>
+            <View style={styles.fieldGroup}>
               <ThemedText style={[styles.label, { color: labelColor }]}>Profession</ThemedText>
               <Pressable
-                onPress={openProfessionDropdown}
-                style={[styles.selectContainer, { backgroundColor: inputBg, borderColor }]}
+                style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}
+                onPress={() => setOpenPicker(openPicker === "profession" ? null : "profession")}
               >
+                <MaterialIcons name="work-outline" size={16} color={labelColor} />
                 <ThemedText
-                  style={{ color: formData.libProfession ? textColor : labelColor, flex: 1, fontSize: 14 }}
+                  style={[styles.selectBtnText, { color: formData.libProfession ? textColor : labelColor }]}
+                  numberOfLines={1}
                 >
-                  {formData.libProfession || "Sélectionner…"}
+                  {formData.libProfession || "Choisir une profession"}
                 </ThemedText>
-                <MaterialIcons name="expand-more" size={20} color={labelColor} />
+                <MaterialIcons
+                  name={openPicker === "profession" ? "arrow-drop-up" : "arrow-drop-down"}
+                  size={20}
+                  color={labelColor}
+                />
               </Pressable>
             </View>
 
-            {/* ── Téléphone / Mobile ── */}
-            <View style={styles.formField}>
-                <ThemedText style={[styles.label, { color: labelColor }]}>Téléphone</ThemedText>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                  placeholder="+225 xx xx xx xx"
-                  placeholderTextColor={labelColor}
-                  value={formData.tel}
-                  onChangeText={(t) => update({ tel: t })}
-                  keyboardType="phone-pad"
-                />
+            {openPicker === "profession" && (
+              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
+                {loadingProfessions ? (
+                  <ActivityIndicator size="small" color={primaryColor} style={{ margin: 12 }} />
+                ) : professionOptions.length === 0 ? (
+                  <View style={styles.pickerEmptyState}>
+                    <ThemedText style={[styles.pickerEmptyStateText, { color: labelColor }]}>Aucune profession disponible</ThemedText>
+                  </View>
+                ) : (
+                  professionOptions.map((profession) => {
+                    const selected = formData.professionId === profession.id;
+                    return (
+                      <Pressable
+                        key={profession.id}
+                        style={[
+                          styles.pickerOption,
+                          selected && { backgroundColor: primaryColor + "1A" },
+                        ]}
+                        onPress={() => {
+                          update({ professionId: profession.id, libProfession: profession.libelle });
+                          setOpenPicker(null);
+                        }}
+                      >
+                        <ThemedText
+                          style={[
+                            styles.pickerOptionText,
+                            { color: selected ? primaryColor : textColor, fontWeight: selected ? "700" : "500" },
+                          ]}
+                        >
+                          {profession.libelle}
+                        </ThemedText>
+                        <MaterialIcons
+                          name={selected ? "check-box" : "check-box-outline-blank"}
+                          size={18}
+                          color={selected ? primaryColor : labelColor}
+                        />
+                      </Pressable>
+                    );
+                  })
+                )}
               </View>
-              
+            )}
 
-<View style={styles.formField}>
-            
-                <ThemedText style={[styles.label, { color: labelColor }]}>Mobile</ThemedText>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                  placeholder="+225 xx xx xx xx"
-                  placeholderTextColor={labelColor}
-                  value={formData.mobile}
-                  onChangeText={(t) => update({ mobile: t })}
-                  keyboardType="phone-pad"
-                />
-              </View>
+            {formData.typeId === 2 &&
+              renderInput("RCCM *", formData.rccm, (v) => update({ rccm: v }), "description", {
+                placeholder: "RCCM n°",
+                autoCapitalize: "characters",
+              })}
 
-            {/* ── WhatsApp ── */}
-            <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>WhatsApp</ThemedText>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                placeholder="+225 xx xx xx xx"
-                placeholderTextColor={labelColor}
-                value={formData.whatsapp}
-                onChangeText={(t) => update({ whatsapp: t })}
-                keyboardType="phone-pad"
-              />
-            </View>
+            {renderInput("Téléphone", formData.tel, (v) => update({ tel: v }), "phone", {
+              placeholder: "+225 xx xx xx xx",
+              keyboardType: "phone-pad",
+            })}
+            {renderInput("Mobile", formData.mobile, (v) => update({ mobile: v }), "smartphone", {
+              placeholder: "+225 xx xx xx xx",
+              keyboardType: "phone-pad",
+            })}
+            {renderInput("WhatsApp", formData.whatsapp, (v) => update({ whatsapp: v }), "chat", {
+              placeholder: "+225 xx xx xx xx",
+              keyboardType: "phone-pad",
+            })}
+            {renderInput("Email", formData.email, (v) => update({ email: v }), "email", {
+              placeholder: "email@example.com",
+              keyboardType: "email-address",
+              autoCapitalize: "none",
+            })}
+            {renderInput("Boîte postale", formData.bP, (v) => update({ bP: v }), "markunread-mailbox", {
+              placeholder: "BP xxxxx",
+              autoCapitalize: "characters",
+            })}
 
-            {/* ── Email ── */}
-            <View style={styles.formField}>
-              <ThemedText style={[styles.label, { color: labelColor }]}>Email</ThemedText>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                placeholder="email@example.com"
-                placeholderTextColor={labelColor}
-                value={formData.email}
-                onChangeText={(t) => update({ email: t })}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* ── BP / RCCM ── */}
-              <View style={styles.formField}>
-                <ThemedText style={[styles.label, { color: labelColor }]}>Boîte postale</ThemedText>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                  placeholder="BP xxxxx"
-                  placeholderTextColor={labelColor}
-                  value={formData.bP}
-                  onChangeText={(t) => update({ bP: t })}
-                />
-              </View>
-             
-              <View style={styles.formField}>
-                <ThemedText style={[styles.label, { color: labelColor }]}>RCCM</ThemedText>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: inputBg, borderColor, color: textColor }]}
-                  placeholder="RCCM n°"
-                  placeholderTextColor={labelColor}
-                  value={formData.rccm}
-                  onChangeText={(t) => update({ rccm: t })}
-                />
-              </View>
-
-          
-
-            {/* ── Erreur ── */}
-            {validationError ? (
+            {validationError && (
               <View style={styles.errorBox}>
-                <MaterialIcons name="error-outline" size={16} color="#EF4444" />
+                <MaterialIcons name="error-outline" size={14} color="#E05252" />
                 <ThemedText style={styles.errorText}>{validationError}</ThemedText>
               </View>
-            ) : null}
-          </ScrollView>
+            )}
 
-          {/* Footer */}
-          <View style={[styles.footer, { borderTopColor: borderColor }]}>
             <Pressable
-              style={[styles.button, { backgroundColor: cardBackground, borderColor }]}
-              onPress={onClose}
-              disabled={isSubmitting}
-            >
-              <ThemedText style={[styles.buttonText, { color: labelColor }]}>Annuler</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.button, { backgroundColor: COLORS.primaryColor }, isSubmitting && styles.buttonDisabled]}
+              style={[styles.submitBtn, isSubmitting && { opacity: 0.7 }]}
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <ThemedText style={[styles.buttonText, { color: "#FFFFFF" }]}>Enregistrer</ThemedText>
+                <ThemedText style={styles.submitBtnText}>Enregistrer</ThemedText>
               )}
             </Pressable>
-          </View>
+
+            <View style={{ height: 32 }} />
+          </ScrollView>
         </View>
       </View>
-      </Modal>
-
-
-      {/* Profession Dropdown Modal */}
-      <Modal visible={showProfessionMenu} transparent animationType="none">
-        <Pressable
-          style={styles.dropdownOverlay}
-          onPress={closeProfessionDropdown}
-        >
-          <Animated.View
-            style={[
-              styles.dropdownPopup,
-              {
-                backgroundColor: cardBackground,
-                borderColor,
-                transform: [
-                  {
-                    translateY: dropdownAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-20, 0],
-                    }),
-                  },
-                ],
-                opacity: dropdownAnimation,
-              },
-            ]}
-          >
-            <View style={[styles.dropdownHeader, { borderColor }]}>
-              <ThemedText type="defaultSemiBold" style={{ color: textColor }}>
-                Choisir une profession
-              </ThemedText>
-              <Pressable onPress={closeProfessionDropdown}>
-                <MaterialIcons name="close" size={20} color={labelColor} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              style={styles.dropdownContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {professionsFakeData.map((profession) => (
-                <Pressable
-                  key={profession.id}
-                  onPress={() => {
-                    update({ professionId: profession.id, libProfession: profession.libelle });
-                    closeProfessionDropdown();
-                  }}
-                  style={[
-                    styles.dropdownItemPopup,
-                    {
-                      backgroundColor:
-                        formData.libProfession === profession.libelle
-                          ? borderColor
-                          : "transparent",
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.dropdownItemCheckbox,
-                      {
-                        borderColor:
-                          formData.libProfession === profession.libelle
-                            ? COLORS.primaryColor
-                            : labelColor,
-                        backgroundColor:
-                          formData.libProfession === profession.libelle
-                            ? COLORS.primaryColor
-                            : "transparent",
-                      },
-                    ]}
-                  >
-                    {formData.libProfession === profession.libelle && (
-                      <MaterialIcons name="check" size={16} color="#FFFFFF" />
-                    )}
-                  </View>
-                  <ThemedText
-                    style={{
-                      color:
-                        formData.libProfession === profession.libelle
-                          ? COLORS.primaryColor
-                          : textColor,
-                      fontWeight:
-                        formData.libProfession === profession.libelle
-                          ? "600"
-                          : "400",
-                      fontSize: 15,
-                    }}
-                  >
-                    {profession.libelle}
-                  </ThemedText>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </Pressable>
-      </Modal>
-    </>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 20,
-    maxHeight: "90%",
-    overflow: "hidden",
-  },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 20, paddingHorizontal: 16, maxHeight: "92%" },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#1F8B82",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 0,
-  },
-  headerCloseBtn: {
-    backgroundColor: "rgba(255,255,255,0.22)",
-    borderRadius: 8,
-    padding: 6,
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  scrollContent: {
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    marginBottom: 14,
-    color: "#D64545",
-  },
-  formField: {
-    marginBottom: 12,
-  },
-  rowContainer: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  required: {
-    color: "#EF4444",
-  },
-  textInput: {
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 14,
-  },
-  selectContainer: {
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 18,
   },
-  dropdownMenu: {
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    maxHeight: 200,
-    marginTop: -8,
-    marginHorizontal: 0,
-    zIndex: 1000,
-  },
-  dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "transparent",
-  },
-  footer: {
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 4,
-    borderTopWidth: 1,
-  },
-  button: {
-    flex: 1,
-    height: 44,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  pillRow: {
+  headerTitle: { fontSize: 16, fontWeight: "700" },
+  fieldGroup: { marginBottom: 14 },
+  label: { fontSize: 12, fontWeight: "600", marginBottom: 6 },
+  chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 8,
+    gap: 10,
   },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
+  chip: {
+    borderRadius: 10,
     borderWidth: 1.5,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
   },
-  pillText: {
+  chipText: {
     fontSize: 13,
-    fontWeight: "500",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  textareaRow: { alignItems: "flex-start" },
+  input: { flex: 1, fontSize: 14 },
+  textarea: { minHeight: 70, textAlignVertical: "top" },
+  selectBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  selectBtnText: { flex: 1, fontSize: 14 },
+  pickerDropdown: {
+    borderRadius: 10,
+    overflow: "hidden",
+    marginBottom: 6,
+    maxHeight: 220,
+  },
+  pickerOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  pickerOptionText: {
+    fontSize: 14,
+    flex: 1,
+  },
+  pickerEmptyState: {
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  pickerEmptyStateText: {
+    fontSize: 13,
   },
   errorBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: "#FFE5E5",
     borderRadius: 8,
     padding: 10,
-    marginTop: 10,
+    marginBottom: 12,
   },
   errorText: {
-    color: "#EF4444",
-    fontSize: 13,
+    color: "#E05252",
+    fontSize: 12,
     flex: 1,
   },
-  vehiclesList: {
-    gap: 10,
-    marginBottom: 14,
-  },
-  vehicleItem: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-  },
-  vehicleItemHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  vehicleItemDetails: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  vehicleDetail: {
-    alignItems: "center",
-  },
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  dropdownPopup: {
+  submitBtn: {
+    backgroundColor: "#1F8B82",
     borderRadius: 12,
-    maxHeight: "70%",
-    minHeight: 250,
-    borderWidth: 1,
-    overflow: "hidden",
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  dropdownHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  dropdownContent: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  dropdownItemPopup: {
-    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    marginVertical: 4,
-    borderRadius: 8,
-    gap: 12,
+    marginTop: 4,
   },
-  dropdownItemCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
+  submitBtnText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 });
