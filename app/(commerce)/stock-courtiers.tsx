@@ -116,7 +116,7 @@ export default function StockCourtiersScreen() {
     const addQty = movementType === "add" ? qty : 0;
     const removeQty = movementType === "remove" ? qty : 0;
 
-    if (removeQty > currentStock + addQty) {
+    if (removeQty > currentStock && movementType === "remove") {
       showMessage("error", "Stock insuffisant", "La quantité à retirer dépasse le stock disponible.");
       return;
     }
