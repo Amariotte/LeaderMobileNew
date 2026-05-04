@@ -1,4 +1,9 @@
 
+export type TypeAttestation = {
+  id: number;
+  code: string;
+  libelle: string;
+};
 
 export enum Params {
   BAREMES = "BAREMES",

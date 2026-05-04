@@ -37,7 +37,7 @@ import {
 } from "@/types/other.type";
 import { SoldeResponse } from "@/types/solde.type";
 import { listStockCourtier, listStockPartenaire, listStockProducteur } from "@/types/stock.type";
-import { listVehicules, VehicleFormData, vehicule } from "@/types/vehicule.type";
+import { listVehicules, vehicule } from "@/types/vehicule.type";
 import { deleteJsonAuth, getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
 const LIMIT_RECENT_TRANSACTIONS = process.env
@@ -735,7 +735,7 @@ export async function getfetchVehicules(
 
 export async function createVehicule(
   token: string,
-  data: VehicleFormData,
+  data: Partial<vehicule>,
 ): Promise<vehicule> {
   if (isModeDemoEnabled()) {
     const newVehicule: vehicule = {
@@ -776,7 +776,7 @@ export async function createVehicule(
     vehiculesFakeData.data.unshift(newVehicule);
     return newVehicule;
   }
-  const d = await postJsonAuth<vehicule, VehicleFormData>( apiConfig.endpoints.vehicules, token, data);
+  const d = await postJsonAuth<vehicule, Partial<vehicule>>( apiConfig.endpoints.vehicules, token, data);
 
   return d ;
 }
@@ -784,7 +784,7 @@ export async function createVehicule(
 export async function updateVehicule(
   token: string,
   id: number,
-  data: VehicleFormData,
+  data: Partial<vehicule>,
 ): Promise<vehicule> {
   if (isModeDemoEnabled()) {
     const index = vehiculesFakeData.data.findIndex((v) => v.id === id);
@@ -801,7 +801,7 @@ export async function updateVehicule(
     return vehiculesFakeData.data[index];
   }
 
-  return putJsonAuth<vehicule, VehicleFormData>(
+  return putJsonAuth<vehicule, Partial<vehicule>>(
     `${apiConfig.endpoints.vehicules}/${id}`,
     token,
     data,
@@ -852,9 +852,10 @@ export async function getfetchParametres(token: string,tabParams: params[]): Pro
     return parametresFakeData;
   }
 
-  const url = apiConfig.endpoints.parametres + "?";
-  const query = tabParams.map((param) => `param=${param}`).join("&");
-  const finalUrl = url + query;
+  const parameters: string = tabParams.join(",");
+  const finalUrl = apiConfig.endpoints.parametres + "?param="+parameters;
+
+  console.log("URL finale pour les paramètres :", finalUrl);
 
   const payload = await getJsonAuth<parametresData>(finalUrl, token);
     return payload

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getAllClients } from "@/services/api-service";
@@ -158,13 +159,13 @@ export default function EncaissementPrimeFormModal({
       <ThemedText style={[styles.label, { color: labelColor }]}>{label}</ThemedText>
       <Pressable
         style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}
-        onPress={() => setOpenPicker(openPicker === picker ? null : picker)}
+        onPress={() => setOpenPicker(picker)}
       >
         <MaterialIcons name={icon} size={16} color={labelColor} />
         <ThemedText style={[styles.selectBtnText, { color: value ? textColor : labelColor }]} numberOfLines={1}>
           {value || `Choisir ${label.toLowerCase()}`}
         </ThemedText>
-        <MaterialIcons name={openPicker === picker ? "arrow-drop-up" : "arrow-drop-down"} size={20} color={labelColor} />
+        <MaterialIcons name="arrow-drop-down" size={20} color={labelColor} />
       </Pressable>
     </View>
   );
@@ -184,96 +185,17 @@ export default function EncaissementPrimeFormModal({
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Client */}
             {renderSelectField("Client *", form.clientNom, "client", "person")}
-            {openPicker === "client" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                <View style={[styles.pickerSearch, { backgroundColor: inputBg, borderColor }]}>
-                  <MaterialIcons name="search" size={14} color={labelColor} />
-                  <TextInput
-                    style={[styles.pickerSearchInput, { color: textColor }]}
-                    placeholder="Rechercher..."
-                    placeholderTextColor={labelColor}
-                    value={clientSearch}
-                    onChangeText={setClientSearch}
-                  />
-                </View>
-                {loadingClients ? (
-                  <ActivityIndicator size="small" color="#1F8B82" style={{ margin: 12 }} />
-                ) : (
-                  filteredClients.slice(0, 50).map((c) => (
-                    <Pressable
-                      key={c.id}
-                      style={[styles.pickerOption, form.clientId === c.id && { backgroundColor: "#1F8B8220" }]}
-                      onPress={() => {
-                        update({ clientId: c.id, clientNom: `${c.nom} ${c.prenoms}` });
-                        setOpenPicker(null);
-                        setClientSearch("");
-                      }}
-                    >
-                      <ThemedText style={[styles.pickerOptionText, form.clientId === c.id && { color: "#1F8B82", fontWeight: "700" }]}>
-                        {c.nom} {c.prenoms}
-                      </ThemedText>
-                      <ThemedText style={[styles.pickerOptionMeta, { color: labelColor }]}>{c.code}</ThemedText>
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            )}
 
             {/* Agence */}
             {renderSelectField("Agence", form.agenceNom, "agence", "business")}
-            {openPicker === "agence" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {agenceOptions.map((a) => (
-                  <Pressable
-                    key={a.id}
-                    style={[styles.pickerOption, form.agenceId === a.id && { backgroundColor: "#1F8B8220" }]}
-                    onPress={() => { update({ agenceId: a.id, agenceNom: a.nom }); setOpenPicker(null); }}
-                  >
-                    <ThemedText style={[styles.pickerOptionText, form.agenceId === a.id && { color: "#1F8B82", fontWeight: "700" }]}>
-                      {a.nom}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
 
             {/* Mode de paiement */}
             {renderSelectField("Mode de paiement", form.modeNom, "mode", "payment")}
-            {openPicker === "mode" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {modeOptions.map((m) => (
-                  <Pressable
-                    key={m.id}
-                    style={[styles.pickerOption, form.modeId === m.id && { backgroundColor: "#1F8B8220" }]}
-                    onPress={() => { update({ modeId: m.id, modeNom: m.nom }); setOpenPicker(null); }}
-                  >
-                    <ThemedText style={[styles.pickerOptionText, form.modeId === m.id && { color: "#1F8B82", fontWeight: "700" }]}>
-                      {m.nom}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
             
             {/* Banque */}
             {renderSelectField("Banque", form.banqueNom, "banque", "account-balance")}
-            {openPicker === "banque" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {banqueOptions.map((b) => (
-                  <Pressable
-                    key={b.id}
-                    style={[styles.pickerOption, form.banqueId === b.id && { backgroundColor: "#1F8B8220" }]}
-                    onPress={() => { update({ banqueId: b.id, banqueNom: b.nom }); setOpenPicker(null); }}
-                  >
-                    <ThemedText style={[styles.pickerOptionText, form.banqueId === b.id && { color: "#1F8B82", fontWeight: "700" }]}>
-                      {b.nom}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
             {/* Date */}
             <View style={styles.fieldGroup}>
@@ -361,6 +283,48 @@ export default function EncaissementPrimeFormModal({
           </ScrollView>
         </View>
       </View>
+
+      {/* Client picker */}
+      <BottomPickerModal
+        visible={openPicker === "client"}
+        title="Client"
+        options={clients.filter((c) => c.id !== undefined).map((c): BPickerOption => ({ id: c.id as number, label: `${c.nom} ${c.prenoms ?? ""}`.trim(), sublabel: c.code ?? undefined }))}
+        loading={loadingClients}
+        selectedId={form.clientId}
+        searchable
+        onSelect={(opt) => { update({ clientId: opt.id as number, clientNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
+
+      {/* Agence picker */}
+      <BottomPickerModal
+        visible={openPicker === "agence"}
+        title="Agence"
+        options={agenceOptions.map((a): BPickerOption => ({ id: a.id, label: a.nom }))}
+        selectedId={form.agenceId}
+        onSelect={(opt) => { update({ agenceId: opt.id as number, agenceNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
+
+      {/* Mode picker */}
+      <BottomPickerModal
+        visible={openPicker === "mode"}
+        title="Mode de paiement"
+        options={modeOptions.map((m): BPickerOption => ({ id: m.id, label: m.nom }))}
+        selectedId={form.modeId}
+        onSelect={(opt) => { update({ modeId: opt.id as number, modeNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
+
+      {/* Banque picker */}
+      <BottomPickerModal
+        visible={openPicker === "banque"}
+        title="Banque"
+        options={banqueOptions.map((b): BPickerOption => ({ id: b.id, label: b.nom }))}
+        selectedId={form.banqueId}
+        onSelect={(opt) => { update({ banqueId: opt.id as number, banqueNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
     </Modal>
   );
 }

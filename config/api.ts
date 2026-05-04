@@ -24,7 +24,8 @@ const apiConfig = {
     parametres: "/parametres",
     statistiques: "/statistiques",
     agences: "/agences",
-    parternaires: "/partenaires",
+    partenaires: "/partenaires",
+    compagnies: "/compagnies",
   },
 };
 

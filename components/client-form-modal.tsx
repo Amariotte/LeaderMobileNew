@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import BottomPickerModal from "@/components/ui/bottom-picker-modal";
 import { CIVILITES, TYPES_PERSONNES } from "@/constants/constants";
 import { professionsFakeData } from "@/data/datas.fake";
 import { useAuthContext } from "@/hooks/auth-context";
@@ -115,12 +116,7 @@ export default function ClientFormModal({
       setValidationError("Le nom est obligatoire.");
       return;
     }
-    if (formData.typeId === 2) {
-      if (!formData.rccm?.trim()) {
-        setValidationError("Le RCCM est obligatoire pour une personne morale.");
-        return;
-      }
-    } else {
+    if (formData.typeId === 1) {
       if (!formData.prenoms?.trim()) {
         setValidationError("Le prénom est obligatoire.");
         return;
@@ -284,7 +280,7 @@ export default function ClientFormModal({
               <ThemedText style={[styles.label, { color: labelColor }]}>Profession</ThemedText>
               <Pressable
                 style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}
-                onPress={() => setOpenPicker(openPicker === "profession" ? null : "profession")}
+                onPress={() => setOpenPicker("profession")}
               >
                 <MaterialIcons name="work-outline" size={16} color={labelColor} />
                 <ThemedText
@@ -293,56 +289,9 @@ export default function ClientFormModal({
                 >
                   {formData.libProfession || "Choisir une profession"}
                 </ThemedText>
-                <MaterialIcons
-                  name={openPicker === "profession" ? "arrow-drop-up" : "arrow-drop-down"}
-                  size={20}
-                  color={labelColor}
-                />
+                <MaterialIcons name="arrow-drop-down" size={20} color={labelColor} />
               </Pressable>
             </View>
-
-            {openPicker === "profession" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {loadingProfessions ? (
-                  <ActivityIndicator size="small" color={primaryColor} style={{ margin: 12 }} />
-                ) : professionOptions.length === 0 ? (
-                  <View style={styles.pickerEmptyState}>
-                    <ThemedText style={[styles.pickerEmptyStateText, { color: labelColor }]}>Aucune profession disponible</ThemedText>
-                  </View>
-                ) : (
-                  professionOptions.map((profession) => {
-                    const selected = formData.professionId === profession.id;
-                    return (
-                      <Pressable
-                        key={profession.id}
-                        style={[
-                          styles.pickerOption,
-                          selected && { backgroundColor: primaryColor + "1A" },
-                        ]}
-                        onPress={() => {
-                          update({ professionId: profession.id, libProfession: profession.libelle });
-                          setOpenPicker(null);
-                        }}
-                      >
-                        <ThemedText
-                          style={[
-                            styles.pickerOptionText,
-                            { color: selected ? primaryColor : textColor, fontWeight: selected ? "700" : "500" },
-                          ]}
-                        >
-                          {profession.libelle}
-                        </ThemedText>
-                        <MaterialIcons
-                          name={selected ? "check-box" : "check-box-outline-blank"}
-                          size={18}
-                          color={selected ? primaryColor : labelColor}
-                        />
-                      </Pressable>
-                    );
-                  })
-                )}
-              </View>
-            )}
 
             {formData.typeId === 2 &&
               renderInput("RCCM *", formData.rccm, (v) => update({ rccm: v }), "description", {
@@ -395,6 +344,19 @@ export default function ClientFormModal({
           </ScrollView>
         </View>
       </View>
+
+      <BottomPickerModal
+        visible={openPicker === "profession"}
+        title="Profession"
+        options={professionOptions.map((p) => ({ id: p.id, label: p.libelle }))}
+        loading={loadingProfessions}
+        selectedId={formData.professionId}
+        onSelect={(opt) => {
+          update({ professionId: opt.id as number, libProfession: opt.label });
+          setOpenPicker(null);
+        }}
+        onClose={() => setOpenPicker(null)}
+      />
     </Modal>
   );
 }

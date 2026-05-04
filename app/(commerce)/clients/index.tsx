@@ -77,9 +77,24 @@ export default function ClientsScreen() {
     mode: "create" | "edit",
     selectedClient?: client,
   ): Promise<void> => {
-    if (!data.nom || !data.prenoms) {
-      throw new Error("Le nom et le prénom sont obligatoires");
+
+     if (!data.nom) {
+      throw new Error("Le nom est obligatoire");
     }
+
+    if (data.typeId === 1) {
+      if (!data.civilite) {
+        throw new Error("La civilité est obligatoire pour une personne physique.");
+      }
+
+        if (!data.prenoms?.trim()) {
+      throw new Error("Le prénom est obligatoire");
+    }
+    } else if (data.typeId === 2) {
+       data.civilite = 4; // Forcer à "Société" si typeId est 2
+       data.prenoms = ""; // Vider les prénoms pour une société
+     }
+   
 
     if (mode === "edit" && selectedClient) {
       const updated = await updateClient(userToken ?? "", selectedClient?.id ?? 0, data);

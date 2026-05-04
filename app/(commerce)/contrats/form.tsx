@@ -2,16 +2,16 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
-  View,
+  View
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { vehiculesFakeData } from "@/data/datas.fake";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
@@ -224,18 +224,18 @@ export default function ContratFormScreen() {
 
   const assureNomInitial =
     initialContract?.assureNom ??
-    (initialClient ? `${initialClient.nom} ${initialClient.prenom}`.trim() : "");
+    (initialClient ? `${initialClient.nom} ${initialClient.prenoms}`.trim() : "");
   const assureTelInitial = initialContract?.assureTel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
   const assureEmailInitial = initialContract?.assureEmail ?? initialClient?.email ?? "";
-  const assureBpInitial = initialContract?.assureBp ?? initialClient?.boitePostale ?? "";
+  const assureBpInitial = initialContract?.assureBp ?? initialClient?.bP ?? "";
   const assureProfessionInitial = initialContract?.assureProfession ?? initialClient?.libProfession ?? "";
   const souscripteurNomInitial =
     initialContract?.souscripteurNom ??
-    (initialClient ? `${initialClient.nom} ${initialClient.prenom}`.trim() : "");
+    (initialClient ? `${initialClient.nom} ${initialClient.prenoms}`.trim() : "");
   const souscripteurTelInitial =
     initialContract?.souscripteurTel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
   const souscripteurEmailInitial = initialContract?.souscripteurEmail ?? initialClient?.email ?? "";
-  const souscripteurBpInitial = initialContract?.souscripteurBp ?? initialClient?.boitePostale ?? "";
+  const souscripteurBpInitial = initialContract?.souscripteurBp ?? initialClient?.bP ?? "";
 
   const [form, setForm] = useState<ContratFormData>({
     vehicule: selectedInitialVehicule,
@@ -941,51 +941,14 @@ export default function ContratFormScreen() {
         )}
       </View>
 
-      <Modal visible={pickerState.visible} transparent animationType="fade">
-        <Pressable style={styles.pickerOverlay} onPress={closeSelectPicker}>
-          <Pressable
-            style={[styles.pickerPopup, { backgroundColor: cardBackground, borderColor }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={[styles.pickerHeader, { borderBottomColor: borderColor }]}> 
-              <ThemedText type="defaultSemiBold" style={{ color: textColor }}>
-                {pickerState.title}
-              </ThemedText>
-              <Pressable onPress={closeSelectPicker}>
-                <MaterialIcons name="close" size={20} color={mutedText} />
-              </Pressable>
-            </View>
-
-            <ScrollView style={styles.pickerList} showsVerticalScrollIndicator={false}>
-              {pickerState.options.map((option) => {
-                const currentValue = pickerState.field ? form[pickerState.field] : "";
-                const isActive = currentValue === option;
-
-                return (
-                  <Pressable
-                    key={option}
-                    onPress={() => selectPickerOption(option)}
-                    style={[
-                      styles.pickerItem,
-                      { backgroundColor: isActive ? COLORS.primaryColor + "16" : "transparent" },
-                    ]}
-                  >
-                    <ThemedText
-                      style={{
-                        color: isActive ? COLORS.primaryColor : textColor,
-                        fontWeight: isActive ? "700" : "500",
-                      }}
-                    >
-                      {option}
-                    </ThemedText>
-                    {isActive && <MaterialIcons name="check" size={18} color={COLORS.primaryColor} />}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <BottomPickerModal
+        visible={pickerState.visible}
+        title={pickerState.title}
+        options={pickerState.options.map((o): BPickerOption => ({ id: o, label: o }))}
+        selectedId={pickerState.field ? form[pickerState.field] : undefined}
+        onSelect={(opt) => selectPickerOption(opt.label)}
+        onClose={closeSelectPicker}
+      />
     </ThemedView>
   );
 }

@@ -1,31 +1,31 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-    Animated,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import ClientFormModal from "@/components/client-form-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { TYPES_PERSONNES } from "@/constants/constants";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import {
-    createClient,
-    createVehicule,
-    getfetchClients,
-    getfetchParametres,
-    updateClient,
-    updateVehicule,
+  createClient,
+  createVehicule,
+  getfetchClients,
+  getfetchParametres,
+  updateClient,
+  updateVehicule,
 } from "@/services/api-service";
 import COLORS from "@/styles/colors";
 import { client, listClients } from "@/types/client.type";
@@ -208,7 +208,6 @@ export default function VehiculeFormScreen() {
     title: "",
     options: [],
   });
-  const dropdownAnimation = useRef(new Animated.Value(0)).current;
 
   const [formData, setFormData] = useState<VehicleFormState>({
     numImmatriculation: initialVehicle?.numImmatriculation ?? "",
@@ -354,20 +353,10 @@ export default function VehiculeFormScreen() {
       title,
       options: normalizeOptions(options),
     });
-
-    Animated.timing(dropdownAnimation, {
-      toValue: 1,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
   };
 
   const closePicker = () => {
-    Animated.timing(dropdownAnimation, {
-      toValue: 0,
-      duration: 180,
-      useNativeDriver: true,
-    }).start(() => setPickerState((prev) => ({ ...prev, visible: false, field: undefined })));
+    setPickerState((prev) => ({ ...prev, visible: false, field: undefined }));
   };
 
   const selectPickerOption = (value: string) => {
@@ -930,84 +919,15 @@ export default function VehiculeFormScreen() {
         </Pressable>
       </View>
 
-      <Modal transparent visible={pickerState.visible} animationType="none" onRequestClose={closePicker}>
-        <Pressable style={styles.pickerOverlay} onPress={closePicker}>
-          <Animated.View
-            style={[
-              styles.pickerSheet,
-              {
-                backgroundColor: cardBackground,
-                borderColor,
-                transform: [
-                  {
-                    translateY: dropdownAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-16, 0],
-                    }),
-                  },
-                ],
-                opacity: dropdownAnimation,
-              },
-            ]}
-          >
-            <View style={[styles.pickerHeader, { borderColor }]}>
-              <ThemedText type="defaultSemiBold" style={{ color: textColor, fontSize: 16 }}>
-                {pickerState.title}
-              </ThemedText>
-              <Pressable onPress={closePicker}>
-                <MaterialIcons name="close" size={20} color={labelColor} />
-              </Pressable>
-            </View>
-
-            <ScrollView style={styles.pickerList} showsVerticalScrollIndicator={false}>
-              {pickerState.options.length === 0 && (
-                <View style={styles.emptyPickerState}>
-                  <ThemedText style={{ color: labelColor }}>Aucune option disponible</ThemedText>
-                </View>
-              )}
-
-              {pickerState.options.map((option) => {
-                const isSelected = pickerState.field ? formData[pickerState.field] === option : false;
-
-                return (
-                  <Pressable
-                    key={option}
-                    style={[
-                      styles.pickerItem,
-                      {
-                        backgroundColor: isSelected ? mutedBlock : "transparent",
-                        borderColor: isSelected ? COLORS.primaryColor : "transparent",
-                      },
-                    ]}
-                    onPress={() => selectPickerOption(option)}
-                  >
-                    <View
-                      style={[
-                        styles.dropdownItemCheckbox,
-                        {
-                          borderColor: isSelected ? COLORS.primaryColor : labelColor,
-                          backgroundColor: isSelected ? COLORS.primaryColor : "transparent",
-                        },
-                      ]}
-                    >
-                      {isSelected && <MaterialIcons name="check" size={15} color="#FFFFFF" />}
-                    </View>
-                    <ThemedText
-                      style={{
-                        color: isSelected ? COLORS.primaryColor : textColor,
-                        fontWeight: isSelected ? "700" : "500",
-                        flex: 1,
-                      }}
-                    >
-                      {option}
-                    </ThemedText>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Animated.View>
-        </Pressable>
-      </Modal>
+      <BottomPickerModal
+        visible={pickerState.visible}
+        title={pickerState.title}
+        options={pickerState.options.map((o): BPickerOption => ({ id: o, label: o }))}
+        selectedId={pickerState.field ? formData[pickerState.field] : undefined}
+        searchable={pickerState.options.length > 8}
+        onSelect={(opt) => selectPickerOption(opt.label)}
+        onClose={closePicker}
+      />
 
       <Modal
         transparent

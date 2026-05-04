@@ -6,6 +6,7 @@ import AppHeaderDrawer from "@/components/app-header-drawer";
 import EncaissementPrimeFormModal, { EncaissementPrimeFormData } from "@/components/encaissement-prime-form-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
@@ -423,44 +424,33 @@ export default function EncaissementsPrimesScreen() {
         </Modal>
 
         {/* Modale de sélection */}
-        <Modal visible={openPicker !== null} transparent animationType="fade" onRequestClose={() => setOpenPicker(null)}>
-          <Pressable style={styles.modalOverlay} onPress={() => setOpenPicker(null)}>
-            <Pressable style={[styles.modalSheet, { backgroundColor: cardBackground }]}>
-              <View style={styles.modalHeader}>
-                <ThemedText style={styles.modalTitle}>
-                  {openPicker === "operateur" ? "Choisir un opérateur" : openPicker === "agence" ? "Choisir une agence" : "Choisir un mode"}
-                </ThemedText>
-                <Pressable onPress={() => setOpenPicker(null)}>
-                  <MaterialIcons name="close" size={20} color={muted} />
-                </Pressable>
-              </View>
-              <ScrollView>
-                {(openPicker === "operateur" ? operateurs : openPicker === "agence" ? agences : modes).map((val) => {
-                  const current = openPicker === "operateur" ? filterOperateur : openPicker === "agence" ? filterAgence : filterMode;
-                  const setter = openPicker === "operateur" ? setFilterOperateur : openPicker === "agence" ? setFilterAgence : setFilterMode;
-                  const isSelected = current.includes(val);
-                  return (
-                    <Pressable
-                      key={val}
-                      style={[styles.modalOption, isSelected && { backgroundColor: softBlock }]}
-                      onPress={() => setter(isSelected ? current.filter((v) => v !== val) : [...current, val])}
-                    >
-                      <ThemedText style={[styles.modalOptionText, isSelected && { color: "#1F8B82", fontWeight: "700" }]}>{val}</ThemedText>
-                      <MaterialIcons
-                        name={isSelected ? "check-box" : "check-box-outline-blank"}
-                        size={18}
-                        color={isSelected ? "#1F8B82" : muted}
-                      />
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-              <Pressable style={styles.modalConfirm} onPress={() => setOpenPicker(null)}>
-                <ThemedText style={styles.modalConfirmText}>Valider</ThemedText>
-              </Pressable>
-            </Pressable>
-          </Pressable>
-        </Modal>
+        <BottomPickerModal
+          visible={openPicker === "operateur"}
+          title="Choisir un opérateur"
+          multiSelect
+          options={operateurs.map((v): BPickerOption => ({ id: v, label: v }))}
+          selectedIds={filterOperateur}
+          onMultiConfirm={(opts) => { setFilterOperateur(opts.map((o) => o.label)); setOpenPicker(null); }}
+          onClose={() => setOpenPicker(null)}
+        />
+        <BottomPickerModal
+          visible={openPicker === "agence"}
+          title="Choisir une agence"
+          multiSelect
+          options={agences.map((v): BPickerOption => ({ id: v, label: v }))}
+          selectedIds={filterAgence}
+          onMultiConfirm={(opts) => { setFilterAgence(opts.map((o) => o.label)); setOpenPicker(null); }}
+          onClose={() => setOpenPicker(null)}
+        />
+        <BottomPickerModal
+          visible={openPicker === "mode"}
+          title="Choisir un mode"
+          multiSelect
+          options={modes.map((v): BPickerOption => ({ id: v, label: v }))}
+          selectedIds={filterMode}
+          onMultiConfirm={(opts) => { setFilterMode(opts.map((o) => o.label)); setOpenPicker(null); }}
+          onClose={() => setOpenPicker(null)}
+        />
 
         {loading ? (
           <ActivityIndicator size="small" color="#1F8B82" style={styles.loader} />

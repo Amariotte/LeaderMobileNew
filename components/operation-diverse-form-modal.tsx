@@ -1,16 +1,17 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
+import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { operation } from "@/types/operations.type";
 
@@ -135,7 +136,7 @@ export default function OperationDiverseFormModal({
       <ThemedText style={[styles.label, { color: labelColor }]}>{label}</ThemedText>
       <Pressable
         style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}
-        onPress={() => setOpenPicker(openPicker === picker ? null : picker)}
+        onPress={() => setOpenPicker(picker)}
       >
         <MaterialIcons name={icon} size={16} color={labelColor} />
         <ThemedText
@@ -144,11 +145,7 @@ export default function OperationDiverseFormModal({
         >
           {value || `Choisir ${label.toLowerCase()}`}
         </ThemedText>
-        <MaterialIcons
-          name={openPicker === picker ? "arrow-drop-up" : "arrow-drop-down"}
-          size={20}
-          color={labelColor}
-        />
+        <MaterialIcons name="arrow-drop-down" size={20} color={labelColor} />
       </Pressable>
     </View>
   );
@@ -201,63 +198,12 @@ export default function OperationDiverseFormModal({
 
             {/* Agence */}
             {renderSelectField("Agence", form.agenceNom, "agence", "business")}
-            {openPicker === "agence" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {agenceOptions.map((a) => (
-                  <Pressable
-                    key={a.id}
-                    style={[styles.pickerOption, form.agenceId === a.id && { backgroundColor: "#1F8B8220" }]}
-                    onPress={() => { update({ agenceId: a.id, agenceNom: a.nom }); setOpenPicker(null); }}
-                  >
-                    <ThemedText
-                      style={[styles.pickerOptionText, { color: textColor }, form.agenceId === a.id && { color: "#1F8B82", fontWeight: "700" }]}
-                    >
-                      {a.nom}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
             {/* Banque */}
             {renderSelectField("Banque / Caisse", form.banqueNom, "banque", "account-balance")}
-            {openPicker === "banque" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {banqueOptions.map((b) => (
-                  <Pressable
-                    key={b.id}
-                    style={[styles.pickerOption, form.banqueId === b.id && { backgroundColor: "#1F8B8220" }]}
-                    onPress={() => { update({ banqueId: b.id, banqueNom: b.nom }); setOpenPicker(null); }}
-                  >
-                    <ThemedText
-                      style={[styles.pickerOptionText, { color: textColor }, form.banqueId === b.id && { color: "#1F8B82", fontWeight: "700" }]}
-                    >
-                      {b.nom}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
             {/* Mode */}
             {renderSelectField("Mode de paiement", form.modeNom, "mode", "payment")}
-            {openPicker === "mode" && (
-              <View style={[styles.pickerDropdown, { backgroundColor: softBlock }]}>
-                {modeOptions.map((m) => (
-                  <Pressable
-                    key={m.id}
-                    style={[styles.pickerOption, form.modeId === m.id && { backgroundColor: "#1F8B8220" }]}
-                    onPress={() => { update({ modeId: m.id, modeNom: m.nom }); setOpenPicker(null); }}
-                  >
-                    <ThemedText
-                      style={[styles.pickerOptionText, { color: textColor }, form.modeId === m.id && { color: "#1F8B82", fontWeight: "700" }]}
-                    >
-                      {m.nom}
-                    </ThemedText>
-                  </Pressable>
-                ))}
-              </View>
-            )}
 
             {/* Date */}
             <View style={styles.fieldGroup}>
@@ -375,6 +321,33 @@ export default function OperationDiverseFormModal({
           </ScrollView>
         </View>
       </View>
+
+      <BottomPickerModal
+        visible={openPicker === "agence"}
+        title="Agence"
+        options={agenceOptions.map((a): BPickerOption => ({ id: a.id, label: a.nom }))}
+        selectedId={form.agenceId}
+        onSelect={(opt) => { update({ agenceId: opt.id as number, agenceNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
+
+      <BottomPickerModal
+        visible={openPicker === "banque"}
+        title="Banque / Caisse"
+        options={banqueOptions.map((b): BPickerOption => ({ id: b.id, label: b.nom }))}
+        selectedId={form.banqueId}
+        onSelect={(opt) => { update({ banqueId: opt.id as number, banqueNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
+
+      <BottomPickerModal
+        visible={openPicker === "mode"}
+        title="Mode de paiement"
+        options={modeOptions.map((m): BPickerOption => ({ id: m.id, label: m.nom }))}
+        selectedId={form.modeId}
+        onSelect={(opt) => { update({ modeId: opt.id as number, modeNom: opt.label }); setOpenPicker(null); }}
+        onClose={() => setOpenPicker(null)}
+      />
     </Modal>
   );
 }
