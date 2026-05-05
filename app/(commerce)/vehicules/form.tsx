@@ -41,8 +41,8 @@ const MARQUES: itemDefaut[] = [];
 const COULEURS: itemDefaut[] = [];
 const CATEGORIES: itemDefaut[] = [];
 const SOUS_CATEGORIES: itemDefaut[] = [];
-const VILLES: itemDefaut[] = [];
-const ZONES: itemDefaut[] = [];
+const GROUPES_ZONES: itemDefaut[] = [];
+const ZONES_CIRCULATIONS: itemDefaut[] = [];
 const PROFESSIONS: itemDefaut[] = [];
 
 type VehicleFormState = {
@@ -194,8 +194,8 @@ export default function VehiculeFormScreen() {
   const [energiesOptions, setEnergiesOptions] = useState<itemDefaut[]>(ENERGIES);
   const [marquesOptions, setMarquesOptions] = useState<itemDefaut[]>(MARQUES);
   const [couleursOptions, setCouleursOptions] = useState<itemDefaut[]>(COULEURS);
-  const [zonesOptions, setZonesOptions] = useState<itemDefaut[]>(ZONES);
-  const [villesOptions, setVillesOptions] = useState<itemDefaut[]>(VILLES);
+  const [zonesCirculationsOptions, setZonesCirculationsOptions] = useState<itemDefaut[]>(ZONES_CIRCULATIONS);
+  const [groupesZonesOptions, setGroupesZonesOptions] = useState<itemDefaut[]>(GROUPES_ZONES);
   const [professionsOptions, setProfessionsOptions] = useState<itemDefaut[]>(PROFESSIONS);
 
   const [pickerState, setPickerState] = useState<{
@@ -276,8 +276,8 @@ export default function VehiculeFormScreen() {
         setMarquesOptions(payload?.marques?.data && payload.marques.data.length > 0 ? payload.marques.data : MARQUES);
         setCouleursOptions(payload?.couleurs?.data && payload.couleurs.data.length > 0 ? payload.couleurs.data : COULEURS);
         setProfessionsOptions(payload?.professions?.data && payload.professions.data.length > 0 ? payload.professions.data : PROFESSIONS);
-        setZonesOptions(payload?.zonesCirculations?.data && payload.zonesCirculations.data.length > 0 ? payload.zonesCirculations.data : ZONES);
-        setVillesOptions(payload?.groupesZones?.data && payload.groupesZones.data.length > 0 ? payload.groupesZones.data : VILLES);
+        setZonesCirculationsOptions(payload?.zones_circulations?.data && payload.zones_circulations.data.length > 0 ? payload.zones_circulations.data : ZONES_CIRCULATIONS);
+        setGroupesZonesOptions(payload?.groupes_zones?.data && payload.groupes_zones.data.length > 0 ? payload.groupes_zones.data : GROUPES_ZONES);
       })
       .catch(() => {
         setGenresOptions(GENRES);
@@ -288,8 +288,8 @@ export default function VehiculeFormScreen() {
         setMarquesOptions(MARQUES);
         setCouleursOptions(COULEURS);
         setProfessionsOptions(PROFESSIONS);
-        setZonesOptions(ZONES);
-        setVillesOptions(VILLES);
+        setZonesCirculationsOptions(ZONES_CIRCULATIONS);
+        setGroupesZonesOptions(GROUPES_ZONES);
       });
   }, [userToken]);
 
@@ -442,8 +442,8 @@ export default function VehiculeFormScreen() {
       usageId: findIdByLabel(formData.libUsage, usagesOptions),
       categorieId: findIdByLabel(formData.libCategorie, CATEGORIES),
       sousCategorieId: findIdByLabel(formData.libSousCategorie, SOUS_CATEGORIES),
-      groupeZoneId: findIdByLabel(formData.libGroupeZone, villesOptions),
-      zoneCirculationId: findIdByLabel(formData.libZoneCirculation, zonesOptions),
+      groupeZoneId: findIdByLabel(formData.libGroupeZone, groupesZonesOptions),
+      zoneCirculationId: findIdByLabel(formData.libZoneCirculation, zonesCirculationsOptions),
       marqueId: findIdByLabel(formData.libMarque, marquesOptions),
       couleurId: findIdByLabel(formData.libCouleur, couleursOptions),
 
@@ -796,18 +796,14 @@ export default function VehiculeFormScreen() {
               )}
             </View>
 
-            <View style={styles.grid2}>
               {renderSelect("Genre", formData.libGenre, () => openPicker("libGenre", "Choisir un genre", genresOptions))}
               {renderSelect("Type", formData.libType, () => openPicker("libType", "Choisir un type", vehicleTypesOptions))}
-            </View>
-            <View style={styles.grid2}>
+
               {renderSelect("Carrosserie", formData.libCarrosserie, () => openPicker("libCarrosserie", "Choisir une carrosserie", carrosseriesOptions))}
               {renderSelect("Energie", formData.libEnergie, () => openPicker("libEnergie", "Choisir une énergie", energiesOptions))}
-            </View>
-            <View style={styles.grid2}>
+
               {renderSelect("Marque", formData.libMarque, () => openPicker("libMarque", "Choisir une marque", marquesOptions))}
               {renderSelect("Couleur", formData.libCouleur, () => openPicker("libCouleur", "Choisir une couleur", couleursOptions))}
-            </View>
 
             <View style={styles.grid2}>
               {renderTextInput("Numéro de série", formData.numSerie, (value) => updateField("numSerie", value))}
@@ -833,15 +829,11 @@ export default function VehiculeFormScreen() {
 
             {renderTextInput("Modèle", formData.modele, (value) => updateField("modele", value))}
 
-            <View style={styles.grid2}>
               {renderSelect("Usage", formData.libUsage, () => openPicker("libUsage", "Choisir un usage", usagesOptions))}
               {renderSelect("Catégorie", formData.libCategorie, () => openPicker("libCategorie", "Choisir une catégorie", CATEGORIES))}
-            </View>
-            <View style={styles.grid2}>
               {renderSelect("Sous-catégorie", formData.libSousCategorie, () => openPicker("libSousCategorie", "Choisir une sous-catégorie", SOUS_CATEGORIES))}
-              {renderSelect("Ville de circulation", formData.libGroupeZone, () => openPicker("libGroupeZone", "Choisir une ville", villesOptions))}
-            </View>
-            {renderSelect("Zone de circulation", formData.libZoneCirculation, () => openPicker("libZoneCirculation", "Choisir une zone", zonesOptions))}
+              {renderSelect("Zone de circulation", formData.libZoneCirculation, () => openPicker("libZoneCirculation", "Choisir une zone", groupesZonesOptions))}
+              {renderSelect("Ville de circulation", formData.libGroupeZone, () => openPicker("libGroupeZone", "Choisir une ville", zonesCirculationsOptions))}
 
             <View style={styles.field}>
               <ThemedText style={[styles.label, { color: labelColor }]}>Commentaires</ThemedText>

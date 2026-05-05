@@ -87,8 +87,7 @@ export type parametresData = {
   usages?: { data: itemDefaut[] };
   couleurs?: { data: itemDefaut[] };
   professions?: { data: itemDefaut[] };
-  zonesCirculations?: { data: itemDefaut[] };
-  groupesZones?: { data: itemDefaut[] };
-  motifsAnnulations?: { data: itemDefaut[] };
-
+  zones_circulations?: { data: itemDefaut[] };
+  groupes_zones?: { data: itemDefaut[] };
+  motifs_annulations?: { data: itemDefaut[] };
 };
