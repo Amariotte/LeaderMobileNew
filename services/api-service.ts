@@ -36,7 +36,7 @@ import {
   stat
 } from "@/types/other.type";
 import { SoldeResponse } from "@/types/solde.type";
-import { listStockCourtier, listStockPartenaire, listStockProducteur } from "@/types/stock.type";
+import { listStockCourtier, listStockPartenaire, listStockProducteur, stockCourtier, stockCourtierForm } from "@/types/stock.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
 import { deleteJsonAuth, getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
@@ -871,10 +871,27 @@ export async function getfetchProfessions(token: string): Promise<itemDefaut[]> 
 }
 
 
-export async function getfetchAgences(token: string, type: params): Promise<listAgences> {
+export async function getfetchAgences(token: string, data: params): Promise<listAgences> {
   if (isModeDemoEnabled()) {
     return  agencesFakeData;
   } 
   const payload = await getJsonAuth<listAgences>(`${apiConfig.endpoints.agences}`, token);
   return payload
+}
+
+export async function movementStockCourtier(
+  token: string,
+  data: stockCourtierForm,
+): Promise<stockCourtier> {
+
+  if (isModeDemoEnabled()) {
+    const newStockCourtier: stockCourtier = {
+      compagnieId: data.compagnieId,
+      compagnieNom: `Compagnie ${data.compagnieId}`,
+    }
+   
+    return newStockCourtier;
+  }
+  const d = await postJsonAuth<stockCourtier, stockCourtierForm>( apiConfig.endpoints.stockCourtiers, token, data);
+  return d ;
 }

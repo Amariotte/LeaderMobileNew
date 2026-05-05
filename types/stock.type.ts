@@ -11,6 +11,19 @@ export type stockCourtier = {
 
 };
 
+
+export type stockCourtierForm = {
+  compagnieId: number
+  qteRecuees?: number
+  qteRetirees: number
+};
+
+
+
+
+
+
+
 export type stockPartenaire = {
   compagnieNom: string 
   compagnieId: number
@@ -25,6 +38,19 @@ export type stockPartenaire = {
   qteDisponibles?: number
 };
 
+
+export type stockPartenaireForm = {
+  compagnieId: number
+  partenaireId: number
+  typeId: number
+  qteRecuees?: number
+  qteRetirees: number
+};
+
+
+
+
+
 export type stockProducteur = {
   compagnieNom: string 
   compagnieId: number
@@ -38,6 +64,15 @@ export type stockProducteur = {
   qteRetirees?: number
   qteProduites?: number
   qteDisponibles?: number
+};
+
+
+export type stockProducteurForm = {
+  compagnieId: number
+  producteurId: number
+  typeId: number
+  qteRecuees?: number
+  qteRetirees: number
 };
 
 
