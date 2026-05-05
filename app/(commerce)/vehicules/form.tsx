@@ -868,16 +868,17 @@ export default function VehiculeFormScreen() {
               {renderNumberInput("Puissance", formData.puissance, (value) => updateField("puissance", value))}
             </View>
 
-            <View style={styles.grid3}>
+            <View style={styles.grid2}>
               {renderNumberInput("Cylindrée", formData.cylindree, (value) => updateField("cylindree", value))}
               {renderNumberInput("Nombre de cartes", formData.nbCartes, (value) => updateField("nbCartes", value))}
-              {renderTextInput("Type commercial", formData.typeCommercial, (value) => updateField("typeCommercial", value))}
             </View>
 
             <View style={styles.grid2}>
               {renderNumberInput("Valeur neuve", formData.valeurNeuve, (value) => updateField("valeurNeuve", value))}
               {renderNumberInput("Valeur vénale", formData.valeurVenale, (value) => updateField("valeurVenale", value))}
             </View>
+
+              {renderTextInput("Type commercial", formData.typeCommercial, (value) => updateField("typeCommercial", value))}
 
             {renderTextInput("Modèle", formData.modele, (value) => updateField("modele", value))}
 
