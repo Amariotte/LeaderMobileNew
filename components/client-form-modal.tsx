@@ -13,7 +13,6 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import BottomPickerModal from "@/components/ui/bottom-picker-modal";
 import { CIVILITES, TYPES_PERSONNES } from "@/constants/constants";
-import { professionsFakeData } from "@/data/datas.fake";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchProfessions } from "@/services/api-service";
@@ -63,7 +62,7 @@ export default function ClientFormModal({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [professionOptions, setProfessionOptions] = useState<itemDefaut[]>(
-    professionsFakeData,
+    [],
   );
   const [loadingProfessions, setLoadingProfessions] = useState(false);
 
@@ -92,10 +91,10 @@ export default function ClientFormModal({
     setLoadingProfessions(true);
     getfetchProfessions(userToken)
       .then((data) => {
-        setProfessionOptions(data.length > 0 ? data : professionsFakeData);
+        setProfessionOptions(data.length > 0 ? data : []);
       })
       .catch(() => {
-        setProfessionOptions(professionsFakeData);
+        setProfessionOptions([]);
       })
       .finally(() => setLoadingProfessions(false));
   }, [visible, userToken]);

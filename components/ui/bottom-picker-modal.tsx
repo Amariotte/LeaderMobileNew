@@ -42,6 +42,8 @@ type BottomPickerModalProps = (SingleProps | MultiProps) & {
   onClose: () => void;
   searchable?: boolean;
   loading?: boolean;
+  creatableFromSearch?: boolean;
+  createPrefixLabel?: string;
 };
 
 export default function BottomPickerModal({
@@ -51,6 +53,8 @@ export default function BottomPickerModal({
   onClose,
   searchable = false,
   loading = false,
+  creatableFromSearch = false,
+  createPrefixLabel = "Utiliser",
   multiSelect,
   selectedId,
   selectedIds,
@@ -87,6 +91,23 @@ export default function BottomPickerModal({
         o.sublabel?.toLowerCase().includes(q),
     );
   }, [options, search]);
+
+  const customCreateOption = useMemo<PickerOption | null>(() => {
+    if (!creatableFromSearch || !searchable || multiSelect) return null;
+    const value = search.trim();
+    if (!value) return null;
+
+    const exists = options.some(
+      (o) => o.label.trim().toLowerCase() === value.toLowerCase(),
+    );
+    if (exists) return null;
+
+    return {
+      id: `__create__${value}`,
+      label: value,
+      sublabel: `${createPrefixLabel} "${value}"`,
+    };
+  }, [creatableFromSearch, searchable, multiSelect, options, search, createPrefixLabel]);
 
   const handleSingleSelect = (option: PickerOption) => {
     if (!multiSelect && onSelect) {
@@ -148,6 +169,20 @@ export default function BottomPickerModal({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {!loading && customCreateOption && (
+              <Pressable
+                style={[styles.option, { borderBottomColor: borderColor, backgroundColor: primaryColor + "0D" }]}
+                onPress={() => handleSingleSelect(customCreateOption)}
+              >
+                <View style={styles.optionContent}>
+                  <ThemedText style={[styles.optionLabel, { color: primaryColor, fontWeight: "700" }]}>
+                    {customCreateOption.sublabel}
+                  </ThemedText>
+                </View>
+                <MaterialIcons name="add-circle-outline" size={18} color={primaryColor} />
+              </Pressable>
+            )}
+
             {loading ? (
               <ActivityIndicator size="small" color={primaryColor} style={{ margin: 20 }} />
             ) : filtered.length === 0 ? (

@@ -100,10 +100,22 @@ type VehicleSelectField =
 
 type FormSection = "vehicule" | "assure";
 
-const normalizeOptions = (options: (string | itemDefaut)[]) =>
-  options
-    .map((option) => (typeof option === "string" ? option : option.libelle))
-    .filter((value): value is string => Boolean(value?.trim()));
+const normalizeOptions = (options: (string | itemDefaut)[]): BPickerOption[] =>
+  options.reduce<BPickerOption[]>((acc, option, index) => {
+    if (typeof option === "string") {
+      const label = option.trim();
+      if (label) {
+        acc.push({ id: `opt-${index + 1}`, label });
+      }
+      return acc;
+    }
+
+    const label = option.libelle?.trim();
+    if (label) {
+      acc.push({ id: option.id, label });
+    }
+    return acc;
+  }, []);
 
 const formatDateForInput = (date?: Date | string) => {
   if (!date) return "";
@@ -129,7 +141,8 @@ const parseDateInput = (value?: string) => {
 };
 
 const findIdByLabel = (label: string, options: itemDefaut[]) => {
-  const match = options.find((option) => option.libelle === label);
+  const normalized = label.trim().toLowerCase();
+  const match = options.find((option) => option.libelle?.trim().toLowerCase() === normalized);
   return match?.id ?? 0;
 };
 
@@ -202,7 +215,7 @@ export default function VehiculeFormScreen() {
     visible: boolean;
     field?: VehicleSelectField;
     title: string;
-    options: string[];
+    options: BPickerOption[];
   }>({
     visible: false,
     title: "",
@@ -332,6 +345,8 @@ export default function VehiculeFormScreen() {
   const textColor = isDark ? "#F2F5FF" : "#1F2737";
   const labelColor = isDark ? "#AEB9D3" : "#6D768B";
   const mutedBlock = isDark ? "#212838" : "#EEF2FA";
+  const inputBg = isDark ? "#242735" : "#F9F9FC";
+  const primaryColor = "#1F8B82";
 
   const clientType = useMemo(() => {
     if (!selectedClient) return TYPES_PERSONNES[0];
@@ -359,9 +374,15 @@ export default function VehiculeFormScreen() {
     setPickerState((prev) => ({ ...prev, visible: false, field: undefined }));
   };
 
-  const selectPickerOption = (value: string) => {
+  const getPickerSelectedId = () => {
+    if (!pickerState.field) return undefined;
+    const selectedLabel = formData[pickerState.field];
+    return pickerState.options.find((option) => option.label === selectedLabel)?.id;
+  };
+
+  const selectPickerOption = (option: BPickerOption) => {
     if (pickerState.field) {
-      updateField(pickerState.field, value as VehicleFormState[typeof pickerState.field]);
+      updateField(pickerState.field, option.label as VehicleFormState[typeof pickerState.field]);
     }
     closePicker();
   };
@@ -591,6 +612,22 @@ export default function VehiculeFormScreen() {
     });
   };
 
+  const applyClientAsConducteur = () => {
+    if (!selectedClient) return;
+
+    updateField("libTypeConducteur", selectedClient.typeId === 2 ? TYPES_PERSONNES[1] : TYPES_PERSONNES[0]);
+    updateField("nomConducteur", `${selectedClient.nom} ${selectedClient.prenoms ?? ""}`.trim());
+    updateField("telConducteur", selectedClient.tel ?? selectedClient.mobile ?? "");
+    updateField("emailConducteur", selectedClient.email ?? "");
+    updateField("boitePostaleConducteur", selectedClient.bP ?? "");
+    updateField("libProfessionConducteur", selectedClient.libProfession ?? "");
+  };
+
+  useEffect(() => {
+    if (!formData.conducteurLuiMeme) return;
+    applyClientAsConducteur();
+  }, [selectedClient, formData.conducteurLuiMeme]);
+
   const renderTextInput = (
     label: string,
     value: string,
@@ -598,25 +635,35 @@ export default function VehiculeFormScreen() {
     placeholder = "",
     keyboardType: "default" | "numeric" | "phone-pad" | "email-address" = "default",
     editable = true,
+    icon: React.ComponentProps<typeof MaterialIcons>["name"] = "edit-note",
   ) => (
-    <View style={styles.field}>
+    <View style={styles.fieldGroup}>
       <ThemedText style={[styles.label, { color: labelColor }]}>{label}</ThemedText>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={labelColor}
-        keyboardType={keyboardType}
-        editable={editable}
+      <View
         style={[
-          styles.input,
+          styles.inputRow,
           {
-            backgroundColor: mutedBlock,
+            backgroundColor: inputBg,
             borderColor,
-            color: editable ? textColor : labelColor,
           },
         ]}
-      />
+      >
+        <MaterialIcons name={icon} size={16} color={labelColor} />
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={labelColor}
+          keyboardType={keyboardType}
+          editable={editable}
+          style={[
+            styles.inputText,
+            {
+              color: editable ? textColor : labelColor,
+            },
+          ]}
+        />
+      </View>
     </View>
   );
 
@@ -625,6 +672,7 @@ export default function VehiculeFormScreen() {
     value: number,
     onChangeNumber: (next: number) => void,
     placeholder = "0",
+    icon: React.ComponentProps<typeof MaterialIcons>["name"] = "pin",
   ) =>
     renderTextInput(
       label,
@@ -632,6 +680,8 @@ export default function VehiculeFormScreen() {
       (next) => onChangeNumber(toNumber(next)),
       placeholder,
       "numeric",
+      true,
+      icon,
     );
 
   const renderSelect = (
@@ -639,14 +689,16 @@ export default function VehiculeFormScreen() {
     value: string,
     onPress: () => void,
     showLabel = true,
+    icon: React.ComponentProps<typeof MaterialIcons>["name"] = "list-alt",
   ) => (
-    <View style={styles.field}>
+    <View style={styles.fieldGroup}>
       {showLabel && <ThemedText style={[styles.label, { color: labelColor }]}>{label}</ThemedText>}
-      <Pressable onPress={onPress} style={[styles.select, { backgroundColor: mutedBlock, borderColor }]}>
-        <ThemedText style={{ color: value ? textColor : labelColor, flex: 1 }}>
+      <Pressable onPress={onPress} style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}> 
+        <MaterialIcons name={icon} size={16} color={labelColor} />
+        <ThemedText style={[styles.selectBtnText, { color: value ? textColor : labelColor }]}>
           {value || "Sélectionner"}
         </ThemedText>
-        <MaterialIcons name="expand-more" size={20} color={labelColor} />
+        <MaterialIcons name="arrow-drop-down" size={20} color={labelColor} />
       </Pressable>
     </View>
   );
@@ -837,13 +889,18 @@ export default function VehiculeFormScreen() {
 
             <View style={styles.field}>
               <ThemedText style={[styles.label, { color: labelColor }]}>Commentaires</ThemedText>
-              <TextInput
-                multiline
-                numberOfLines={4}
-                value={formData.commentaires}
-                onChangeText={(value) => updateField("commentaires", value)}
-                style={[styles.textArea, { backgroundColor: mutedBlock, color: textColor, borderColor }]}
-              />
+              <View style={[styles.inputRow, styles.textareaRow, { backgroundColor: inputBg, borderColor }]}>
+                <MaterialIcons name="notes" size={16} color={labelColor} />
+                <TextInput
+                  multiline
+                  numberOfLines={4}
+                  value={formData.commentaires}
+                  onChangeText={(value) => updateField("commentaires", value)}
+                  style={[styles.inputText, styles.textareaInput, { color: textColor }]}
+                  placeholder="Commentaires utiles..."
+                  placeholderTextColor={labelColor}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -856,7 +913,13 @@ export default function VehiculeFormScreen() {
 
             <Pressable
               style={styles.checkboxRow}
-              onPress={() => updateField("conducteurLuiMeme", !formData.conducteurLuiMeme)}
+              onPress={() => {
+                const nextValue = !formData.conducteurLuiMeme;
+                updateField("conducteurLuiMeme", nextValue);
+                if (nextValue) {
+                  applyClientAsConducteur();
+                }
+              }}
             >
               <View style={[styles.checkbox, { borderColor }]}> 
                 {formData.conducteurLuiMeme && <View style={styles.checkboxDot} />}
@@ -866,28 +929,41 @@ export default function VehiculeFormScreen() {
               </ThemedText>
             </Pressable>
 
-            <View style={styles.grid2}>
-              {renderSelect(
-                "Type assuré",
-                formData.libTypeConducteur,
-                () => openPicker("libTypeConducteur", "Choisir le type", TYPES_PERSONNES),
-              )}
-              {renderSelect(
-                "Profession",
-                formData.libProfessionConducteur,
-                () => openPicker("libProfessionConducteur", "Choisir une profession", professionsOptions),
-              )}
-            </View>
+            {formData.conducteurLuiMeme ? (
+              <View style={[styles.inlineInfo, { borderColor, backgroundColor: mutedBlock }]}>
+                <MaterialIcons name="person" size={16} color={primaryColor} />
+                <View style={styles.conducteurSummaryWrap}>
+                  <ThemedText style={[styles.conducteurSummaryTitle, { color: textColor }]}> 
+                    {formData.nomConducteur || "Conducteur basé sur le client"}
+                  </ThemedText>
+                  <ThemedText style={[styles.conducteurSummaryText, { color: labelColor }]}> 
+                    {formData.telConducteur || "Téléphone non renseigné"}
+                  </ThemedText>
+                  <ThemedText style={[styles.conducteurSummaryText, { color: labelColor }]}> 
+                    {formData.emailConducteur || "Email non renseigné"}
+                  </ThemedText>
+                </View>
+              </View>
+            ) : (
+              <>
+                {renderSelect(
+                  "Type assuré",
+                  formData.libTypeConducteur,
+                  () => openPicker("libTypeConducteur", "Choisir le type", TYPES_PERSONNES),
+                )}
+                {renderSelect(
+                  "Profession",
+                  formData.libProfessionConducteur,
+                  () => openPicker("libProfessionConducteur", "Choisir une profession", professionsOptions),
+                )}
 
-            <View style={styles.grid2}>
-              {renderTextInput("Nom assuré", formData.nomConducteur, (value) => updateField("nomConducteur", value))}
-              {renderTextInput("Téléphone", formData.telConducteur, (value) => updateField("telConducteur", value), "+225 xx xx xx xx", "phone-pad")}
-            </View>
+                {renderTextInput("Nom assuré", formData.nomConducteur, (value) => updateField("nomConducteur", value))}
+                {renderTextInput("Téléphone", formData.telConducteur, (value) => updateField("telConducteur", value), "+225 xx xx xx xx", "phone-pad")}
 
-            <View style={styles.grid2}>
-              {renderTextInput("Email", formData.emailConducteur, (value) => updateField("emailConducteur", value), "email@example.com", "email-address")}
-              {renderTextInput("Boite postale", formData.boitePostaleConducteur, (value) => updateField("boitePostaleConducteur", value))}
-            </View>
+                {renderTextInput("Email", formData.emailConducteur, (value) => updateField("emailConducteur", value), "email@example.com", "email-address")}
+                {renderTextInput("Boite postale", formData.boitePostaleConducteur, (value) => updateField("boitePostaleConducteur", value))}
+              </>
+            )}
           </View>
         )}
       </ScrollView>
@@ -901,7 +977,7 @@ export default function VehiculeFormScreen() {
           <ThemedText style={styles.footerButtonText}>Annuler</ThemedText>
         </Pressable>
         <Pressable
-          style={[styles.footerButton, { backgroundColor: COLORS.primaryColor, opacity: isSubmitting ? 0.7 : 1 }]}
+          style={[styles.footerButton, { backgroundColor: primaryColor, opacity: isSubmitting ? 0.7 : 1 }]}
           onPress={handleSubmit}
           disabled={isSubmitting}
         >
@@ -914,10 +990,16 @@ export default function VehiculeFormScreen() {
       <BottomPickerModal
         visible={pickerState.visible}
         title={pickerState.title}
-        options={pickerState.options.map((o): BPickerOption => ({ id: o, label: o }))}
-        selectedId={pickerState.field ? formData[pickerState.field] : undefined}
-        searchable={pickerState.options.length > 8}
-        onSelect={(opt) => selectPickerOption(opt.label)}
+        options={pickerState.options}
+        selectedId={getPickerSelectedId()}
+        searchable={
+          pickerState.options.length > 8
+          || pickerState.field === "libMarque"
+          || pickerState.field === "libCouleur"
+        }
+        creatableFromSearch={pickerState.field === "libMarque" || pickerState.field === "libCouleur"}
+        createPrefixLabel="Saisir"
+        onSelect={selectPickerOption}
         onClose={closePicker}
       />
 
@@ -1111,31 +1193,48 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
+  fieldGroup: {
+    flex: 1,
+    gap: 4,
+  },
   label: {
     fontSize: 12,
     fontWeight: "700",
   },
-  input: {
-    minHeight: 42,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 11,
-    fontSize: 13,
-  },
-  select: {
-    minHeight: 42,
+  inputRow: {
+    minHeight: 44,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 11,
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
   },
-  textArea: {
-    minHeight: 108,
+  inputText: {
+    flex: 1,
+    fontSize: 13,
+    paddingVertical: 6,
+  },
+  selectBtn: {
+    minHeight: 44,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 11,
-    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  selectBtnText: {
+    flex: 1,
+    fontSize: 13,
+  },
+  textareaRow: {
+    minHeight: 108,
+    alignItems: "flex-start",
+    paddingTop: 10,
+  },
+  textareaInput: {
+    minHeight: 84,
     textAlignVertical: "top",
   },
   grid2: {
@@ -1337,5 +1436,16 @@ const styles = StyleSheet.create({
   },
   clientPickerEmptyText: {
     fontSize: 13,
+  },
+  conducteurSummaryWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  conducteurSummaryTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  conducteurSummaryText: {
+    fontSize: 12,
   },
 });
