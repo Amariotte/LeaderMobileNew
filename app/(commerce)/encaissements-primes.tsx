@@ -10,12 +10,7 @@ import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/u
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import {
-  createEncaissementPrime,
-  deleteEncaissementPrime,
-  getfetchEncaissementsPrimes,
-  updateEncaissementPrime,
-} from "@/services/api-service";
+import { createEncaissementPrime, deleteEncaissementPrime, getfetchEncaissementsPrimes, updateEncaissementPrime } from "@/services/api-finances";
 import { formatDate, formatNumber } from "@/tools/tools";
 import { encaissementPrime } from "@/types/encaissementPrime.type";
 

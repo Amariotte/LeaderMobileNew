@@ -19,12 +19,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import {
-  createOperationDiverse,
-  deleteOperationDiverse,
-  getfetchOperationsDiverses,
-  updateOperationDiverse,
-} from "@/services/api-service";
+import { createOperationDiverse, deleteOperationDiverse, getfetchOperationsDiverses, updateOperationDiverse } from "@/services/api-finances";
 import { formatDate, formatNumber } from "@/tools/tools";
 import { operation, typeMouvementColorMap } from "@/types/operations.type";
 

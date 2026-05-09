@@ -1,5 +1,8 @@
 import apiConfig from "@/config/api";
-import { userDataFake, userDataFakeAuthResponse } from "@/data/datas.fake";
+import {
+  userDataFake,
+  userDataFakeAuthResponse
+} from "@/data/fake/user.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
 import { AuthResponse, user } from "@/types/user.type";
 import { ImageSource } from "expo-image";

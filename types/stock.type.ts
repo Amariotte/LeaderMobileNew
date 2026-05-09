@@ -15,7 +15,7 @@ export type stockCourtier = {
 export type stockCourtierForm = {
   compagnieId: number
   qteRecuees?: number
-  qteRetirees: number
+  qteRetirees?: number
 };
 
 
@@ -44,7 +44,7 @@ export type stockPartenaireForm = {
   partenaireId: number
   typeId: number
   qteRecuees?: number
-  qteRetirees: number
+  qteRetirees?: number
 };
 
 

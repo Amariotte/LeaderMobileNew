@@ -19,6 +19,7 @@ export enum Params {
   ZONES_CIRCULATIONS = "ZONES_CIRCULATIONS",
   GROUPES_ZONES = "GROUPES_ZONES",
   MOTIFS_ANNULATIONS = "MOTIF_ANNULATIONS",
+  COMPAGNIES  = "COMPAGNIES",
 }
 
 export { Params as params };
@@ -90,4 +91,5 @@ export type parametresData = {
   zones_circulations?: { data: itemDefaut[] };
   groupes_zones?: { data: itemDefaut[] };
   motifs_annulations?: { data: itemDefaut[] };
+  compagnies?: { data: itemDefaut[] };
 };
