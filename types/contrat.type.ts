@@ -60,7 +60,7 @@ export type contrat = {
   frais?: number;
   regle :number;   
 
-  contratVehicule?: contratVehicule[];
+  contratDetails?: contratVehicule[];
 };
 
 export type listContrats = {
@@ -72,9 +72,44 @@ export type listContrats = {
 export type contratVehicule = {
   id: number;
   vehiculeId?: number;
-  categorie: string;
+  usageId?: number;
+  genreId?: number;
+  marqueId?: number;
+  modele?: string;
+  typeId?: number;
+  groupeZoneId?: number;
+  energieId?: number;
+  nbPlaces?: number;
+  carrosserieId?: number;
+  valeurVenale?: number;
+  valeurNeuve?: number;
+  puissance?: number;
+  categorieId?: number;
   numeroPolice: string;
   numeroAttestation: string;
+  immatriculation: string;
+  dateImmatriculation: Date;
+  date1ereMiseEnCirculation: Date;
+  numSerieOuChassis: string;
+  chargeUtile: number;
+  cylindree: number;
+  nbCarte: number;
+  zoneCirculationId: number;
+  typeAttestationId: number;
+  cedeao: number;
+  numCedeao: string;
+  numMoteur: string;
+  montantRc: number;
+
+usageNom?: string;
+typeNom?: string;
+energieNom?: string;
+carrosserieNom?: string;
+marqueNom?: string;
+categorieNom?: string;
+genreNom?: string;
+groupeZoneNom?: string;
+
 
   assure: {
     typeId: number;

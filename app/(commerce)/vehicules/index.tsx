@@ -37,11 +37,6 @@ export default function VehiculesScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const lastPayloadRef = useRef<string>("");
 
-  const initialVehicules = useMemo(
-    () => ({ meta: { page: 1, next: 1, totalPages: 1, total: 0, size: 0 }, data: [] }),
-    [],
-  );
-
   useEffect(() => {
     if (!userToken) return;
     setIsLoading(true);

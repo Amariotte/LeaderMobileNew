@@ -6,7 +6,6 @@ import { Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { contratsFakeData } from "@/data/datas.fake";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
@@ -18,38 +17,8 @@ import { contrat } from "@/types/contrat.type";
 import { vehicule } from "@/types/vehicule.type";
 
 
-type ContractListItem = Omit<contrat, "categorie"> & {
-  categorie: contrat["categorie"] | string;
-  immatriculation?: string;
-  numeroAttestation?: string;
-  assureType?: string;
-  assureNom?: string;
-  assureTel?: string;
-  assureEmail?: string;
-  assureBp?: string;
-  souscripteurType?: string;
-  souscripteurNom?: string;
-  souscripteurTel?: string;
-  souscripteurEmail?: string;
-  souscripteurBp?: string;
-  souscripteurProfession?: string;
-  souscripteurTypeId?: number;
-  souscripteurProfessionId?: number;
-  agence?: string;
-  compagnie?: string;
-  duree?: string;
-  nombreJours?: number;
-  couverture?: string;
-  client?: client;
-  vehicule?: vehicule;
-};
+type ContractFormPayload = Partial<contrat> & Record<string, unknown>;
 
-type ContractFormPayload = Partial<ContractListItem> & {
-  souscripteurTypeId?: number;
-  souscripteurProfessionId?: number;
-};
-
-const INITIAL_CONTRATS: ContractListItem[] = contratsFakeData.data as unknown as ContractListItem[];
 
 type ContractFilters = {
   numeroContrat: string;
@@ -130,7 +99,7 @@ export default function ContratsScreen() {
   }, [vehiculeData]);
 
   const [searchText, setSearchText] = useState("");
-  const [contratsList, setContratsList] = useState<ContractListItem[]>(INITIAL_CONTRATS);
+  const [contratsList, setContratsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<ContractFilters>(EMPTY_FILTERS);
@@ -143,7 +112,7 @@ export default function ContratsScreen() {
 
     setIsLoading(true);
     getfetchContrats(userToken)
-      .then((res) => setContratsList((res.data ?? []) as unknown as ContractListItem[]))
+      .then((res) => setContratsList(res?.data ?? []))
       .catch(() => setContratsList([]))
       .finally(() => setIsLoading(false));
   }, [userToken]);
@@ -168,63 +137,46 @@ export default function ContratsScreen() {
         setContratsList((prev) =>
           prev.map((item) => (
             item.id === payload.id
-              ? ({ ...item, ...payload, regle: payload.regle ?? item.regle ?? 0 } as ContractListItem)
+              ? ({ ...item, ...payload, regle: Number(payload.regle ?? item.regle ?? 0) } as contrat)
               : item
           )),
         );
       } else {
         const nextId = Math.max(0, ...contratsList.map((item) => item.id)) + 1;
-        const newContrat: ContractListItem = {
-          id: payload.id ?? nextId,
-          numeroContrat: payload.numeroContrat,
-          categorie: payload.categorie ?? "NOUVELLE AFFAIRE",
-          type: payload.type ?? 0,
-          dateContrat: payload.dateContrat ?? new Date(),
-          numeroPolice: payload.numeroPolice ?? "",
-          numeroAttestation: payload.numeroAttestation ?? "",
-          immatriculation: payload.immatriculation ?? selectedVehicle?.numImmatriculation ?? "",
-          assureType: payload.assureType ?? "PERSONNE PHYSIQUE",
-          assureNom: payload.assureNom ?? "",
-          assureTel: payload.assureTel ?? "",
-          assureEmail: payload.assureEmail ?? "",
-          assureBp: payload.assureBp ?? "",
-          souscripteur: payload.souscripteur ?? {
-            typeId: payload.souscripteurTypeId ?? 0,
-            professionId: payload.souscripteurProfessionId ?? 0,
-            type: payload.souscripteurType ?? "PERSONNE PHYSIQUE",
-            nom: payload.souscripteurNom ?? "",
-            tel: payload.souscripteurTel ?? "",
-            email: payload.souscripteurEmail ?? "",
-            bp: payload.souscripteurBp ?? "",
-            profession: payload.souscripteurProfession ?? "",
+        const newContrat: contrat = {
+          id: Number(payload.id ?? nextId),
+          numeroContrat: String(payload.numeroContrat ?? ""),
+          categorie: Number(payload.categorie ?? 0),
+          type: Number(payload.type ?? 0),
+          dateContrat: (payload.dateContrat as Date) ?? new Date(),
+          numeroPolice: String(payload.numeroPolice ?? ""),
+          souscripteur: (payload.souscripteur as contrat["souscripteur"]) ?? {
+            typeId: Number(payload.souscripteurTypeId ?? 0),
+            professionId: Number(payload.souscripteurProfessionId ?? 0),
+            type: String(payload.souscripteurType ?? "PERSONNE PHYSIQUE"),
+            nom: String(payload.souscripteurNom ?? ""),
+            tel: String(payload.souscripteurTel ?? ""),
+            email: String(payload.souscripteurEmail ?? ""),
+            bp: String(payload.souscripteurBp ?? ""),
+            profession: String(payload.souscripteurProfession ?? ""),
           },
-          souscripteurType: payload.souscripteurType ?? "PERSONNE PHYSIQUE",
-          souscripteurNom: payload.souscripteurNom ?? "",
-          souscripteurTel: payload.souscripteurTel ?? "",
-          souscripteurEmail: payload.souscripteurEmail ?? "",
-          souscripteurBp: payload.souscripteurBp ?? "",
-          agence: payload.agence ?? "",
-          compagnie: payload.compagnie ?? "",
-          duree: payload.duree ?? "",
-          nombreJours: payload.nombreJours ?? 0,
-          couverture: payload.couverture ?? "",
-          agenceNom: payload.agenceNom ?? payload.agence ?? "",
-          compagnieNom: payload.compagnieNom ?? payload.compagnie ?? "",
-          partenaireNom: payload.partenaireNom ?? "",
-          baremeNom: payload.baremeNom ?? "",
-          nbJours: payload.nbJours ?? payload.nombreJours ?? 0,
-          couvertureNom: payload.couvertureNom ?? payload.couverture ?? "",
-          dateEffet: payload.dateEffet,
-          dateEcheance: payload.dateEcheance,
-          primeNette: payload.primeNette ?? 0,
-          accessoires: payload.accessoires ?? 0,
-          taxe: payload.taxe ?? 0,
-          taxeFga: payload.taxeFga ?? 0,
-          cedeao: payload.cedeao ?? 0,
-          netAPayer: payload.netAPayer ?? 0,
-          regle: payload.regle ?? 0,
-          client: payload.client ?? selectedClient,
-          vehicule: payload.vehicule ?? selectedVehicle,
+          agenceNom: String(payload.agenceNom ?? payload.agence ?? ""),
+          compagnieNom: String(payload.compagnieNom ?? payload.compagnie ?? ""),
+          partenaireNom: String(payload.partenaireNom ?? ""),
+          typeNom: String(payload.typeNom ?? ""),
+          categorieNom: String(payload.categorieNom ?? ""),
+          baremeNom: String(payload.baremeNom ?? ""),
+          nbJours: Number(payload.nbJours ?? payload.nombreJours ?? 0),
+          couvertureNom: String(payload.couvertureNom ?? payload.couverture ?? ""),
+          dateEffet: payload.dateEffet as Date | undefined,
+          dateEcheance: payload.dateEcheance as Date | undefined,
+          primeNette: Number(payload.primeNette ?? 0),
+          accessoires: Number(payload.accessoires ?? 0),
+          taxe: Number(payload.taxe ?? 0),
+          taxeFga: Number(payload.taxeFga ?? 0),
+          cedeao: Number(payload.cedeao ?? 0),
+          netAPayer: Number(payload.netAPayer ?? 0),
+          regle: Number(payload.regle ?? 0),
         };
 
         setContratsList((prev) => [newContrat, ...prev]);
@@ -337,7 +289,7 @@ export default function ContratsScreen() {
     });
   };
 
-  const handleEdit = (item: ContractListItem) => {
+  const handleEdit = (item: contrat) => {
     router.push({
       pathname: "/(commerce)/contrats/form",
       params: {
@@ -351,7 +303,7 @@ export default function ContratsScreen() {
 
   const { showConfirm, showMessage } = usePopup();
 
-  const handleCancelContract = async (item: ContractListItem) => {
+  const handleCancelContract = async (item: contrat) => {
     if (!userToken) {
       showMessage("error", "Session invalide", "Veuillez vous reconnecter.");
       return;
@@ -362,7 +314,7 @@ export default function ContratsScreen() {
       setContratsList((prev) =>
         prev.map((c) =>
           c.id === item.id
-            ? ({ ...c, ...updated, categorie: "ANNULÉ" } as ContractListItem)
+            ? ({ ...c, ...updated } as contrat)
             : c,
         ),
       );
@@ -372,7 +324,7 @@ export default function ContratsScreen() {
     }
   };
 
-  const handleDelete = (item: ContractListItem) => {
+  const handleDelete = (item: contrat) => {
     showConfirm(
       "error",
       "Supprimer le contrat",
@@ -439,23 +391,23 @@ export default function ContratsScreen() {
           <ThemedText style={{ color: mutedText, textAlign: "center", marginTop: 8 }}>Chargement des contrats...</ThemedText>
         ) : (
         <>
-        {filteredContrats.map((item: ContractListItem) => {
-          const categoryLabel = item.categorieNom ?? "";
+        {filteredContrats.map((item) => {
+          const categoryLabel = String((item as any).categorieNom ?? item.categorie ?? "");
           const contractMode = categoryLabel.toLowerCase().includes("flotte")
             ? "Flotte"
             : "Auto";
           const status = categoryLabel.toLowerCase().includes("annul")
             ? "Annulé"
             : "Actif";
-          const immatriculation = item.immatriculation ?? item.vehicule?.numImmatriculation ?? "-";
-          const souscripteurDisplay = item.souscripteurNom ?? item.souscripteur?.nom ?? item.souscripteur?.tel ?? "-";
-          const compagnieDisplay = item.compagnie ?? item.compagnieNom ?? "-";
-          const couvertureDisplay = item.couverture ?? item.couvertureNom ?? "-";
-          const numeroAttestationDisplay = item.numeroAttestation ?? item.contratVehicule?.[0]?.numeroAttestation ?? "-";
-          const agenceDisplay = item.agence ?? item.agenceNom ?? "-";
-          const dureeDisplay = item.duree ?? (item.nbJours ? `${item.nbJours} jours` : "-");
-          const assureNomDisplay = item.assureNom ?? item.contratVehicule?.[0]?.assure?.nom ?? "-";
-          const assureTelDisplay = item.assureTel ?? item.contratVehicule?.[0]?.assure?.tel ?? "-";
+          const immatriculation = String((item as any).immatriculation ?? "-");
+          const souscripteurDisplay = String((item as any).souscripteurNom ?? item.souscripteur?.nom ?? item.souscripteur?.tel ?? "-");
+          const compagnieDisplay = String((item as any).compagnie ?? item.compagnieNom ?? "-");
+          const couvertureDisplay = String((item as any).couverture ?? item.couvertureNom ?? "-");
+          const numeroAttestationDisplay = String((item as any).numeroAttestation ?? item.contratVehicule?.[0]?.numeroAttestation ?? "-");
+          const agenceDisplay = String((item as any).agence ?? item.agenceNom ?? "-");
+          const dureeDisplay = String((item as any).duree ?? (item.nbJours ? `${item.nbJours} jours` : "-"));
+          const assureNomDisplay = String((item as any).assureNom ?? item.contratVehicule?.[0]?.assure?.nom ?? "-");
+          const assureTelDisplay = String((item as any).assureTel ?? item.contratVehicule?.[0]?.assure?.tel ?? "-");
 
           return (
           <View key={item.id} style={[styles.card, { backgroundColor: cardBackground, borderColor }]}> 
