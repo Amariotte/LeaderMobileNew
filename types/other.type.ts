@@ -1,13 +1,10 @@
 
-export type TypeAttestation = {
-  id: number;
-  code: string;
-  libelle: string;
-};
+
 
 export enum Params {
   BAREMES = "BAREMES",
   COUVERTURES = "COUVERTURES",
+  TYPES_ATTESTATIONS = "TYPES_ATTESTATIONS",
   TYPES = "TYPES",
   GENRES = "GENRES",
   CARROSSERIES = "CARROSSERIES",
@@ -64,6 +61,10 @@ export type stat = {
   sousCompte: number;
 };
 
+export type successMessage = {
+  message: string;
+};
+  
 
 export type dataChart = {
   mois: string;
@@ -92,4 +93,5 @@ export type parametresData = {
   groupes_zones?: { data: itemDefaut[] };
   motifs_annulations?: { data: itemDefaut[] };
   compagnies?: { data: itemDefaut[] };
+  types_attestations?: { data: itemDefaut[] };
 };

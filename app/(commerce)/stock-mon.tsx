@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getfetchMonStock } from "@/services/api-service";
+import { getfetchMonStock } from "@/services/api-stock";
 import { formatNumber } from "@/tools/tools";
 import { listStockProducteur } from "@/types/stock.type";
 

@@ -10,7 +10,7 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { useClientEditorModal } from "@/hooks/use-client-editor-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { createClient, getfetchClients, updateClient } from "@/services/api-service";
+import { createClient, deleteClient, getfetchClients, updateClient } from "@/services/api-service";
 import { getLabelTypeClient } from "@/tools/tools";
 import { client } from "@/types/client.type";
 import { useEffect, useState } from "react";
@@ -35,7 +35,7 @@ export default function ClientsScreen() {
   const [customersList, setCustomersList] = useState<client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const { showConfirm } = usePopup();
+  const { showConfirm, showMessage } = usePopup();
   const clientEditor = useClientEditorModal({
     createTitle: "Creer un nouveau client",
     getEditTitle: (selectedClient) => `Modifier ${selectedClient.code} - ${selectedClient.nom} ${selectedClient.prenoms}`,
@@ -107,12 +107,29 @@ export default function ClientsScreen() {
     }
   };
 
+  const handleConfirmDeleteClient = async (selectedClient: client) => {
+    if (!userToken) {
+      showMessage("error", "Session invalide", "Veuillez vous reconnecter.");
+      return;
+    }
+
+    try {
+      const response = await deleteClient(userToken, selectedClient.id ?? 0);
+      setCustomersList((prev) => prev.filter((c) => c.id !== selectedClient.id));
+      showMessage("success", "Client supprimé", response.message || "Le client a été supprimé avec succès.");
+    } catch {
+      showMessage("error", "Échec de suppression", "Impossible de supprimer ce client pour le moment.");
+    }
+  };
+
   const handleDeleteClient = (client: client) => {
     showConfirm(
       "error",
       "Supprimer le client",
       `Êtes-vous sûr de vouloir supprimer ${client.nom} ${client.prenoms} ?`,
-      () => setCustomersList((prev) => prev.filter((c) => c.id !== client.id)),
+      () => {
+        void handleConfirmDeleteClient(client);
+      },
       { confirmLabel: "Supprimer", cancelLabel: "Annuler" },
     );
   };

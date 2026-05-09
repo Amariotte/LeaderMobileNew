@@ -9,7 +9,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { getfetchVehicules } from "@/services/api-service";
+import { deleteVehicule, getfetchVehicules } from "@/services/api-service";
 import { client } from "@/types/client.type";
 import { vehicule } from "@/types/vehicule.type";
 
@@ -160,14 +160,31 @@ export default function VehiculesScreen() {
     });
   };
 
-  const { showConfirm } = usePopup();
+  const { showConfirm, showMessage } = usePopup();
+
+  const handleConfirmDelete = async (item: vehicule) => {
+    if (!userToken) {
+      showMessage("error", "Session invalide", "Veuillez vous reconnecter.");
+      return;
+    }
+
+    try {
+      const response = await deleteVehicule(userToken, item.id);
+      setVehiculesList((prev) => prev.filter((v) => v.id !== item.id));
+      showMessage("success", "Véhicule supprimé", response.message || "Le véhicule a été supprimé avec succès.");
+    } catch {
+      showMessage("error", "Échec de suppression", "Impossible de supprimer ce véhicule pour le moment.");
+    }
+  };
 
   const handleDelete = (item: vehicule) => {
     showConfirm(
       "error",
       "Supprimer le véhicule",
       `Supprimer le véhicule ${item.numImmatriculation} ?`,
-      () => setVehiculesList((prev) => prev.filter((v) => v.id !== item.id)),
+      () => {
+        void handleConfirmDelete(item);
+      },
       { confirmLabel: "Supprimer", cancelLabel: "Annuler" },
     );
   };

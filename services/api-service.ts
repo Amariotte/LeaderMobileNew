@@ -10,20 +10,17 @@ import { isModeDemoEnabled } from "@/tools/tools";
 import { client, listClients } from "@/types/client.type";
 import { contrat, listContrats } from "@/types/contrat.type";
 import {
-  cotation,
-  cotationLigneEdit,
-  deleteCotationLigneEdit,
-  listCotation,
+  listCotation
 } from "@/types/devis.type";
 import {
   itemDefaut,
   PaginationParams,
   parametresData,
-  params
+  params,
+  successMessage
 } from "@/types/other.type";
-import { listStockCourtier, listStockPartenaire, listStockProducteur, stockCourtier, stockCourtierForm } from "@/types/stock.type";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
-import { getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
+import { deleteJsonAuth, getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 import { fetchPaginatedList } from "./pagination-service";
 
 const LIMIT_RECENT_TRANSACTIONS = process.env
@@ -125,146 +122,6 @@ export async function annulerPolice(
   );
 }
 
-
-export async function getfetchCotationById(
-  token: string,
-  id: number,
-): Promise<cotation | null> {
-  if (isModeDemoEnabled()) {
-    return cotationsFakeData.data.filter((cotation) => cotation.id === id).length > 0
-      ? cotationsFakeData.data.filter((cotation) => cotation.id === id)[0]
-      : null;
-  }
-
-  const d = await getJsonAuth<cotation>(
-    `${apiConfig.endpoints.cotations}/${id}`,
-    token,
-  );
-
-  return d;
-}
-
-export async function postCotationLigne(
-  token: string,
-  ligne: cotationLigneEdit,
-  cotationId?: number,
-): Promise<cotation | null> {
-  if (isModeDemoEnabled()) {
-    if (!cotationId) {
-      return null;
-    }
-
-    const found = cotationsFakeData.data.find((cotation) => cotation.id === cotationId);
-    return found ?? null;
-  }
-
-  const endpoint = cotationId
-    ? `${apiConfig.endpoints.cotations}/${cotationId}`
-    : `${apiConfig.endpoints.cotations}`;
-
-  const d = await postJsonAuth<cotation, cotationLigneEdit>(endpoint, token, ligne);
-  return d;
-}
-
-export async function updateCotationLigne(
-  token: string,
-  cotationId: number,
-  ligneId: number,
-  ligne: cotationLigneEdit,
-): Promise<cotation | null> {
-  if (isModeDemoEnabled()) {
-    const found = cotationsFakeData.data.find((cotation) => cotation.id === cotationId);
-    return found ?? null;
-  }
-
-  const d = await postJsonAuth<cotation, cotationLigneEdit>(
-    `${apiConfig.endpoints.cotations}/${cotationId}/lignes/${ligneId}`,
-    token,
-    ligne,
-  );
-
-  return d;
-}
-
-export async function deleteCotationLigne(
-  token: string,
-  cotationId: number,
-  ligneId: number,
-  ligne: deleteCotationLigneEdit,
-): Promise<cotation | null> {
-  if (isModeDemoEnabled()) {
-    const found = cotationsFakeData.data.find((cotation) => cotation.id === cotationId);
-    return found ?? null;
-  }
-
-  const endpoint = `${apiConfig.endpoints.cotations}/${cotationId}/lignes/${ligneId}/delete`;
-  const d = await postJsonAuth<cotation, deleteCotationLigneEdit>(
-    endpoint,
-    token,
-    ligne,
-  );
-
-  return d;
-}
-
-export async function deleteCotation(token: string, id: number): Promise<boolean> {
-  if (isModeDemoEnabled()) {
-    const initialLength = cotationsFakeData.data.length;
-    cotationsFakeData.data = cotationsFakeData.data.filter(
-      (cotation) => cotation.id !== id,
-    );
-    return cotationsFakeData.data.length < initialLength;
-  }
-
-  await getJsonAuth<null>(`${apiConfig.endpoints.cotations}/${id}/delete`, token);
-  return true;
-}
-
-
-
-
-export async function postValidateCotation(
-  token: string,
-  id: number,
-): Promise<cotation | null> {
-  if (isModeDemoEnabled()) {
-    const initialLength = cotationsFakeData.data.length;
-    cotationsFakeData.data = cotationsFakeData.data.filter(
-      (cotation) => cotation.id !== id,
-    );
-    return cotationsFakeData.data.length < initialLength
-      ? (cotationsFakeData.data.find((cotation) => cotation.id === id) ?? null)
-      : null;
-  }
-
-  const d = await getJsonAuth<cotation>(
-    `${apiConfig.endpoints.cotations}/${id}/validate`,
-    token,
-  );
-  return d;
-}
-
-export async function postSaveCotation(
-  token: string,
-  id: number,
-): Promise<cotation | null> {
-  if (isModeDemoEnabled()) {
-    const initialLength = cotationsFakeData.data.length;
-    cotationsFakeData.data = cotationsFakeData.data.filter(
-      (cotation) => cotation.id !== id,
-    );
-    return cotationsFakeData.data.length < initialLength
-      ? (cotationsFakeData.data.find((cotation) => cotation.id === id) ?? null)
-      : null;
-  }
-
-  const d = await getJsonAuth<cotation>(
-    `${apiConfig.endpoints.cotations}/${id}/save`,
-    token,
-  );
-  return d;
-}
-
 export async function createClient(
   token: string,
   data: Partial<client>,
@@ -302,6 +159,46 @@ export async function updateClient(
     data,
   );
 }
+
+
+export async function deleteClient(
+  token: string,
+  id: number,
+): Promise<successMessage> {
+  if (isModeDemoEnabled()) {
+    const index = clientsFakeData.data.findIndex((c) => c.id === id);
+    if (index !== -1) {
+      clientsFakeData.data.splice(index, 1);
+      return { message: "Client supprimé avec succès" };
+    }
+
+    throw new Error("Client introuvable");
+  }
+  return deleteJsonAuth<successMessage>(
+    `${apiConfig.endpoints.clients}/${id}`,
+    token,
+  );
+}
+
+export async function deleteVehicule(
+  token: string,
+  id: number,
+): Promise<successMessage> {
+  if (isModeDemoEnabled()) {
+    const index = vehiculesFakeData.data.findIndex((v) => v.id === id);
+    if (index !== -1) {
+      vehiculesFakeData.data.splice(index, 1);
+      return { message: "Véhicule supprimé avec succès" };
+    }
+
+    throw new Error("Véhicule introuvable");
+  }
+  return deleteJsonAuth<successMessage>(
+    `${apiConfig.endpoints.vehicules}/${id}`,
+    token,
+  );
+}
+
 
 export async function getfetchVehicules(
   token: string,
@@ -400,44 +297,6 @@ export async function updateVehicule(
   );
 }
 
-export async function getfetchMonStock(token: string): Promise<listStockProducteur> {
-  if (isModeDemoEnabled()) {
-    return { data: [] };
-  }
-  const payload = await getJsonAuth<listStockProducteur>(apiConfig.endpoints.stockMe, token);
-    return payload
-}
-
-export async function getfetchStockProducteurs(token: string): Promise<listStockProducteur> {
-  if (isModeDemoEnabled()) {
-    return { data: [] };
-  }
-  
-  const payload = await getJsonAuth<listStockProducteur>(apiConfig.endpoints.stockProducteurs, token);
-  return payload
-
-}
-
-export async function getfetchStockCourtiers(token: string): Promise<listStockCourtier> {
-  if (isModeDemoEnabled()) {
-    return { data: [] };
-  }
-
-  const payload = await getJsonAuth<listStockCourtier>(apiConfig.endpoints.stockCourtiers, token);
-  return payload
-  
-}
-
-export async function getfetchStockPartenaires(token: string): Promise<listStockPartenaire> {
-  if (isModeDemoEnabled()) {
-    return { data: [] };
-  }
-  
-  const payload = await getJsonAuth<listStockPartenaire>(apiConfig.endpoints.stockPartenaires, token);
-   return payload
-
-}
-
 
 export async function getfetchParametres(token: string,tabParams: params[]): Promise<parametresData> {
   if (isModeDemoEnabled()) {
@@ -469,22 +328,4 @@ export async function getfetchCompagnies(token: string): Promise<itemDefaut[]> {
 
   const payload = await getfetchParametres(token, [params.COMPAGNIES]);
   return payload.compagnies?.data ?? [];
-}
-
-
-export async function movementStockCourtier(
-  token: string,
-  data: stockCourtierForm,
-): Promise<stockCourtier> {
-
-  if (isModeDemoEnabled()) {
-    const newStockCourtier: stockCourtier = {
-      compagnieId: data.compagnieId,
-      compagnieNom: `Compagnie ${data.compagnieId}`,
-    }
-   
-    return newStockCourtier;
-  }
-  const d = await postJsonAuth<stockCourtier, stockCourtierForm>( apiConfig.endpoints.stockCourtiers, token, data);
-  return d ;
 }

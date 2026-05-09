@@ -1,5 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
@@ -9,9 +9,13 @@ import BottomPickerModal, { PickerOption } from "@/components/ui/bottom-picker-m
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { getfetchStockPartenaires } from "@/services/api-service";
+import { getfetchPartenaires } from "@/services/api-partenaires";
+import { getfetchParametres } from "@/services/api-service";
+import { getfetchStockCourtierById, getfetchStockCourtiers, getfetchStockPartenaireById, getfetchStockPartenaires, updateStockPartenaire } from "@/services/api-stock";
 import { formatNumber } from "@/tools/tools";
-import { listStockPartenaire } from "@/types/stock.type";
+import { itemDefaut, params } from "@/types/other.type";
+import { partenaire } from "@/types/partenaires";
+import { listStockCourtier, listStockPartenaire } from "@/types/stock.type";
 
 export default function StockPartenairesScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -31,6 +35,10 @@ export default function StockPartenairesScreen() {
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
   const [items, setItems] = useState<listStockPartenaire>({ data: [] });
+  const [courtiers, setCourtiers] = useState<listStockCourtier>({ data: [] });
+  const [compagnies, setCompagnies] = useState<itemDefaut[]>([]);
+  const [partenaires, setPartenaires] = useState<partenaire[]>([]);
+  const [typesAttestation, setTypesAttestation] = useState<itemDefaut[]>([]);
   const [loading, setLoading] = useState(false);
   const { userToken } = useAuthContext();
   const { showMessage } = usePopup();
@@ -45,54 +53,75 @@ export default function StockPartenairesScreen() {
   const [compagniePickerOpen, setCompagniePickerOpen] = useState(false);
   const [partenairePickerOpen, setPartenairePickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
- 
-  useEffect(() => {
+  const [submitting, setSubmitting] = useState(false);
+  const [currentCourtierStock, setCurrentCourtierStock] = useState(0);
+  const [currentPartenaireStock, setCurrentPartenaireStock] = useState(0);
+
+  const loadStocks = useCallback(async () => {
     if (!userToken) return;
     setLoading(true);
-    getfetchStockPartenaires(userToken)
-      .then((data) => setItems(data))
-      .catch(() => setItems({ data: [] }))
-      .finally(() => setLoading(false));
+    try {
+      const [partenairesData, courtiersData] = await Promise.all([
+        getfetchStockPartenaires(userToken),
+        getfetchStockCourtiers(userToken),
+      ]);
+      setItems(partenairesData);
+      setCourtiers(courtiersData);
+    } catch {
+      setItems({ data: [] });
+      setCourtiers({ data: [] });
+    } finally {
+      setLoading(false);
+    }
   }, [userToken]);
+ 
+  useEffect(() => {
+    loadStocks();
+  }, [loadStocks]);
+
+  useEffect(() => {
+    if (!userToken) return;
+
+    Promise.all([
+      getfetchPartenaires(userToken),
+      getfetchParametres(userToken, [params.TYPES_ATTESTATIONS,params.COMPAGNIES]),
+    ])
+      .then(([partenairesData, paramsData]) => {
+        setCompagnies(paramsData.compagnies?.data ??  []);
+        setPartenaires(partenairesData.data ?? []);
+        setTypesAttestation(paramsData.types_attestations?.data ??  []);
+      })
+      .catch(() => {
+        setCompagnies([]);
+        setPartenaires([]);
+        setTypesAttestation([]);
+      });
+  }, [userToken]);
+
 
   const compagnieOptions = useMemo<PickerOption[]>(
     () =>
-      Array.from(new Map(items.data.map((item) => [item.compagnieId, item.compagnieNom])).entries())
-        .map(([id, label]) => ({ id, label: label || "Compagnie inconnue" }))
+      compagnies
+        .map((item) => ({ id: item.id, label: item.libelle || "Compagnie inconnue" }))
         .sort((a, b) => a.label.localeCompare(b.label, "fr")),
-    [items.data],
+    [compagnies],
   );
 
   const partenaireOptions = useMemo<PickerOption[]>(
     () =>
-      Array.from(
-        new Map(
-          items.data
-            .filter((item) => selectedCompagnieId == null || item.compagnieId === selectedCompagnieId)
-            .map((item) => [item.partenaireId, item.partenaireNom]),
-        ).entries(),
-      )
-        .map(([id, label]) => ({ id, label: label || "Partenaire inconnu" }))
+      partenaires
+        .map((item) => ({ id: item.id ?? 0, label: item.nom || "Partenaire inconnu" }))
+        .filter((item) => item.id !== 0)
         .sort((a, b) => a.label.localeCompare(b.label, "fr")),
-    [items.data, selectedCompagnieId],
+    [partenaires],
   );
 
   const typeOptions = useMemo<PickerOption[]>(
     () =>
-      Array.from(
-        new Map(
-          items.data
-            .filter(
-              (item) =>
-                (selectedCompagnieId == null || item.compagnieId === selectedCompagnieId) &&
-                (selectedPartenaireId == null || item.partenaireId === selectedPartenaireId),
-            )
-            .map((item) => [item.typeId, item.typeNom]),
-        ).entries(),
-      )
-        .map(([id, label]) => ({ id, label: label || "Type inconnu" }))
+      typesAttestation
+        .map((item) => ({ id: item.id, label: item.libelle || "Type inconnu" }))
         .sort((a, b) => a.label.localeCompare(b.label, "fr")),
-    [items.data, selectedCompagnieId, selectedPartenaireId],
+    [typesAttestation],
   );
 
   const selectedItem = useMemo(
@@ -108,7 +137,43 @@ export default function StockPartenairesScreen() {
     [selectedCompagnieId, selectedPartenaireId, selectedTypeId, items.data],
   );
 
-  const currentStock = selectedItem?.qteDisponibles ?? 0;
+  useEffect(() => {
+    if (!userToken || selectedCompagnieId == null) {
+      setCurrentCourtierStock(0);
+      return;
+    }
+
+    getfetchStockCourtierById(userToken, selectedCompagnieId)
+      .then((stock) => setCurrentCourtierStock(stock?.qteDisponibles ?? 0))
+      .catch(() => setCurrentCourtierStock(0));
+  }, [userToken, selectedCompagnieId]);
+
+  useEffect(() => {
+    if (!userToken || selectedCompagnieId == null || selectedPartenaireId == null || selectedTypeId == null) {
+      setCurrentPartenaireStock(0);
+      return;
+    }
+
+    getfetchStockPartenaireById(userToken, selectedPartenaireId, selectedCompagnieId, selectedTypeId)
+      .then((stock) => setCurrentPartenaireStock(stock?.qteDisponibles ?? 0))
+      .catch(() => setCurrentPartenaireStock(0));
+  }, [userToken, selectedCompagnieId, selectedPartenaireId, selectedTypeId]);
+
+  
+  // Réinitialiser le type quand le partenaire change
+  useEffect(() => {
+    if (selectedPartenaireId != null && selectedTypeId != null) {
+      const typeExistsForPartner = items.data.some(
+        (item) =>
+          item.compagnieId === selectedCompagnieId &&
+          item.partenaireId === selectedPartenaireId &&
+          item.typeId === selectedTypeId
+      );
+      if (!typeExistsForPartner) {
+        setSelectedTypeId(null);
+      }
+    }
+  }, [selectedPartenaireId, selectedCompagnieId, selectedTypeId, items.data]);
 
   const openMovementPopup = (
     type: "add" | "remove",
@@ -124,7 +189,12 @@ export default function StockPartenairesScreen() {
     setMovementPopupOpen(true);
   };
 
-  const handleApplyStock = () => {
+  const handleApplyStock = async () => {
+    if (!userToken) {
+      showMessage("error", "Session invalide", "Veuillez vous reconnecter.");
+      return;
+    }
+
     if (!selectedItem) {
       showMessage("error", "Sélection requise", "Veuillez choisir une compagnie, un partenaire et un type.");
       return;
@@ -134,32 +204,34 @@ export default function StockPartenairesScreen() {
       showMessage("error", "Quantité invalide", "Saisissez uniquement des nombres positifs.");
       return;
     }
-    if (movementType === "remove" && qty > currentStock) {
+    if (movementType === "remove" && qty > currentPartenaireStock) {
       showMessage("error", "Stock insuffisant", "La quantité à retirer dépasse le stock disponible.");
       return;
     }
+
     const addQty = movementType === "add" ? qty : 0;
     const removeQty = movementType === "remove" ? qty : 0;
-    setItems((prev) => ({
-      ...prev,
-      data: prev.data.map((item) => {
-        if (
-          item.compagnieId !== selectedCompagnieId ||
-          item.partenaireId !== selectedPartenaireId ||
-          item.typeId !== selectedTypeId
-        )
-          return item;
-        return {
-          ...item,
-          qteRecues: (item.qteRecues ?? 0) + addQty,
-          qteRetirees: (item.qteRetirees ?? 0) + removeQty,
-          qteDisponibles: (item.qteDisponibles ?? 0) + addQty - removeQty,
-        };
-      }),
-    }));
-    setMovementQtyInput("");
-    setMovementPopupOpen(false);
-    showMessage("success", "Stock mis à jour", "Le mouvement de stock partenaire a été enregistré.");
+
+    try {
+      setSubmitting(true);
+      const payload = {
+        compagnieId: selectedCompagnieId ?? selectedItem.compagnieId,
+        partenaireId: selectedPartenaireId ?? selectedItem.partenaireId,
+        typeId: selectedTypeId ?? selectedItem.typeId,
+        qteMvt: addQty > 0 ? addQty : -removeQty,
+      };
+
+      const response = await updateStockPartenaire(userToken, payload);
+      await loadStocks();
+
+      setMovementQtyInput("");
+      setMovementPopupOpen(false);
+      showMessage("success", "Stock mis à jour", response?.message || "Le mouvement de stock partenaire a été enregistré.");
+    } catch {
+      showMessage("error", "Échec de mise à jour", "Impossible d'enregistrer le mouvement de stock.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filteredItems = useMemo(
@@ -360,9 +432,15 @@ export default function StockPartenairesScreen() {
               </Pressable>
             </View>
 
-            <View style={[styles.currentStockCard, { backgroundColor: softBlock }]}>
-              <ThemedText style={[styles.currentStockLabel, { color: mutedText }]}>Stock actuel</ThemedText>
-              <ThemedText style={styles.currentStockValue}>{formatNumber(currentStock)}</ThemedText>
+            <View style={styles.rowDuo}>
+              <View style={[styles.currentStockCard, styles.flex1, { backgroundColor: softBlock }]}>
+                <ThemedText style={[styles.currentStockLabel, { color: mutedText }]}>Stock courtier actuel</ThemedText>
+                <ThemedText style={styles.currentStockValue}>{formatNumber(currentCourtierStock)}</ThemedText>
+              </View>
+              <View style={[styles.currentStockCard, styles.flex1, { backgroundColor: softBlock }]}>
+                <ThemedText style={[styles.currentStockLabel, { color: mutedText }]}>Stock partenaire actuel</ThemedText>
+                <ThemedText style={styles.currentStockValue}>{formatNumber(currentPartenaireStock)}</ThemedText>
+              </View>
             </View>
 
             <View style={styles.fieldGroup}>
@@ -385,8 +463,13 @@ export default function StockPartenairesScreen() {
             </View>
 
             <Pressable
-              style={[styles.entrySubmitBtn, { backgroundColor: movementType === "add" ? "#16A34A" : "#E05252" }]}
+              style={[
+                styles.entrySubmitBtn,
+                { backgroundColor: movementType === "add" ? "#16A34A" : "#E05252" },
+                submitting && { opacity: 0.7 },
+              ]}
               onPress={handleApplyStock}
+              disabled={submitting}
             >
               <MaterialIcons name="save" size={16} color="#FFFFFF" />
               <ThemedText style={styles.entrySubmitText}>
@@ -396,6 +479,20 @@ export default function StockPartenairesScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+       <BottomPickerModal
+        visible={partenairePickerOpen}
+        title="Choisir un partenaire"
+        options={partenaireOptions}
+        selectedId={selectedPartenaireId ?? undefined}
+        searchable
+        onSelect={(option) => {
+          setSelectedPartenaireId(Number(option.id));
+          setSelectedTypeId(null);
+          setPartenairePickerOpen(false);
+        }}
+        onClose={() => setPartenairePickerOpen(false)}
+      />
 
       <BottomPickerModal
         visible={compagniePickerOpen}
@@ -411,19 +508,7 @@ export default function StockPartenairesScreen() {
         }}
         onClose={() => setCompagniePickerOpen(false)}
       />
-      <BottomPickerModal
-        visible={partenairePickerOpen}
-        title="Choisir un partenaire"
-        options={partenaireOptions}
-        selectedId={selectedPartenaireId ?? undefined}
-        searchable
-        onSelect={(option) => {
-          setSelectedPartenaireId(Number(option.id));
-          setSelectedTypeId(null);
-          setPartenairePickerOpen(false);
-        }}
-        onClose={() => setPartenairePickerOpen(false)}
-      />
+     
       <BottomPickerModal
         visible={typePickerOpen}
         title="Choisir un type d'attestation"
@@ -490,6 +575,8 @@ const styles = StyleSheet.create({
   currentStockCard: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   currentStockLabel: { fontSize: 12, fontWeight: "600" },
   currentStockValue: { fontSize: 20, fontWeight: "800", color: "#1F8B82" },
+  rowDuo: { flexDirection: "row", gap: 8 },
+  flex1: { flex: 1 },
   numberInputWrap: {
     height: 44,
     borderRadius: 10,

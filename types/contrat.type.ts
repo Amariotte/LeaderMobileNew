@@ -3,35 +3,30 @@ import { meta } from "./other.type";
 export type contrat = {
   id: number;
   numeroContrat: string;
-  categorie: string;
+  categorie: number;
+  type: number;
   numeroPolice: string;
-  numeroAttestation?: string;
   dateContrat: Date;
+  commentaires?: string;
+  descriptionRisques?: string;
+
+
 
   clientId?: number;
   agenceId?: number;
   compagnieId?: number;
   baremeId?: number;
   couvertureId?: number;
-  vehiculeId?: number;
-
-  // Flat vehicle field
-  immatriculation?: string;
-
-  // Flat assure fields
-  assureType?: string;
-  assureNom?: string;
-  assureTel?: string;
-  assureEmail?: string;
-  assureBp?: string;
-  assureProfession?: string;
-
-  // Flat souscripteur fields
-  souscripteurType?: string;
-  souscripteurNom?: string;
-  souscripteurTel?: string;
-  souscripteurEmail?: string;
-  souscripteurBp?: string;
+  partenaireId?: number;
+  operateurId?: number;
+  txTaxe?: number;
+  txFGA?: number;
+  txBareme?: number;
+  bAnnulee?: boolean;
+  annuleLe?: Date;
+  annulePar?: number;
+  dateAnnulation?: Date;
+  motifAnnulationId?: number;
 
   // Nested souscripteur (API format)
   souscripteur?: {
@@ -45,11 +40,14 @@ export type contrat = {
     profession: string;
   };
 
-  agence: string;
-  compagnie: string;
-  duree?: string;
-  nombreJours: number;
-  couverture: string;
+  agenceNom: string;
+  compagnieNom: string;
+  partenaireNom: string;
+  typeNom: string;
+  categorieNom: string;
+  baremeNom: string;
+  nbJours: number;
+  couvertureNom: string;
   dateEffet?: Date;
   dateEcheance?: Date;
 
@@ -59,10 +57,8 @@ export type contrat = {
   taxeFga?: number;
   cedeao?: number;
   netAPayer?: number;
-
-  // Linked objects
-  client?: Record<string, unknown>;
-  vehicule?: Record<string, unknown>;
+  frais?: number;
+  regle :number;   
 
   contratVehicule?: contratVehicule[];
 };

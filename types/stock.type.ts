@@ -14,8 +14,8 @@ export type stockCourtier = {
 
 export type stockCourtierForm = {
   compagnieId: number
-  qteRecuees?: number
-  qteRetirees?: number
+  qteMvt?: number
+  commentaires?: string
 };
 
 
@@ -43,8 +43,8 @@ export type stockPartenaireForm = {
   compagnieId: number
   partenaireId: number
   typeId: number
-  qteRecuees?: number
-  qteRetirees?: number
+  qteMvt?: number
+  commentaires?: string
 };
 
 
@@ -71,8 +71,8 @@ export type stockProducteurForm = {
   compagnieId: number
   producteurId: number
   typeId: number
-  qteRecuees?: number
-  qteRetirees: number
+  qteMvt?: number
+  commentaires?: string
 };
 
 

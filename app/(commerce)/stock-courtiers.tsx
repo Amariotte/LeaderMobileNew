@@ -1,5 +1,5 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
@@ -9,8 +9,10 @@ import BottomPickerModal, { PickerOption } from "@/components/ui/bottom-picker-m
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { getfetchStockCourtiers } from "@/services/api-service";
+import { getfetchCompagnies } from "@/services/api-service";
+import { getfetchStockCourtiers, updateStockCourtier } from "@/services/api-stock";
 import { formatNumber } from "@/tools/tools";
+import { itemDefaut } from "@/types/other.type";
 import { listStockCourtier } from "@/types/stock.type";
 
 
@@ -41,24 +43,42 @@ export default function StockCourtiersScreen() {
   const [movementType, setMovementType] = useState<"add" | "remove">("add");
   const [movementPopupOpen, setMovementPopupOpen] = useState(false);
   const [companyPickerOpen, setCompanyPickerOpen] = useState(false);
- 
-  useEffect(() => {
+  const [compagnies, setCompagnies] = useState<itemDefaut[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadStockCourtiers = useCallback(async () => {
     if (!userToken) return;
     setLoading(true);
-    getfetchStockCourtiers(userToken)
-      .then((data) => setItems(data))
-      .catch(() => setItems({ data: [] }))
-      .finally(() => setLoading(false));
+    try {
+      const data = await getfetchStockCourtiers(userToken);
+      setItems(data);
+    } catch {
+      setItems({ data: [] });
+    } finally {
+      setLoading(false);
+    }
+  }, [userToken]);
+ 
+  useEffect(() => {
+    loadStockCourtiers();
+  }, [loadStockCourtiers]);
+
+  useEffect(() => {
+    if (!userToken) return;
+
+    getfetchCompagnies(userToken)
+      .then((data) => setCompagnies(data))
+      .catch(() => setCompagnies([]));
   }, [userToken]);
 
   const stockCourtiers = items.data ?? [];
 
   const compagnieOptions = useMemo<PickerOption[]>(
     () =>
-      stockCourtiers
-        .map((item) => ({ id: item.compagnieId, label: item.compagnieNom || "Compagnie inconnue" }))
+      compagnies
+        .map((item) => ({ id: item.id, label: item.libelle || "Compagnie inconnue" }))
         .sort((a, b) => a.label.localeCompare(b.label, "fr")),
-    [stockCourtiers],
+    [compagnies],
   );
 
   const selectedCompagnie = useMemo(
@@ -95,12 +115,19 @@ export default function StockCourtiersScreen() {
     setMovementType(type);
     if (typeof compagnieId === "number") {
       setSelectedCompagnieId(compagnieId);
+    } else {
+      setSelectedCompagnieId((prev) => prev ?? stockCourtiers[0]?.compagnieId ?? null);
     }
     setMovementQtyInput("");
     setMovementPopupOpen(true);
   };
 
-  const handleApplyStock = () => {
+  const handleApplyStock = async () => {
+    if (!userToken) {
+      showMessage("error", "Session invalide", "Veuillez vous reconnecter.");
+      return;
+    }
+
     if (!selectedCompagnieId) {
       showMessage("error", "Compagnie requise", "Veuillez choisir une compagnie.");
       return;
@@ -121,28 +148,25 @@ export default function StockCourtiersScreen() {
       return;
     }
 
-    setItems((prev) => ({
-      ...prev,
-      data: prev.data.map((item) => {
-        if (item.compagnieId !== selectedCompagnieId) return item;
+    try {
+      setSubmitting(true);
 
-        const recues = item.qteRecues ?? 0;
-        const retirees = item.qteRetirees ?? 0;
-        const disponibles = item.qteDisponibles ?? 0;
+      const payload = {
+        compagnieId: selectedCompagnieId,
+        qteMvt: addQty > 0 ? addQty : -removeQty,
+      };
 
-        return {
-          ...item,
-          qteRecues: recues + addQty,
-          qteRetirees: retirees + removeQty,
-          qteRetireesAfterDistribuees: (item.qteRetireesAfterDistribuees ?? 0) + removeQty,
-          qteDisponibles: disponibles + addQty - removeQty,
-        };
-      }),
-    }));
+      const response = await updateStockCourtier(userToken, payload);
+      await loadStockCourtiers();
 
-    setMovementQtyInput("");
-    setMovementPopupOpen(false);
-    showMessage("success", "Stock mis à jour", "Le mouvement de stock courtier a été enregistré.");
+      setMovementQtyInput("");
+      setMovementPopupOpen(false);
+      showMessage("success", "Stock mis à jour", response?.message || "Le mouvement de stock courtier a été enregistré.");
+    } catch {
+      showMessage("error", "Échec de mise à jour", "Impossible d'enregistrer le mouvement de stock.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   
@@ -342,8 +366,10 @@ export default function StockCourtiersScreen() {
               style={[
                 styles.entrySubmitBtn,
                 { backgroundColor: movementType === "add" ? "#16A34A" : "#E05252" },
+                submitting && { opacity: 0.7 },
               ]}
               onPress={handleApplyStock}
+              disabled={submitting}
             >
               <MaterialIcons name="save" size={16} color="#FFFFFF" />
               <ThemedText style={styles.entrySubmitText}>
