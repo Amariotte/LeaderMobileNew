@@ -1,18 +1,18 @@
-﻿import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    View,
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import OperationDiverseFormModal, {
-  OperationDiverseFormData,
+    OperationDiverseFormData,
 } from "@/components/operation-diverse-form-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -104,7 +104,7 @@ export default function OperationsDiversesScreen() {
     return Array.from(s).sort();
   }, [operations]);
 
-  const typeOptions = ["Encaissement", "Décaissement"];
+  const typeOptions = useMemo(() => ["Encaissement", "Décaissement"], []);
 
   const agenceOptions = useMemo(() => {
     const map = new Map<number, string>();
@@ -198,7 +198,6 @@ export default function OperationsDiversesScreen() {
     }
   };
 
-  // Picker helper
   const pickerConfig = useMemo(() => {
     if (openPicker === "operateur") return { list: operateurs, current: filterOperateur, setter: setFilterOperateur, title: "Choisir un opérateur" };
     if (openPicker === "agence") return { list: agences, current: filterAgence, setter: setFilterAgence, title: "Choisir une agence" };

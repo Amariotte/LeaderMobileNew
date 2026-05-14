@@ -1,13 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -81,7 +81,7 @@ export default function ClientFormModal({
     } else if (formData.typeId === 1 && formData.civilite === 4) {
       setFormData((prev) => ({ ...prev, civilite: 1 }));
     }
-  }, [formData.typeId]);
+  }, [formData.civilite, formData.typeId]);
 
   useEffect(() => {
     if (!visible || !userToken) {
@@ -103,7 +103,6 @@ export default function ClientFormModal({
     setFormData((prev) => ({ ...prev, ...patch }));
 
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const softBlock = isDark ? "#242735" : "#F2F3F8";
   const borderColor = isDark ? "#363A4C" : "#E7EAF5";
   const textColor = isDark ? "#FFFFFF" : "#2D3142";
   const labelColor = isDark ? "#A8AEC7" : "#61637A";

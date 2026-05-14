@@ -71,7 +71,7 @@ export default function StockCourtiersScreen() {
       .catch(() => setCompagnies([]));
   }, [userToken]);
 
-  const stockCourtiers = items.data ?? [];
+  const stockCourtiers = useMemo(() => items.data ?? [], [items.data]);
 
   const compagnieOptions = useMemo<PickerOption[]>(
     () =>

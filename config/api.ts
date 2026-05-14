@@ -25,6 +25,7 @@ const apiConfig = {
     statistiques: "/statistiques",
     agences: "/partenaires/{idPartenaire}/agences",
     partenaires: "/partenaires",
+    basesVehicules: "/bases/vehicules",
   },
 };
 

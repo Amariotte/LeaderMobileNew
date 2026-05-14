@@ -391,7 +391,7 @@ export default function StockProducteursScreen() {
             </View>
 
             <View style={styles.fieldGroup}>
-              <ThemedText style={[styles.fieldLabel, { color: mutedText }]}>Type d'attestation</ThemedText>
+              <ThemedText style={[styles.fieldLabel, { color: mutedText }]}>Type d&apos;attestation</ThemedText>
               <Pressable
                 style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}
                 onPress={() => setTypePickerOpen(true)}

@@ -1,6 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -256,8 +256,8 @@ export default function VehiculeFormScreen() {
     nomConducteur: initialVehicle?.assure?.nom ?? "",
     telConducteur: initialVehicle?.assure?.tel ?? "",
     emailConducteur: initialVehicle?.assure?.email ?? "",
-    boitePostaleConducteur: initialVehicle?.assure?.bP ?? "",
-    libProfessionConducteur: initialVehicle?.assure?.libProfession ?? "",
+    boitePostaleConducteur: initialVehicle?.assure?.bp ?? "",
+    libProfessionConducteur: initialVehicle?.assure?.profession ?? "",
   });
 
   useEffect(() => {
@@ -353,9 +353,9 @@ export default function VehiculeFormScreen() {
     return selectedClient.typeId === 2 ? TYPES_PERSONNES[1] : TYPES_PERSONNES[0];
   }, [selectedClient]);
 
-  const updateField = <K extends keyof VehicleFormState>(key: K, value: VehicleFormState[K]) => {
+  const updateField = useCallback(<K extends keyof VehicleFormState>(key: K, value: VehicleFormState[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
   const openPicker = (
     field: VehicleSelectField,
@@ -438,7 +438,16 @@ export default function VehiculeFormScreen() {
 
     const payload: Partial<vehicule> = {
       id: initialVehicle?.id,
-      client: selectedClient,
+      souscripteur: {
+        nom: selectedClient.nom,
+        email: selectedClient.email,
+        tel: selectedClient.tel,
+        bp: selectedClient.bP,
+        typeId: selectedClient.typeId,
+        type: clientType,
+        professionId: selectedClient.professionId,
+        profession: selectedClient?.libProfession,
+      },
       clientId: selectedClient.id ?? 0,
       numImmatriculation: formData.numImmatriculation.trim().toUpperCase(),
       dateImmatriculation: parseDateInput(formData.dateImmatriculation),
@@ -485,10 +494,11 @@ export default function VehiculeFormScreen() {
         nom: formData.nomConducteur,
         email: formData.emailConducteur,
         tel: formData.telConducteur,
-        bP: formData.boitePostaleConducteur,
+        bp: formData.boitePostaleConducteur,
         typeId: formData.libTypeConducteur === TYPES_PERSONNES[1] ? 2 : 1,
+        type: formData.libTypeConducteur,
         professionId: findIdByLabel(formData.libProfessionConducteur, professionsOptions),
-        libProfession: formData.libProfessionConducteur,
+        profession: formData.libProfessionConducteur,
       },
     };
 
@@ -503,7 +513,6 @@ export default function VehiculeFormScreen() {
       const returnPayload: Partial<vehicule> = {
         ...payload,
         ...savedVehicule,
-        client: selectedClient,
       };
 
       showMessage(
@@ -612,7 +621,7 @@ export default function VehiculeFormScreen() {
     });
   };
 
-  const applyClientAsConducteur = () => {
+  const applyClientAsConducteur = useCallback(() => {
     if (!selectedClient) return;
 
     updateField("libTypeConducteur", selectedClient.typeId === 2 ? TYPES_PERSONNES[1] : TYPES_PERSONNES[0]);
@@ -621,12 +630,12 @@ export default function VehiculeFormScreen() {
     updateField("emailConducteur", selectedClient.email ?? "");
     updateField("boitePostaleConducteur", selectedClient.bP ?? "");
     updateField("libProfessionConducteur", selectedClient.libProfession ?? "");
-  };
+  }, [selectedClient, updateField]);
 
   useEffect(() => {
     if (!formData.conducteurLuiMeme) return;
     applyClientAsConducteur();
-  }, [selectedClient, formData.conducteurLuiMeme]);
+  }, [applyClientAsConducteur, formData.conducteurLuiMeme]);
 
   const renderTextInput = (
     label: string,

@@ -1,13 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -16,8 +16,9 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getfetchParametres } from "@/services/api-service";
 import { client } from "@/types/client.type";
+import { personne } from "@/types/contrat.type";
 import { itemDefaut, params } from "@/types/other.type";
-import { VehicleFormData, vehicule } from "@/types/vehicule.type";
+import { vehicule } from "@/types/vehicule.type";
 
 type VehicleFormModalProps = {
   visible: boolean;
@@ -30,6 +31,50 @@ type VehicleFormModalProps = {
 
 type VehicleFormTab = "caracteristiques" | "parametres" | "conducteur";
 type ActivePicker = { title: string; options: PickerOption[]; onSelect: (opt: PickerOption) => void } | null;
+type VehicleAssureForm = personne & { bP?: string; libProfession?: string };
+type VehicleFormState = Omit<Partial<vehicule>, "dateImmatriculation" | "dateMiseEnCirculation" | "assure"> & {
+  numImmatriculation: string;
+  dateImmatriculation: string;
+  dateMiseEnCirculation: string;
+  numSerie: string;
+  numCarteGrise: string;
+  numMoteur: string;
+  nbPlaces: number;
+  chargeUtile: number;
+  cylindree: number;
+  puissance: number;
+  valeurNeuve: number;
+  valeurVenale: number;
+  modele: string;
+  typeCommercial: string;
+  nbCartes: number;
+  commentaires: string;
+  luiMemeAssure: boolean;
+  usageId: number;
+  groupeZoneId: number;
+  genreId: number;
+  typeId: number;
+  carrosserieId: number;
+  energieId: number;
+  marqueId: number;
+  couleurId: number;
+  categorieId: number;
+  sousCategorieId: number;
+  villeId: number;
+  clientId: number;
+  zoneCirculationId: number;
+  libGenre: string;
+  libType: string;
+  libCarrosserie: string;
+  libEnergie: string;
+  libMarque: string;
+  libUsage: string;
+  libCategorie: string;
+  libSousCategorie: string;
+  libGroupeZone: string;
+  libZoneCirculation: string;
+  assure?: VehicleAssureForm;
+};
 
 const GENRES: itemDefaut[] = [];
 const VEHICLE_TYPES: itemDefaut[] = [];
@@ -43,6 +88,17 @@ const ZONES: itemDefaut[] = [];
 const MARQUES: itemDefaut[] = [];
 const COULEURS: itemDefaut[] = [];
 const PROFESSIONS: itemDefaut[] = [];
+
+const createEmptyAssure = (): VehicleAssureForm => ({
+  nom: "",
+  email: "",
+  typeId: 1,
+  professionId: 0,
+  type: "PERSONNE PHYSIQUE",
+  tel: "",
+  bp: "",
+  profession: "",
+});
 
 export default function VehicleFormModal({
   visible,
@@ -69,11 +125,11 @@ export default function VehicleFormModal({
   const [villeOptions, setVilleOptions] = useState<itemDefaut[]>(VILLES);
   const [zoneOptions, setZoneOptions] = useState<itemDefaut[]>(ZONES);
   const [marqueOptions, setMarqueOptions] = useState<itemDefaut[]>(MARQUES);
-  const [couleurOptions, setCouleurOptions] = useState<itemDefaut[]>(COULEURS);
+  const [, setCouleurOptions] = useState<itemDefaut[]>(COULEURS);
   const [professionOptions, setProfessionOptions] = useState<itemDefaut[]>(PROFESSIONS);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
-  const [formData, setFormData] = useState<VehicleFormData>({
+  const [formData, setFormData] = useState<VehicleFormState>({
     numImmatriculation: initialVehicle?.numImmatriculation ?? "",
     dateImmatriculation: initialVehicle?.dateImmatriculation ? String(initialVehicle.dateImmatriculation).slice(0, 10) : "",
     dateMiseEnCirculation: initialVehicle?.dateMiseEnCirculation ? String(initialVehicle.dateMiseEnCirculation).slice(0, 10) : "",
@@ -112,17 +168,15 @@ export default function VehicleFormModal({
     libUsage: initialVehicle?.libUsage ?? "",
     libCategorie: initialVehicle?.libCategorie ?? "",
     libSousCategorie: initialVehicle?.libSousCategorie ?? "",
-    libVille: initialVehicle?.libVille ?? "",
+    libGroupeZone: initialVehicle?.libGroupeZone ?? "",
     libZoneCirculation: initialVehicle?.libZoneCirculation ?? "",
-    assure: initialVehicle?.assure ?? {
-      nom: "",
-      email: "",
-      typeId: 1,
-      professionId: 0,
-      tel: "",
-      bP: "",
-      libProfession: "",
-    },
+    assure: initialVehicle?.assure
+      ? {
+          ...initialVehicle.assure,
+          bP: initialVehicle.assure.bp,
+          libProfession: initialVehicle.assure.profession,
+        }
+      : createEmptyAssure(),
   });
 
   useEffect(() => {
@@ -150,8 +204,8 @@ export default function VehicleFormModal({
         setMarqueOptions(payload.marques?.data ?? MARQUES);
         setCouleurOptions(payload.couleurs?.data ?? COULEURS);
         setProfessionOptions(payload.professions?.data ?? PROFESSIONS);
-        setZoneOptions(payload.zonesCirculations?.data ?? ZONES);
-        setVilleOptions(payload.groupesZones?.data ?? VILLES);
+        setZoneOptions(payload.zones_circulations?.data ?? ZONES);
+        setVilleOptions(payload.groupes_zones?.data ?? VILLES);
       })
       .catch(() => {
         setGenreOptions(GENRES);
@@ -169,14 +223,13 @@ export default function VehicleFormModal({
   }, [userToken, visible]);
 
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const softBlock = isDark ? "#242735" : "#F2F3F8";
   const borderColor = isDark ? "#363A4C" : "#E7EAF5";
   const textColor = isDark ? "#FFFFFF" : "#2D3142";
   const labelColor = isDark ? "#A8AEC7" : "#61637A";
   const inputBg = isDark ? "#242735" : "#F9F9FC";
   const primaryColor = "#1F8B82";
 
-  const updateField = <K extends keyof VehicleFormData>(key: K, value: VehicleFormData[K]) => {
+  const updateField = <K extends keyof VehicleFormState>(key: K, value: VehicleFormState[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -188,10 +241,19 @@ export default function VehicleFormModal({
     setValidationError(null);
     setIsSubmitting(true);
     try {
+      const assureToSubmit = formData.assure
+        ? {
+            ...formData.assure,
+            bp: formData.assure.bP ?? formData.assure.bp ?? "",
+            profession: formData.assure.libProfession ?? formData.assure.profession ?? "",
+          }
+        : undefined;
+
       const dataToSubmit: Partial<vehicule> = {
         ...formData,
         dateImmatriculation: formData.dateImmatriculation ? new Date(formData.dateImmatriculation) : undefined,
         dateMiseEnCirculation: formData.dateMiseEnCirculation ? new Date(formData.dateMiseEnCirculation) : undefined,
+        assure: assureToSubmit,
       };
       onSubmit(dataToSubmit);
       onClose();
@@ -250,7 +312,12 @@ export default function VehicleFormModal({
     setActivePicker({
       title,
       options: options.map((o) => ({ id: o.id, label: o.libelle })),
-      onSelect: (opt) => onSelect({ id: opt.id as number, libelle: opt.label }),
+      onSelect: (opt) => {
+        const selectedOption = options.find((option) => option.id === opt.id);
+        if (selectedOption) {
+          onSelect(selectedOption);
+        }
+      },
     });
   };
 
@@ -356,17 +423,17 @@ export default function VehicleFormModal({
                 </View>
 
                 <View style={styles.rowDuo}>
-                  {renderSelectField("Genre", formData.libGenre, "Genre", genreOptions, (opt) => updateField("libGenre", opt.libelle as VehicleFormData["libGenre"]), "local-shipping")}
-                  {renderSelectField("Type", formData.libType, "Type de véhicule", typeOptions, (opt) => updateField("libType", opt.libelle as VehicleFormData["libType"]), "category")}
+                  {renderSelectField("Genre", formData.libGenre, "Genre", genreOptions, (opt) => updateField("libGenre", opt.libelle), "local-shipping")}
+                  {renderSelectField("Type", formData.libType, "Type de véhicule", typeOptions, (opt) => updateField("libType", opt.libelle), "category")}
                 </View>
 
                 <View style={styles.rowDuo}>
-                  {renderSelectField("Carrosserie", formData.libCarrosserie, "Carrosserie", carrosserieOptions, (opt) => updateField("libCarrosserie", opt.libelle as VehicleFormData["libCarrosserie"]), "car-rental")}
-                  {renderSelectField("Énergie", formData.libEnergie, "Énergie", energieOptions, (opt) => updateField("libEnergie", opt.libelle as VehicleFormData["libEnergie"]), "local-gas-station")}
+                  {renderSelectField("Carrosserie", formData.libCarrosserie, "Carrosserie", carrosserieOptions, (opt) => updateField("libCarrosserie", opt.libelle), "car-rental")}
+                  {renderSelectField("Énergie", formData.libEnergie, "Énergie", energieOptions, (opt) => updateField("libEnergie", opt.libelle), "local-gas-station")}
                 </View>
 
                 <View style={styles.rowDuo}>
-                  {renderSelectField("Marque", formData.libMarque, "Marque", marqueOptions, (opt) => updateField("libMarque", opt.libelle as VehicleFormData["libMarque"]), "badge")}
+                  {renderSelectField("Marque", formData.libMarque, "Marque", marqueOptions, (opt) => updateField("libMarque", opt.libelle), "badge")}
                   {renderInput("Modèle", formData.modele, (v) => updateField("modele", v), "description")}
                 </View>
 
@@ -398,17 +465,17 @@ export default function VehicleFormModal({
             {activeTab === "parametres" && (
               <>
                 <View style={styles.rowDuo}>
-                  {renderSelectField("Usage", formData.libUsage, "Usage", usageOptions, (opt) => updateField("libUsage", opt.libelle as VehicleFormData["libUsage"]), "directions")}
-                  {renderSelectField("Catégorie", formData.libCategorie, "Catégorie", CATEGORIES, (opt) => updateField("libCategorie", opt.libelle as VehicleFormData["libCategorie"]), "folder")}
+                  {renderSelectField("Usage", formData.libUsage, "Usage", usageOptions, (opt) => updateField("libUsage", opt.libelle), "directions")}
+                  {renderSelectField("Catégorie", formData.libCategorie, "Catégorie", CATEGORIES, (opt) => updateField("libCategorie", opt.libelle), "folder")}
                 </View>
 
                 <View style={styles.rowDuo}>
-                  {renderSelectField("S/Catégorie", formData.libSousCategorie, "Sous-catégorie", SOUS_CATEGORIES, (opt) => updateField("libSousCategorie", opt.libelle as VehicleFormData["libSousCategorie"]), "folder-open")}
-                  {renderSelectField("Zone circulation", formData.libZoneCirculation, "Zone de circulation", zoneOptions, (opt) => updateField("libZoneCirculation", opt.libelle as VehicleFormData["libZoneCirculation"]), "public")}
+                  {renderSelectField("S/Catégorie", formData.libSousCategorie, "Sous-catégorie", SOUS_CATEGORIES, (opt) => updateField("libSousCategorie", opt.libelle), "folder-open")}
+                  {renderSelectField("Zone circulation", formData.libZoneCirculation, "Zone de circulation", zoneOptions, (opt) => updateField("libZoneCirculation", opt.libelle), "public")}
                 </View>
 
                 <View style={styles.rowDuo}>
-                  {renderSelectField("Ville", formData.libVille, "Ville", villeOptions, (opt) => updateField("libVille", opt.libelle as VehicleFormData["libVille"]), "location-city")}
+                  {renderSelectField("Ville", formData.libGroupeZone, "Ville", villeOptions, (opt) => updateField("libGroupeZone", opt.libelle), "location-city")}
                   {renderInput("N° cartes", formData.nbCartes, (v) => updateField("nbCartes", parseInt(v) || 0), "credit-card", { keyboardType: "numeric" })}
                 </View>
 
@@ -438,29 +505,29 @@ export default function VehicleFormModal({
                 {!formData.luiMemeAssure && (
                   <>
                     {renderInput("Nom assuré", formData.assure?.nom ?? "", (v) => {
-                      const base = formData.assure ?? { nom: "", email: "" };
+                      const base = formData.assure ?? createEmptyAssure();
                       updateField("assure", { ...base, nom: v });
                     }, "person")}
 
                     <View style={styles.rowDuo}>
                       {renderInput("Téléphone", formData.assure?.tel ?? "", (v) => {
-                        const base = formData.assure ?? { nom: "", email: "" };
+                        const base = formData.assure ?? createEmptyAssure();
                         updateField("assure", { ...base, tel: v });
                       }, "phone", { keyboardType: "phone-pad", placeholder: "+225 xx xx xx xx" })}
                       {renderInput("Email", formData.assure?.email ?? "", (v) => {
-                        const base = formData.assure ?? { nom: "", email: "" };
+                        const base = formData.assure ?? createEmptyAssure();
                         updateField("assure", { ...base, email: v });
                       }, "email", { keyboardType: "email-address", placeholder: "email@example.com" })}
                     </View>
 
-                    {renderInput("Boîte postale", formData.assure?.bP ?? "", (v) => {
-                      const base = formData.assure ?? { nom: "", email: "" };
-                      updateField("assure", { ...base, bP: v });
+                    {renderInput("Boîte postale", formData.assure?.bP ?? formData.assure?.bp ?? "", (v) => {
+                      const base = formData.assure ?? createEmptyAssure();
+                      updateField("assure", { ...base, bp: v, bP: v });
                     }, "markunread-mailbox")}
 
-                    {renderSelectField("Profession", formData.assure?.libProfession, "Profession", professionOptions, (opt) => {
-                      const base = formData.assure ?? { nom: "", email: "" };
-                      updateField("assure", { ...base, libProfession: opt.libelle, professionId: opt.id });
+                    {renderSelectField("Profession", formData.assure?.libProfession ?? formData.assure?.profession, "Profession", professionOptions, (opt) => {
+                      const base = formData.assure ?? createEmptyAssure();
+                      updateField("assure", { ...base, profession: opt.libelle, libProfession: opt.libelle, professionId: opt.id });
                     }, "work-outline")}
                   </>
                 )}

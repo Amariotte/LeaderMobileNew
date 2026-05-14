@@ -1,7 +1,7 @@
 import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
+    DarkTheme,
+    DefaultTheme,
+    ThemeProvider,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -13,9 +13,9 @@ import { AuthProvider, useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { PopupProvider, usePopup } from "@/hooks/use-popup";
 import {
-  setApiErrorPopupHandler,
-  setTokenRefreshHandler,
-  setUnauthorizedHandler,
+    setApiErrorPopupHandler,
+    setTokenRefreshHandler,
+    setUnauthorizedHandler,
 } from "@/services/api-client";
 
 export const unstable_settings = {
@@ -60,7 +60,7 @@ function RootNavigator() {
       setTokenRefreshHandler(null);
       setApiErrorPopupHandler(null);
     };
-  }, [clearAuthSession, refreshAccessToken]);
+  }, [clearAuthSession, refreshAccessToken, showMessage]);
 
   if (isLoading) {
     return (

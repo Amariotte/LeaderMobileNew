@@ -109,7 +109,7 @@ export async function annulerPolice(
     if (idx !== -1) {
       contratsFakeData.data[idx] = {
         ...contratsFakeData.data[idx],
-        categorie: "ANNULÉ",
+        categorie: 100,
       };
       return contratsFakeData.data[idx];
     }
@@ -118,7 +118,45 @@ export async function annulerPolice(
   return putJsonAuth<contrat, Partial<contrat>>(
     `${apiConfig.endpoints.contrats}/${id}/annuler`,
     token,
-    { categorie: "ANNULÉ" },
+    { categorie: 100 },
+  );
+}
+
+export async function createContrat(
+  token: string,
+  data: Partial<contrat>,
+): Promise<contrat> {
+  if (isModeDemoEnabled()) {
+    const newContrat: contrat = {
+      ...data,
+    } as contrat;
+    contratsFakeData.data.unshift(newContrat);
+    return newContrat;
+  }
+  return postJsonAuth<contrat, Partial<contrat>>(
+    apiConfig.endpoints.contrats,
+    token,
+    data,
+  );
+}
+
+export async function updateContrat(
+  token: string,
+  id: number,
+  data: Partial<contrat>,
+): Promise<contrat> {
+  if (isModeDemoEnabled()) {
+    const index = contratsFakeData.data.findIndex((c) => c.id === id);
+    if (index !== -1) {
+      contratsFakeData.data[index] = { ...contratsFakeData.data[index], ...data };
+      return contratsFakeData.data[index];
+    }
+    throw new Error("Contrat introuvable");
+  }
+  return putJsonAuth<contrat, Partial<contrat>>(
+    `${apiConfig.endpoints.contrats}/${id}`,
+    token,
+    data,
   );
 }
 
@@ -221,6 +259,44 @@ export async function getfetchVehicules(
   const data = await getJsonAuth<listVehicules>(endpoint, token);
   return data;
 }
+
+
+
+export async function getfetchBasesVehicules(
+  token: string,
+  clientId?: number,
+  immatriculation?: string
+): Promise<listVehicules> {
+  if (isModeDemoEnabled()) {
+    if (clientId !== undefined) {
+      return {
+        ...vehiculesFakeData,
+        data: vehiculesFakeData.data.filter((v: vehicule) => v.clientId === clientId),
+      };
+    }
+    return vehiculesFakeData;
+  }
+
+  const params = new URLSearchParams();
+  if (clientId !== undefined) {
+    params.append('client', clientId.toString());
+  }
+  if (immatriculation) {
+    params.append('immatriculation', immatriculation);
+  }
+
+  const endpoint = params.toString()
+    ? `${apiConfig.endpoints.basesVehicules}?${params.toString()}`
+    : apiConfig.endpoints.basesVehicules;
+
+  const data = await getJsonAuth<listVehicules>(endpoint, token);
+  return data;
+}
+
+
+
+
+
 
 export async function createVehicule(
   token: string,

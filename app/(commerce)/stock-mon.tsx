@@ -42,7 +42,7 @@ export default function StockMonScreen() {
       .finally(() => setLoading(false));
   }, [userToken]);
 
-  const stockProducteurs = items.data ?? [];
+  const stockProducteurs = useMemo(() => items.data ?? [], [items.data]);
 
   const filteredItems = useMemo(
     () => stockProducteurs.filter((item) => {

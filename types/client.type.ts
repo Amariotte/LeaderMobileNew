@@ -17,6 +17,7 @@ export type client = {
   exoTaxe?: boolean;
 	rccm?: string;
   libProfession?: string;
+  libType?: string ;
 };
 
 export type listClients = {

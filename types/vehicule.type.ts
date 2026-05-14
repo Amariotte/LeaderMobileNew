@@ -1,4 +1,4 @@
-import { client } from "./client.type";
+import { personne } from "./contrat.type";
 import { meta } from "./other.type";
 
 export type vehicule = {
@@ -48,17 +48,8 @@ export type vehicule = {
 
   luiMemeAssure: boolean;
 
-  assure? : {
-    nom: string;
-    email: string;
-    typeId?: number;
-    professionId?: number;
-    tel?: string;
-    bP?: string;
-    libProfession?: string;
-  }
-
-  client? : client;
+  assure? : personne;
+  souscripteur? : personne;
 };
 
 export type VehicleFormData = {
@@ -94,16 +85,10 @@ export type VehicleFormData = {
   clientId: number;
   zoneCirculationId: number;
 
-  assure? : {
-    nom: string;
-    email: string;
-    typeId?: number;
-    professionId?: number;
-    tel?: string;
-    bP?: string;
-    libProfession?: string;
-  }
+  assure? : personne;
+  souscripteur? : personne;
 };
+  
 
 
 export type listVehicules = {

@@ -88,7 +88,6 @@ export default function OperationDiverseFormModal({
   const [openPicker, setOpenPicker] = useState<InlinePicker>(null);
 
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const softBlock = isDark ? "#242735" : "#F2F3F8";
   const borderColor = isDark ? "#363A4C" : "#E7EAF5";
   const textColor = isDark ? "#FFFFFF" : "#2D3142";
   const labelColor = isDark ? "#A8AEC7" : "#61637A";

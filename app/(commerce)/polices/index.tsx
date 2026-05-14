@@ -119,12 +119,6 @@ export default function PolicesScreen() {
     );
   };
 
-  const pickerConfig = useMemo(() => {
-    if (openPicker === "compagnie") return { list: compagnies, current: filterCompagnie, setter: setFilterCompagnie, title: "Filtrer par compagnie" };
-    if (openPicker === "agence") return { list: agences, current: filterAgence, setter: setFilterAgence, title: "Filtrer par agence" };
-    return { list: [] as string[], current: [] as string[], setter: (_v: string[]) => {}, title: "" };
-  }, [openPicker, compagnies, agences, filterCompagnie, filterAgence]);
-
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <View style={styles.headerWrap}>
@@ -351,8 +345,8 @@ export default function PolicesScreen() {
                     <View style={[styles.attLogo, { backgroundColor: isDark ? "#242735" : "#F2F3F8" }]}>
                       <MaterialIcons name="policy" size={32} color="#1F8B82" />
                     </View>
-                    <ThemedText style={styles.attTitle}>ATTESTATION D'ASSURANCE</ThemedText>
-                    <ThemedText style={[styles.attSubtitle, { color: muted }]}>République de Côte d'Ivoire</ThemedText>
+                    <ThemedText style={styles.attTitle}>ATTESTATION D&apos;ASSURANCE</ThemedText>
+                    <ThemedText style={[styles.attSubtitle, { color: muted }]}>République de Côte d&apos;Ivoire</ThemedText>
                   </View>
 
                   <View style={[styles.attDivider, { backgroundColor: borderColor }]} />
@@ -415,7 +409,7 @@ export default function PolicesScreen() {
                   {/* Bouton imprimer depuis attestation */}
                   <Pressable style={styles.attPrintBtn} onPress={() => { setAttestationItem(null); setPrintItem(attestationItem); }}>
                     <MaterialIcons name="print" size={16} color="#FFF" />
-                    <ThemedText style={styles.attPrintBtnText}>Imprimer l'attestation</ThemedText>
+                    <ThemedText style={styles.attPrintBtnText}>Imprimer l&apos;attestation</ThemedText>
                   </Pressable>
 
                   <View style={{ height: 32 }} />

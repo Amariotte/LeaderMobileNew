@@ -11,11 +11,11 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import { getfetchPartenaires } from "@/services/api-partenaires";
 import { getfetchParametres } from "@/services/api-service";
-import { getfetchStockCourtierById, getfetchStockCourtiers, getfetchStockPartenaireById, getfetchStockPartenaires, updateStockPartenaire } from "@/services/api-stock";
+import { getfetchStockCourtierById, getfetchStockPartenaireById, getfetchStockPartenaires, updateStockPartenaire } from "@/services/api-stock";
 import { formatNumber } from "@/tools/tools";
 import { itemDefaut, params } from "@/types/other.type";
 import { partenaire } from "@/types/partenaires";
-import { listStockCourtier, listStockPartenaire } from "@/types/stock.type";
+import { listStockPartenaire } from "@/types/stock.type";
 
 export default function StockPartenairesScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -35,7 +35,6 @@ export default function StockPartenairesScreen() {
   const producedBg = isDark ? "#173127" : "#E8F6ED";
   const producedColor = isDark ? "#A2E3BE" : "#166534";
   const [items, setItems] = useState<listStockPartenaire>({ data: [] });
-  const [courtiers, setCourtiers] = useState<listStockCourtier>({ data: [] });
   const [compagnies, setCompagnies] = useState<itemDefaut[]>([]);
   const [partenaires, setPartenaires] = useState<partenaire[]>([]);
   const [typesAttestation, setTypesAttestation] = useState<itemDefaut[]>([]);
@@ -61,15 +60,10 @@ export default function StockPartenairesScreen() {
     if (!userToken) return;
     setLoading(true);
     try {
-      const [partenairesData, courtiersData] = await Promise.all([
-        getfetchStockPartenaires(userToken),
-        getfetchStockCourtiers(userToken),
-      ]);
+      const partenairesData = await getfetchStockPartenaires(userToken);
       setItems(partenairesData);
-      setCourtiers(courtiersData);
     } catch {
       setItems({ data: [] });
-      setCourtiers({ data: [] });
     } finally {
       setLoading(false);
     }
@@ -419,7 +413,7 @@ export default function StockPartenairesScreen() {
             </View>
 
             <View style={styles.fieldGroup}>
-              <ThemedText style={[styles.fieldLabel, { color: mutedText }]}>Type d'attestation</ThemedText>
+              <ThemedText style={[styles.fieldLabel, { color: mutedText }]}>Type d&apos;attestation</ThemedText>
               <Pressable
                 style={[styles.selectBtn, { backgroundColor: inputBg, borderColor }]}
                 onPress={() => setTypePickerOpen(true)}

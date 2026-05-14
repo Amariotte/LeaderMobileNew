@@ -84,11 +84,9 @@ export default function EncaissementPrimeFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openPicker, setOpenPicker] = useState<InlinePicker>(null);
   const [clients, setClients] = useState<client[]>([]);
-  const [clientSearch, setClientSearch] = useState("");
   const [loadingClients, setLoadingClients] = useState(false);
 
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const softBlock = isDark ? "#242735" : "#F2F3F8";
   const borderColor = isDark ? "#363A4C" : "#E7EAF5";
   const textColor = isDark ? "#FFFFFF" : "#2D3142";
   const labelColor = isDark ? "#A8AEC7" : "#61637A";
@@ -99,7 +97,6 @@ export default function EncaissementPrimeFormModal({
       setForm(buildInitial(initialData));
       setValidationError(null);
       setOpenPicker(null);
-      setClientSearch("");
     }
   }, [visible, initialData]);
 
@@ -114,15 +111,6 @@ export default function EncaissementPrimeFormModal({
 
   const update = (patch: Partial<EncaissementPrimeFormData>) =>
     setForm((prev) => ({ ...prev, ...patch }));
-
-  const filteredClients = clients.filter((c) => {
-    const q = clientSearch.toLowerCase();
-    return (
-      c.nom?.toLowerCase().includes(q) ||
-      c.prenoms?.toLowerCase().includes(q) ||
-      c.code?.toLowerCase().includes(q)
-    );
-  });
 
   const handleSubmit = async () => {
     if (!form.clientId) {

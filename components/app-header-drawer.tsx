@@ -3,12 +3,12 @@ import type { Href } from "expo-router";
 import { router, usePathname } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
+    Animated,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -293,7 +293,7 @@ export default function AppHeaderDrawer({
                     <ThemedText
                       style={[styles.drawerSubtitle, { color: mutedText }]}
                     >
-                      Gestion des courtages d'assurance
+                      Gestion des courtages d&apos;assurance
                     </ThemedText>
                   </View>
                 </View>

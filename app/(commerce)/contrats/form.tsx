@@ -2,6 +2,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,8 +14,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { vehiculesFakeData } from "@/data/datas.fake";
+import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
+import { createContrat, getfetchBasesVehicules, updateContrat } from "@/services/api-service";
 import COLORS from "@/styles/colors";
 import { client } from "@/types/client.type";
 import { contrat } from "@/types/contrat.type";
@@ -52,15 +55,7 @@ type ContratFormData = {
   vehicule?: vehicule;
   // Step 2
   souscripteurMemeAssure: boolean;
-  assureNom: string;
-  assureTel: string;
-  assureEmail: string;
-  assureBp: string;
-  assureProfession: string;
-  souscripteurNom: string;
-  souscripteurTel: string;
-  souscripteurEmail: string;
-  souscripteurBp: string;
+
   // Step 3
   compagnie: string;
   agence: string;
@@ -189,6 +184,8 @@ export default function ContratFormScreen() {
   }>();
 
   const isEditMode = mode === "edit";
+  const { userToken } = useAuthContext();
+  const [loading, setLoading] = useState(false);
 
   const initialClient = useMemo<client | undefined>(() => {
     if (!clientData) return undefined;
@@ -207,9 +204,13 @@ export default function ContratFormScreen() {
 
   const vehicleFromContract = useMemo<vehicule | undefined>(() => {
     if (!initialContract) return undefined;
-    if (initialContract.contratVehicule) return initialContract.contratVehicule;
+
+    const contractVehicule = initialContract.contratDetails?.[0];
+    const immatriculation = contractVehicule?.immatriculation;
+    if (!immatriculation) return undefined;
+
     return vehiculesFakeData.data.find(
-      (v) => v.numImmatriculation === initialContract.N,
+      (v) => v.numImmatriculation === immatriculation,
     );
   }, [initialContract]);
 
@@ -217,44 +218,50 @@ export default function ContratFormScreen() {
 
   const [step, setStep] = useState(1);
   const [immatSearch, setImmatSearch] = useState(
-    selectedInitialVehicule?.numImmatriculation ?? initialContract?.immatriculation ?? "",
+    selectedInitialVehicule?.numImmatriculation ?? initialContract?.contratDetails?.[0]?.immatriculation ?? "",
   );
-  const [searchResult, setSearchResult] = useState<vehicule | undefined>(selectedInitialVehicule);
+  const [searchResults, setSearchResults] = useState<vehicule[]>(
+    selectedInitialVehicule ? [selectedInitialVehicule] : [],
+  );
   const [notFound, setNotFound] = useState(false);
 
   const assureNomInitial =
-    initialContract?.assureNom ??
+    initialContract?.souscripteur?.nom ??
     (initialClient ? `${initialClient.nom} ${initialClient.prenoms}`.trim() : "");
-  const assureTelInitial = initialContract?.assureTel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
-  const assureEmailInitial = initialContract?.assureEmail ?? initialClient?.email ?? "";
-  const assureBpInitial = initialContract?.assureBp ?? initialClient?.bP ?? "";
-  const assureProfessionInitial = initialContract?.assureProfession ?? initialClient?.libProfession ?? "";
+  const assureTelInitial = initialContract?.souscripteur?.tel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
+  const assureEmailInitial = initialContract?.souscripteur?.email ?? initialClient?.email ?? "";
+  const assureBpInitial = initialContract?.souscripteur?.bp ?? initialClient?.bP ?? "";
+  const assureProfessionInitial = initialContract?.souscripteur?.profession ?? initialClient?.libProfession ?? "";
   const souscripteurNomInitial =
-    initialContract?.souscripteurNom ??
+    initialContract?.souscripteur?.nom ??
     (initialClient ? `${initialClient.nom} ${initialClient.prenoms}`.trim() : "");
   const souscripteurTelInitial =
-    initialContract?.souscripteurTel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
-  const souscripteurEmailInitial = initialContract?.souscripteurEmail ?? initialClient?.email ?? "";
-  const souscripteurBpInitial = initialContract?.souscripteurBp ?? initialClient?.bP ?? "";
+    initialContract?.souscripteur?.tel ?? initialClient?.tel ?? initialClient?.mobile ?? "";
+  const souscripteurEmailInitial = initialContract?.souscripteur?.email ?? initialClient?.email ?? "";
+  const souscripteurBpInitial = initialContract?.souscripteur?.bp ?? initialClient?.bP ?? "";
 
   const [form, setForm] = useState<ContratFormData>({
     vehicule: selectedInitialVehicule,
     souscripteurMemeAssure:
       !initialContract ||
       (assureNomInitial === souscripteurNomInitial && assureTelInitial === souscripteurTelInitial),
-    assureNom: assureNomInitial,
-    assureTel: assureTelInitial,
-    assureEmail: assureEmailInitial,
-    assureBp: assureBpInitial,
-    assureProfession: assureProfessionInitial,
-    souscripteurNom: souscripteurNomInitial,
-    souscripteurTel: souscripteurTelInitial,
-    souscripteurEmail: souscripteurEmailInitial,
-    souscripteurBp: souscripteurBpInitial,
-    compagnie: initialContract?.compagnie ?? COMPAGNIES[0],
-    agence: initialContract?.agence ?? AGENCES[0],
-    couverture: initialContract?.couverture ?? COUVERTURES[0],
-    duree: initialContract?.duree ?? DUREES[3],
+    assure: {
+      nom: assureNomInitial,
+      tel: assureTelInitial,
+      email: assureEmailInitial,
+      bp: assureBpInitial,
+      profession: assureProfessionInitial,
+    },
+    souscripteur: {
+      nom: souscripteurNomInitial,
+      tel: souscripteurTelInitial,
+      email: souscripteurEmailInitial,
+      bp: souscripteurBpInitial,
+    },
+    compagnie: initialContract?.compagnieNom ?? COMPAGNIES[0],
+    agence: initialContract?.agenceNom ?? AGENCES[0],
+    couverture: initialContract?.couvertureNom ?? COUVERTURES[0],
+    duree: initialContract?.nbJours ? `${initialContract.nbJours} jours` : DUREES[3],
     dateEffet: toInputDate(initialContract?.dateEffet, new Date()),
     dateEcheance: toInputDate(
       initialContract?.dateEcheance,
@@ -288,6 +295,11 @@ export default function ContratFormScreen() {
 
   const { showMessage } = usePopup();
 
+  const clientVehicules = useMemo<vehicule[]>(() => {
+    const vehicules = (initialClient as client & { vehicules?: vehicule[] } | undefined)?.vehicules;
+    return Array.isArray(vehicules) ? vehicules : [];
+  }, [initialClient]);
+
   const update = <K extends keyof ContratFormData>(key: K, value: ContratFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -306,20 +318,38 @@ export default function ContratFormScreen() {
   };
 
   // ─── Step 1: Recherche véhicule ───────────────────────────────────────────────
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const q = immatSearch.trim().toLowerCase();
     if (!q) return;
-    const found = vehiculesFakeData.data.find(
-      (v) => v.numImmatriculation.toLowerCase() === q,
-    );
-    if (found) {
-      setSearchResult(found);
-      setNotFound(false);
-      update("vehicule", found);
-    } else {
-      setSearchResult(undefined);
+
+    try {
+      setLoading(true);
+      
+      if (!userToken) {
+        showMessage("error", "Erreur", "Token d'authentification manquant");
+        return;
+      }
+
+      // Search from API with immatriculation
+      const result = await getfetchBasesVehicules(userToken, undefined, q);
+      
+      if (result.data && result.data.length > 0) {
+        const foundVehicles = result.data;
+        setSearchResults(foundVehicles);
+        setNotFound(false);
+        update("vehicule", foundVehicles[0]);
+      } else {
+        setSearchResults([]);
+        setNotFound(true);
+        update("vehicule", undefined);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la recherche:", error);
+      showMessage("error", "Erreur", "Impossible de rechercher le véhicule");
+      setSearchResults([]);
       setNotFound(true);
-      update("vehicule", undefined);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -335,7 +365,6 @@ export default function ContratFormScreen() {
   };
 
   const handleSelectVehicule = (v: vehicule) => {
-    setSearchResult(v);
     setNotFound(false);
     update("vehicule", v);
   };
@@ -486,16 +515,31 @@ export default function ContratFormScreen() {
           autoCapitalize="characters"
           onSubmitEditing={handleSearch}
           returnKeyType="search"
+          editable={!loading}
         />
-        <Pressable style={[styles.searchBtn, { backgroundColor: COLORS.primaryColor }]} onPress={handleSearch}>
-          <MaterialIcons name="search" size={20} color="#fff" />
+        <Pressable 
+          style={[styles.searchBtn, { backgroundColor: COLORS.primaryColor, opacity: loading ? 0.6 : 1 }]} 
+          onPress={handleSearch}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <MaterialIcons name="search" size={20} color="#fff" />
+          )}
         </Pressable>
       </View>
 
-      {searchResult && (
+      {searchResults.length > 0 && (
         <View style={styles.section}>
-          <ThemedText style={[styles.sectionLabel, { color: COLORS.primaryColor }]}>Véhicule trouvé</ThemedText>
-          {renderVehiculeCard(searchResult, form.vehicule?.id === searchResult.id)}
+          <ThemedText style={[styles.sectionLabel, { color: COLORS.primaryColor }]}>
+            {searchResults.length > 1
+              ? `Véhicules trouvés (${searchResults.length})`
+              : "Véhicule trouvé"}
+          </ThemedText>
+          {searchResults.map((v) =>
+            renderVehiculeCard(v, form.vehicule?.id === v.id),
+          )}
         </View>
       )}
 
@@ -509,12 +553,12 @@ export default function ContratFormScreen() {
       )}
 
       {/* Client vehicles */}
-      {initialClient?.vehicules && initialClient.vehicules.length > 0 && (
+      {clientVehicules.length > 0 && (
         <View style={styles.section}>
           <ThemedText style={[styles.sectionLabel, { color: labelColor }]}>
             Véhicules du client
           </ThemedText>
-          {initialClient.vehicules.map((v) =>
+          {clientVehicules.map((v) =>
             renderVehiculeCard(v, form.vehicule?.id === v.id),
           )}
         </View>
@@ -829,56 +873,80 @@ export default function ContratFormScreen() {
     );
   };
 
-  const handleValidate = () => {
+  const handleValidate = async () => {
     if (!form.vehicule?.numImmatriculation) {
       showMessage("error", "Validation", "Veuillez sélectionner un véhicule.");
       return;
     }
 
-    const payload: Partial<contrat> = {
-      id: initialContract?.id,
-      numeroContrat:
-        initialContract?.numeroContrat ?? `CTR-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
-      categorie: initialContract?.categorie ?? "NOUVELLE AFFAIRE",
-      dateContrat: initialContract?.dateContrat ?? new Date(),
-      numeroPolice: initialContract?.numeroPolice ?? "",
-      numeroAttestation: initialContract?.numeroAttestation ?? "",
-      immatriculation: form.vehicule.numImmatriculation,
-      vehiculeId: form.vehicule.id,
-      assureType: initialContract?.assureType ?? "PERSONNE PHYSIQUE",
-      assureNom: form.assureNom,
-      assureTel: form.assureTel,
-      assureEmail: form.assureEmail,
-      assureBp: form.assureBp,
-      assureProfession: form.assureProfession,
-      souscripteurType: initialContract?.souscripteurType ?? "PERSONNE PHYSIQUE",
-      souscripteurNom: form.souscripteurMemeAssure ? form.assureNom : form.souscripteurNom,
-      souscripteurTel: form.souscripteurMemeAssure ? form.assureTel : form.souscripteurTel,
-      souscripteurEmail: form.souscripteurMemeAssure ? form.assureEmail : form.souscripteurEmail,
-      souscripteurBp: form.souscripteurMemeAssure ? form.assureBp : form.souscripteurBp,
-      agence: form.agence,
-      compagnie: form.compagnie,
-      duree: form.duree,
-      couverture: form.couverture,
-      dateEffet: form.dateEffet ? new Date(form.dateEffet) : undefined,
-      dateEcheance: form.dateEcheance ? new Date(form.dateEcheance) : undefined,
-      primeNette: totalPrimeNette,
-      accessoires,
-      taxe,
-      taxeFga: fga,
-      cedeao: 0,
-      netAPayer,
-      client: initialContract?.client ?? initialClient,
-      vehicule: form.vehicule,
-    };
+    if (!userToken) {
+      showMessage("error", "Erreur", "Token d'authentification manquant");
+      return;
+    }
 
-    router.replace({
-      pathname: "../contrats",
-      params: {
-        action: isEditMode ? "updated" : "created",
-        savedContractData: JSON.stringify(payload),
-      },
-    });
+    try {
+      setLoading(true);
+
+      const payload: Partial<contrat> & Record<string, unknown> = {
+        id: initialContract?.id,
+        numeroContrat:
+          initialContract?.numeroContrat ?? `CTR-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
+        categorie: initialContract?.categorie ?? 0,
+        type: initialContract?.type ?? 0,
+        dateContrat: initialContract?.dateContrat ?? new Date(),
+        numeroPolice: initialContract?.numeroPolice ?? "",
+        immatriculation: form.vehicule.numImmatriculation,
+        vehiculeId: form.vehicule.id,
+        assureNom: form.assureNom,
+        assureTel: form.assureTel,
+        assureEmail: form.assureEmail,
+        assureBp: form.assureBp,
+        assureProfession: form.assureProfession,
+        souscripteurNom: form.souscripteurMemeAssure ? form.assureNom : form.souscripteurNom,
+        souscripteurTel: form.souscripteurMemeAssure ? form.assureTel : form.souscripteurTel,
+        souscripteurEmail: form.souscripteurMemeAssure ? form.assureEmail : form.souscripteurEmail,
+        souscripteurBp: form.souscripteurMemeAssure ? form.assureBp : form.souscripteurBp,
+        agence: form.agence,
+        compagnie: form.compagnie,
+        duree: form.duree,
+        couverture: form.couverture,
+        dateEffet: form.dateEffet ? new Date(form.dateEffet) : undefined,
+        dateEcheance: form.dateEcheance ? new Date(form.dateEcheance) : undefined,
+        primeNette: totalPrimeNette,
+        accessoires,
+        taxe,
+        taxeFga: fga,
+        cedeao: 0,
+        netAPayer,
+        clientId: initialContract?.clientId ?? initialClient?.id,
+        vehicule: form.vehicule,
+      };
+
+      let savedContract: contrat;
+      
+      if (isEditMode && initialContract?.id) {
+        // Update existing contract
+        savedContract = await updateContrat(userToken, Number(initialContract.id), payload);
+        showMessage("success", "Succès", "Contrat modifié avec succès");
+      } else {
+        // Create new contract
+        savedContract = await createContrat(userToken, payload);
+        showMessage("success", "Succès", "Contrat créé avec succès");
+      }
+
+      router.replace({
+        pathname: "../contrats",
+        params: {
+          action: isEditMode ? "updated" : "created",
+          savedContractData: JSON.stringify(savedContract),
+        },
+      });
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement:", error);
+      showMessage("error", "Erreur", "Impossible d'enregistrer le contrat");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────────
@@ -915,28 +983,50 @@ export default function ContratFormScreen() {
       {/* Footer navigation */}
       <View style={[styles.footer, { backgroundColor: cardBackground, borderTopColor: borderColor }]}>
         {step > 1 ? (
-          <Pressable style={[styles.btnSecondary, { borderColor }]} onPress={goPrev}>
+          <Pressable 
+            style={[styles.btnSecondary, { borderColor, opacity: loading ? 0.6 : 1 }]} 
+            onPress={goPrev}
+            disabled={loading}
+          >
             <MaterialIcons name="arrow-back" size={16} color={labelColor} />
             <ThemedText style={[styles.btnSecondaryText, { color: labelColor }]}>Précédent</ThemedText>
           </Pressable>
         ) : (
-          <Pressable style={[styles.btnSecondary, { borderColor }]} onPress={() => router.back()}>
+          <Pressable 
+            style={[styles.btnSecondary, { borderColor, opacity: loading ? 0.6 : 1 }]} 
+            onPress={() => router.back()}
+            disabled={loading}
+          >
             <MaterialIcons name="close" size={16} color={labelColor} />
             <ThemedText style={[styles.btnSecondaryText, { color: labelColor }]}>Annuler</ThemedText>
           </Pressable>
         )}
 
         {step < 5 ? (
-          <Pressable style={[styles.btnPrimary, { backgroundColor: COLORS.primaryColor }]} onPress={goNext}>
+          <Pressable 
+            style={[styles.btnPrimary, { backgroundColor: COLORS.primaryColor, opacity: loading ? 0.6 : 1 }]} 
+            onPress={goNext}
+            disabled={loading}
+          >
             <ThemedText style={styles.btnPrimaryText}>Suivant</ThemedText>
             <MaterialIcons name="arrow-forward" size={16} color="#fff" />
           </Pressable>
         ) : (
-          <Pressable style={[styles.btnPrimary, { backgroundColor: COLORS.primaryColor }]} onPress={handleValidate}>
-            <MaterialIcons name="check" size={16} color="#fff" />
-            <ThemedText style={styles.btnPrimaryText}>
-              {isEditMode ? "Enregistrer les modifications" : "Valider le contrat"}
-            </ThemedText>
+          <Pressable 
+            style={[styles.btnPrimary, { backgroundColor: COLORS.primaryColor, opacity: loading ? 0.6 : 1 }]} 
+            onPress={handleValidate}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <MaterialIcons name="check" size={16} color="#fff" />
+                <ThemedText style={styles.btnPrimaryText}>
+                  {isEditMode ? "Enregistrer les modifications" : "Valider le contrat"}
+                </ThemedText>
+              </>
+            )}
           </Pressable>
         )}
       </View>
