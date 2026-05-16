@@ -152,6 +152,18 @@ function RootNavigator() {
       />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen
+        name="(commerce)/partenaires"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/partenaires/details"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(commerce)/utilisateurs"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="modal"
         options={{ presentation: "modal", headerShown: false }}
       />

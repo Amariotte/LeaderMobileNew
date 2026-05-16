@@ -27,9 +27,11 @@ type AppRoute =
   | "/stock-mon"
   | "/stock-courtiers"
   | "/stock-partenaires"
-  | "/stock-producteurs";
+  | "/stock-producteurs"
+  | "/partenaires"
+  | "/utilisateurs";
 
-type SubMenuKey = "souscriptions" | "stocks" | "comptabilites" | "settings";
+type SubMenuKey = "souscriptions" | "stocks" | "comptabilites" | "settings" | "administration";
 
 type DrawerItem = {
   id:
@@ -37,7 +39,8 @@ type DrawerItem = {
     | "souscriptions"
     | "stocks"
     | "comptabilites"
-    | "parametres-parent";
+    | "parametres-parent"
+    | "administration-parent";
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   route?: AppRoute;
@@ -62,7 +65,8 @@ const DRAWER_ITEMS: DrawerItem[] = [
   { id: "souscriptions", label: "Souscriptions", icon: "sell", subMenuKey: "souscriptions" },
   { id: "stocks", label: "Stocks", icon: "inventory", subMenuKey: "stocks" },
   { id: "comptabilites", label: "Comptabilités", icon: "inventory", subMenuKey: "comptabilites" },
-  {id: "parametres-parent",label: "Parametres",icon: "settings",subMenuKey: "settings",},
+  { id: "administration-parent", label: "Administration", icon: "admin-panel-settings", subMenuKey: "administration" },
+  { id: "parametres-parent", label: "Parametres", icon: "settings", subMenuKey: "settings" },
 ];
 
 const SUB_MENU_ITEMS: Record<SubMenuKey, DrawerSubItem[]> = {
@@ -84,6 +88,10 @@ const SUB_MENU_ITEMS: Record<SubMenuKey, DrawerSubItem[]> = {
     { id: "operations-diverses", label: "Opérations diverses", route: "/operations-diverses" },
   ],
 
+  administration: [
+    { id: "partenaires", label: "Partenaires", route: "/partenaires" },
+    { id: "utilisateurs", label: "Utilisateurs", route: "/utilisateurs" },
+  ],
   settings: [
     { id: "settings-familles", label: "Familles" },
     { id: "settings-sites", label: "Sites" },
@@ -118,6 +126,8 @@ export default function AppHeaderDrawer({
         pathname === "/stock-producteurs",
       comptabilites:
         pathname === "/encaissements-primes" || pathname === "/operations-diverses",
+      administration:
+        pathname === "/partenaires" || pathname === "/utilisateurs",
       settings: false,
     },
   );
@@ -141,6 +151,10 @@ export default function AppHeaderDrawer({
         pathname === "/encaissements-primes" || pathname === "/operations-diverses"
           ? true
           : prev.comptabilites,
+      administration:
+        pathname === "/partenaires" || pathname === "/utilisateurs"
+          ? true
+          : prev.administration,
     }));
   }, [pathname]);
 

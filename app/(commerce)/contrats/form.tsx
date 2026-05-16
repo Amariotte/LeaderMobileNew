@@ -245,19 +245,7 @@ export default function ContratFormScreen() {
     souscripteurMemeAssure:
       !initialContract ||
       (assureNomInitial === souscripteurNomInitial && assureTelInitial === souscripteurTelInitial),
-    assure: {
-      nom: assureNomInitial,
-      tel: assureTelInitial,
-      email: assureEmailInitial,
-      bp: assureBpInitial,
-      profession: assureProfessionInitial,
-    },
-    souscripteur: {
-      nom: souscripteurNomInitial,
-      tel: souscripteurTelInitial,
-      email: souscripteurEmailInitial,
-      bp: souscripteurBpInitial,
-    },
+  
     compagnie: initialContract?.compagnieNom ?? COMPAGNIES[0],
     agence: initialContract?.agenceNom ?? AGENCES[0],
     couverture: initialContract?.couvertureNom ?? COUVERTURES[0],
@@ -644,14 +632,14 @@ export default function ContratFormScreen() {
           <MaterialIcons name="person" size={16} color={COLORS.primaryColor} />
           <ThemedText style={[styles.cardTitle, { color: COLORS.primaryColor }]}>Assuré</ThemedText>
         </View>
-        {renderField("Nom complet", form.assureNom, (v) => update("assureNom", v), { placeholder: "Nom et prénom" })}
+        {renderField("Nom complet", form?.vehicule?.assure?.nom, (v) => update("assureNom", v), { placeholder: "Nom et prénom" })}
         <View style={styles.row}>
-          <View style={{ flex: 1 }}>{renderField("Téléphone", form.assureTel, (v) => update("assureTel", v), { keyboard: "phone-pad" })}</View>
-          <View style={{ flex: 1 }}>{renderField("Email", form.assureEmail, (v) => update("assureEmail", v), { keyboard: "email-address" })}</View>
+          <View style={{ flex: 1 }}>{renderField("Téléphone", form?.vehicule?.assure?.tel, (v) => update("assureTel", v), { keyboard: "phone-pad" })}</View>
+          <View style={{ flex: 1 }}>{renderField("Email", form?.vehicule?.assure?.email, (v) => update("assureEmail", v), { keyboard: "email-address" })}</View>
         </View>
         <View style={styles.row}>
-          <View style={{ flex: 1 }}>{renderField("Boîte postale", form.assureBp, (v) => update("assureBp", v))}</View>
-          <View style={{ flex: 1 }}>{renderField("Profession", form.assureProfession, (v) => update("assureProfession", v))}</View>
+          <View style={{ flex: 1 }}>{renderField("Boîte postale", form.assure.bp, (v) => update("assureBp", v))}</View>
+          <View style={{ flex: 1 }}>{renderField("Profession", form.assure.profession, (v) => update("assureProfession", v))}</View>
         </View>
       </View>
 

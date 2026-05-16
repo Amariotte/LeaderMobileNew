@@ -3,8 +3,8 @@ import apiConfig from "@/config/api";
 import { listAgencesDataFake, listPartenairesDataFake } from "@/data/fake/partenaires.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
 import { agence, listAgences } from "@/types/agences";
-import { listPartenaires } from "@/types/partenaires";
-import { getJsonAuth } from "./api-client";
+import { listPartenaires, partenaire } from "@/types/partenaires";
+import { deleteJsonAuth, getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
 
 
 export async function getfetchPartenaires(token: string): Promise<listPartenaires> {
@@ -34,3 +34,51 @@ export async function getfetchAgencesById(token: string,idPartenaire: number): P
   return payload
 }
 
+export async function createPartenaire(token: string, data: Partial<partenaire>): Promise<partenaire> {
+  if (isModeDemoEnabled()) {
+    const fake: partenaire = { id: Date.now(), nom: data.nom ?? "", ...data };
+    listPartenairesDataFake.data.unshift(fake);
+    return fake;
+  }
+  return postJsonAuth<partenaire, Partial<partenaire>>(apiConfig.endpoints.partenaires, token, data);
+}
+
+export async function updatePartenaire(token: string, id: number, data: Partial<partenaire>): Promise<partenaire> {
+  if (isModeDemoEnabled()) {
+    const index = listPartenairesDataFake.data.findIndex((p) => p.id === id);
+    if (index !== -1) {
+      listPartenairesDataFake.data[index] = { ...listPartenairesDataFake.data[index], ...data };
+      return listPartenairesDataFake.data[index];
+    }
+    return { id, nom: data.nom ?? "", ...data };
+  }
+  return putJsonAuth<partenaire, Partial<partenaire>>(`${apiConfig.endpoints.partenaires}/${id}`, token, data);
+}
+
+export async function deletePartenaire(token: string, id: number): Promise<{ message: string }> {
+  if (isModeDemoEnabled()) {
+    const index = listPartenairesDataFake.data.findIndex((p) => p.id === id);
+    if (index !== -1) listPartenairesDataFake.data.splice(index, 1);
+    return { message: "Partenaire supprimé avec succès." };
+  }
+  return deleteJsonAuth<{ message: string }>(`${apiConfig.endpoints.partenaires}/${id}`, token);
+}
+
+
+export async function desactivationPartenaire(token: string, id: number): Promise<{ message: string }> {
+  if (isModeDemoEnabled()) {
+    const index = listPartenairesDataFake.data.findIndex((p) => p.id === id);
+    if (index !== -1) listPartenairesDataFake.data.splice(index, 1);
+    return { message: "Partenaire désactivé avec succès." };
+  }
+  return putJsonAuth<{ message: string }>(`${apiConfig.endpoints.partenaires}/${id}/desactivations`, token, { etatLib: "Désactivé" });
+}
+
+export async function activationPartenaire(token: string, id: number): Promise<{ message: string }> {
+  if (isModeDemoEnabled()) {
+    const index = listPartenairesDataFake.data.findIndex((p) => p.id === id);
+    if (index !== -1) listPartenairesDataFake.data.splice(index, 1);
+    return { message: "Partenaire activé avec succès." };
+  }
+  return putJsonAuth<{ message: string }>(`${apiConfig.endpoints.partenaires}/${id}/activations`, token, { etatLib: "Activé" });
+}

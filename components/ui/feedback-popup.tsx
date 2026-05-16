@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-export type PopupType = "error" | "success" | "info";
+export type PopupType = "error" | "success" | "info" ;
 export type FeedbackPopupType = PopupType;
 
 type BasePopupProps = {

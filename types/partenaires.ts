@@ -1,5 +1,7 @@
   import { meta } from "./other.type";
 
+export type statusPartenaires = "Activé" | "Désativé" | "En attente";
+
 export type partenaire = {
   id?: number;
   code?: string;
@@ -17,7 +19,9 @@ export type partenaire = {
   adresse?: string;
   rccm?: string;
   allUseCodeAsaci?: boolean;
+  etatLib?: statusPartenaires;
 };
+
 
 export type listPartenaires = {
   meta?: meta;

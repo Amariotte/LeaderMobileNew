@@ -202,4 +202,25 @@ export const getLabelTypeClient = (
   }
 };
 
+
+const AVATAR_COLORS = [
+  "#1F8B82", "#6B3CFF", "#E05252", "#E8872A", "#2A7BE8",
+  "#50C52A", "#A83CFF", "#2AC5C5", "#FF6B6B", "#3CB87A",
+];
+
+
+export function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+export function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
   

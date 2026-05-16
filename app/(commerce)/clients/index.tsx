@@ -11,22 +11,12 @@ import { useClientEditorModal } from "@/hooks/use-client-editor-modal";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import { createClient, deleteClient, getfetchClients, updateClient } from "@/services/api-service";
-import { getLabelTypeClient } from "@/tools/tools";
+import { getAvatarColor, getLabelTypeClient } from "@/tools/tools";
 import { client } from "@/types/client.type";
 import { useEffect, useState } from "react";
 
-const AVATAR_COLORS = [
-  "#1F8B82", "#6B3CFF", "#E05252", "#E8872A", "#2A7BE8",
-  "#50C52A", "#A83CFF", "#2AC5C5", "#FF6B6B", "#3CB87A",
-];
 
-function getAvatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
+
 
 export default function ClientsScreen() {
   const scheme = useColorScheme() ?? "light";
