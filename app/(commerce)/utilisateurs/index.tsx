@@ -12,63 +12,14 @@ import {
 import AppHeaderDrawer from "@/components/app-header-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { UtilisateurFormModal } from "@/components/utilisateur-form-modal";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { usePopup } from "@/hooks/use-popup";
+import { putAuthNoBody } from "@/services/api-client";
+import { createUtilisateur, getfetchUtilisateurs, updateUtilisateur } from "@/services/api-service";
+import { getAvatarColor, getInitials } from "@/tools/tools";
 import { utilisateur } from "@/types/utilisateurs";
-
-// ─── Fake data (remplacer par un vrai service) ───────────────────────────────
-const utilisateursFake: utilisateur[] = [
-  {
-    id: 1,
-    nom: "Jean-Paul Kouassi",
-    login: "jkouassi",
-    email: "jkouassi@leader.ci",
-    contacts: "0102030405",
-    compteActive: true,
-    superUser: false,
-    typeUser: 1,
-    partenaireNom: "Agence Abidjan",
-  },
-  {
-    id: 2,
-    nom: "Marie Adjoua",
-    login: "madjoua",
-    email: "madjoua@leader.ci",
-    contacts: "0506070809",
-    compteActive: true,
-    superUser: true,
-    typeUser: 2,
-    partenaireNom: "Siège",
-  },
-  {
-    id: 3,
-    nom: "Koné Ibrahim",
-    login: "kibrahim",
-    email: "kibrahim@leader.ci",
-    contacts: "",
-    compteActive: false,
-    superUser: false,
-    typeUser: 1,
-    partenaireNom: "Agence Gombe",
-  },
-];
-
-const AVATAR_COLORS = [
-  "#1F8B82", "#6B3CFF", "#E05252", "#E8872A", "#2A7BE8",
-  "#50C52A", "#A83CFF", "#2AC5C5", "#FF6B6B", "#3CB87A",
-];
-
-function getAvatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
 
 export default function UtilisateursScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -85,16 +36,19 @@ export default function UtilisateursScreen() {
   const [utilisateurs, setUtilisateurs] = useState<utilisateur[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalData, setModalData] = useState<Partial<utilisateur> | null>(null);
+  const [modalReadOnly, setModalReadOnly] = useState(false);
   const { userToken } = useAuthContext();
+  const { showMessage, showConfirm } = usePopup();
 
   useEffect(() => {
     if (!userToken) return;
     setIsLoading(true);
-    // TODO: remplacer par getfetchUtilisateurs(userToken)
-    setTimeout(() => {
-      setUtilisateurs(utilisateursFake);
-      setIsLoading(false);
-    }, 500);
+    getfetchUtilisateurs(userToken)
+      .then((res) => setUtilisateurs(res.data))
+      .catch(() => setUtilisateurs([]))
+      .finally(() => setIsLoading(false));
   }, [userToken]);
 
   const filtered = utilisateurs.filter(
@@ -108,12 +62,85 @@ export default function UtilisateursScreen() {
   const totalActifs = utilisateurs.filter((u) => u.compteActive).length;
   const totalSuperUsers = utilisateurs.filter((u) => u.superUser).length;
 
+  const handleOpenModal = (data?: Partial<utilisateur>, readOnly = false) => {
+    setModalData(data || null);
+    setModalReadOnly(readOnly);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setModalData(null);
+    setModalReadOnly(false);
+  };
+
+  const handleSubmitModal = async (data: Partial<utilisateur>) => {
+    if (!userToken) return;
+    try {
+      if (data.id) {
+        const updated = await updateUtilisateur(userToken, data.id, data);
+        setUtilisateurs((prev) => prev.map((u) => u.id === data.id ? { ...u, ...updated } : u));
+        showMessage("success", "Utilisateur modifié", "L'utilisateur a été modifié.");
+      } else {
+        const created = await createUtilisateur(userToken, data);
+        setUtilisateurs((prev) => [created, ...prev]);
+        showMessage("success", "Utilisateur créé", "L'utilisateur a été créé.");
+      }
+    } catch {
+      showMessage("error", "Erreur", "Impossible d'enregistrer l'utilisateur.");
+    }
+    handleCloseModal();
+  };
+
+  const handleToggleActive = (u: utilisateur) => {
+    if (!userToken || !u.id) return;
+    showConfirm(
+      "info",
+      u.compteActive ? "Désactiver l'utilisateur" : "Activer l'utilisateur",
+      `Voulez-vous vraiment ${u.compteActive ? "désactiver" : "activer"} "${u.nom}" ?`,
+      async () => {
+        try {
+          await updateUtilisateur(userToken, u.id!, { compteActive: !u.compteActive });
+          setUtilisateurs((prev) => prev.map((x) => x.id === u.id ? { ...x, compteActive: !u.compteActive } : x));
+          showMessage("success", u.compteActive ? "Utilisateur désactivé" : "Utilisateur activé", `L'utilisateur a été ${u.compteActive ? "désactivé" : "activé"}.`);
+        } catch {
+          showMessage("error", "Erreur", `Impossible de ${u.compteActive ? "désactiver" : "activer"} cet utilisateur.`);
+        }
+      },
+      { confirmLabel: u.compteActive ? "Désactiver" : "Activer", cancelLabel: "Annuler" }
+    );
+  };
+
+  const handleResetPassword = (u: utilisateur) => {
+    if (!userToken || !u.id) return;
+    showConfirm(
+      "info",
+      "Réinitialiser le mot de passe",
+      `Voulez-vous réinitialiser le mot de passe de "${u.nom}" ?`,
+      async () => {
+        try {
+          await putAuthNoBody(`/utilisateurs/${u.id}/reset-password`, userToken);
+          showMessage("success", "Mot de passe réinitialisé", "Un email a été envoyé à l'utilisateur.");
+        } catch {
+          showMessage("error", "Erreur", "Impossible de réinitialiser le mot de passe.");
+        }
+      },
+      { confirmLabel: "Réinitialiser", cancelLabel: "Annuler" }
+    );
+  };
+
   return (
-    <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
+    <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}> 
       <View style={styles.headerWrap}>
         <AppHeaderDrawer title="Utilisateurs" />
       </View>
 
+      {/* Bouton créer */}
+      <View style={{ alignItems: "flex-end", margin: 12 }}>
+        <Pressable onPress={() => handleOpenModal()} style={{ backgroundColor: primaryColor, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 }}>
+          <ThemedText style={{ color: "#fff", fontWeight: "bold" }}>+ Créer utilisateur</ThemedText>
+        </Pressable>
+      </View>
       {/* Search */}
       <View style={[styles.toolbar, { borderBottomColor: borderColor }]}>
         <View style={[styles.searchBar, { backgroundColor: inputBg, borderColor }]}>
@@ -171,9 +198,10 @@ export default function UtilisateursScreen() {
               const isActive = u.compteActive ?? false;
 
               return (
-                <View
+                <Pressable
                   key={u.id}
                   style={[styles.card, { backgroundColor: cardBackground, borderColor }]}
+                  onPress={() => handleOpenModal(u, true)}
                 >
                   <View style={styles.cardMain}>
                     {/* Avatar */}
@@ -217,31 +245,44 @@ export default function UtilisateursScreen() {
                       )}
                     </View>
 
-                    {/* Status */}
-                    <View
-                      style={[
-                        styles.statusDot,
-                        {
-                          backgroundColor: isActive
-                            ? isDark ? "#143B39" : "#DBF4F1"
-                            : isDark ? "#2E1A1A" : "#FFF0F0",
-                        },
-                      ]}
-                    >
+                    {/* Status + Actions */}
+                    <View style={{ alignItems: "flex-end", gap: 6 }}>
                       <View
                         style={[
-                          styles.dot,
-                          { backgroundColor: isActive ? "#16A34A" : "#DC2626" },
-                        ]}
-                      />
-                      <ThemedText
-                        style={[
-                          styles.statusText,
-                          { color: isActive ? (isDark ? "#A2E3BE" : "#166534") : (isDark ? "#F8A0A0" : "#B91C1C") },
+                          styles.statusDot,
+                          {
+                            backgroundColor: isActive
+                              ? isDark ? "#143B39" : "#DBF4F1"
+                              : isDark ? "#2E1A1A" : "#FFF0F0",
+                          },
                         ]}
                       >
-                        {isActive ? "Actif" : "Inactif"}
-                      </ThemedText>
+                        <View
+                          style={[
+                            styles.dot,
+                            { backgroundColor: isActive ? "#16A34A" : "#DC2626" },
+                          ]}
+                        />
+                        <ThemedText
+                          style={[
+                            styles.statusText,
+                            { color: isActive ? (isDark ? "#A2E3BE" : "#166534") : (isDark ? "#F8A0A0" : "#B91C1C") },
+                          ]}
+                        >
+                          {isActive ? "Actif" : "Inactif"}
+                        </ThemedText>
+                      </View>
+                      <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                        <Pressable onPress={() => handleOpenModal(u, false)} hitSlop={6} style={{ padding: 2 }}>
+                          <MaterialIcons name="edit" size={16} color="#2A7BE8" />
+                        </Pressable>
+                        <Pressable onPress={() => handleToggleActive(u)} hitSlop={6} style={{ padding: 2 }}>
+                          <MaterialIcons name={u.compteActive ? "block" : "check-circle"} size={16} color={u.compteActive ? "#B91C1C" : "#166534"} />
+                        </Pressable>
+                        <Pressable onPress={() => handleResetPassword(u)} hitSlop={6} style={{ padding: 2 }}>
+                          <MaterialIcons name="lock-reset" size={16} color="#7C3AED" />
+                        </Pressable>
+                      </View>
                     </View>
                   </View>
 
@@ -252,12 +293,20 @@ export default function UtilisateursScreen() {
                       <ThemedText style={[styles.footerText, { color: mutedText }]}>{u.contacts}</ThemedText>
                     </View>
                   )}
-                </View>
+                </Pressable>
               );
             })
           )}
         </ScrollView>
       )}
+      <UtilisateurFormModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitModal}
+        initialData={modalData || {}}
+        readOnly={modalReadOnly}
+        token={userToken}
+      />
     </ThemedView>
   );
 }

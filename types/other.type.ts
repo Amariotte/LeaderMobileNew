@@ -22,6 +22,14 @@ export enum Params {
 export { Params as params };
 
 
+export type permission = {
+  code: string;
+  libelle: string;
+  id: number;
+  ordre: number;
+};
+
+
 export type meta = {
   page: number;
   next: number;

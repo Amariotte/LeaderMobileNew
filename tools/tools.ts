@@ -223,4 +223,10 @@ export function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-  
+export function parseCsv(value?: string): string[] {
+  if (!value) return [];
+  return value
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}

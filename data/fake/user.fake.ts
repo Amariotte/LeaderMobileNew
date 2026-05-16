@@ -1,26 +1,27 @@
 import { AuthResponse, user } from "@/types/user.type";
+import { listUtilisateurs, utilisateur } from "@/types/utilisateurs";
+import { metaFakeData } from "./params.fake";
 
 
 export const userDataFake: user = {
-  id: "user-123",
   nom: "Ange mariotte",
-  code: "AM123",
-  ncc: "NCC123",
+  codeAsaci: "AM123",
   telFixe: "0123456789",
   telMobile: "0987654321",
-  nomRepresentantLegal: "BEUGRE AIKPA ANGE MARIOTTE",
-  dateNaissance: new Date("1990-01-01"),
-  adresse: "Abidjan, Cocody, Riviera 2",
   email: "ange.mariotte@example.com",
-  nomAgence: "Agence Abidjan",
+  courtierNom: "LEADER ASSURANCE",
+  partenaireNom: "LEADER ASSUR",
+  agenceNom: "SCA NOUVELLE ERE",
   photo: "https://example.com/photos/ange-mariotte.jpg",
-  civilite: "M.",
   type: "PARTICULIER",
-  dateAnniversaire: "26 avril",
-  typePiece: "PASSEPORT",
-  numPiece: "000  000000",
-  plafond: 200000,
+  whatsApp: "0123456789",
+  typeId: 1,
+  login: "amariotte",
+  agenceId: 1,
+  partenaireId: 1,
+  courtierId: 1,
 };
+
 
 export const userDataFakeAuthResponse: AuthResponse = {
   access_token: "fake-token",
@@ -29,3 +30,48 @@ export const userDataFakeAuthResponse: AuthResponse = {
   refresh_token: "fake-refresh-token",
   user: userDataFake,
 };
+
+
+
+export const utilisateursFake: utilisateur[] = [
+  {
+    id: 1,
+    nom: "Jean-Paul Kouassi",
+    login: "jkouassi",
+    email: "jkouassi@leader.ci",
+    contacts: "0102030405",
+    compteActive: true,
+    superUser: false,
+    typeUser: 1,
+    partenaireNom: "Agence Abidjan",
+  },
+  {
+    id: 2,
+    nom: "Marie Adjoua",
+    login: "madjoua",
+    email: "madjoua@leader.ci",
+    contacts: "0506070809",
+    compteActive: true,
+    superUser: true,
+    typeUser: 2,
+    partenaireNom: "Siège",
+  },
+  {
+    id: 3,
+    nom: "Koné Ibrahim",
+    login: "kibrahim",
+    email: "kibrahim@leader.ci",
+    contacts: "",
+    compteActive: false,
+    superUser: false,
+    typeUser: 1,
+    partenaireNom: "Agence Gombe",
+  },
+];
+
+
+export const listUtilisateursFake: listUtilisateurs = {
+  meta: metaFakeData,
+  data: utilisateursFake,
+};
+

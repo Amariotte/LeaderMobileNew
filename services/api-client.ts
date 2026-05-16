@@ -1,3 +1,15 @@
+// PUT sans body JSON
+export async function putAuthNoBody<TResponse>(
+  endpoint: string,
+  token: string,
+): Promise<TResponse> {
+  return requestJson<TResponse>(endpoint, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
 import { getApiUrl } from "@/config/api";
 import { errorApi } from "@/types/errorAPI.type";
 

@@ -1,24 +1,21 @@
 export type user = {
-  id: string;
-  civilite: string;
   nom: string;
-  code: string;
+  codeAsaci: string;
   type: string;
-  ncc: string;
   telFixe: string;
+  whatsApp: string;
   telMobile: string;
-  dateNaissance: Date;
-  dateAnniversaire: string;
-  typePiece: string;
-  numPiece: string;
-  adresse: string;
-  nomRepresentantLegal: string;
+  typeId: number;
+  agenceId: number;
+  partenaireId: number;
+  courtierId: number;
+  login: string;
   email: string;
-  nomAgence: string;
-  plafond: number;
+  courtierNom: string;
+  partenaireNom: string;
+  agenceNom: string;
   photo: string;
 };
-
 
 export type AuthResponse = {
   access_token: string;

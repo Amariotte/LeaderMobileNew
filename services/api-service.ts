@@ -1,27 +1,17 @@
 import apiConfig from "@/config/api";
 import {
   clientsFakeData,
-  contratsFakeData,
-  cotationsFakeData,
   vehiculesFakeData
 } from "@/data/datas.fake";
-import { CompagnieFakeData, parametresFakeData, professionsFakeData } from "@/data/fake/params.fake";
+import { listUtilisateursFake } from "@/data/fake/user.fake";
 import { isModeDemoEnabled } from "@/tools/tools";
 import { client, listClients } from "@/types/client.type";
-import { contrat, listContrats } from "@/types/contrat.type";
 import {
-  listCotation
-} from "@/types/devis.type";
-import {
-  itemDefaut,
-  PaginationParams,
-  parametresData,
-  params,
   successMessage
 } from "@/types/other.type";
+import { listUtilisateurs, utilisateur } from "@/types/utilisateurs";
 import { listVehicules, vehicule } from "@/types/vehicule.type";
-import { deleteJsonAuth, getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
-import { fetchPaginatedList } from "./pagination-service";
+import { deleteJsonAuth, getJsonAuth, postJsonAuth, putAuthNoBody, putJsonAuth } from "./api-client";
 
 const LIMIT_RECENT_TRANSACTIONS = process.env
   .EXPO_PUBLIC_NBRE_RECENT_TRANSACTIONS
@@ -55,110 +45,6 @@ export async function getfetchClients(token: string): Promise<listClients> {
   return data;
 }
 
-
-export async function getfetchContrats(
-  token: string,
-  params?: PaginationParams,
-): Promise<listContrats> {
-  const d = await fetchPaginatedList(
-    token,
-    apiConfig.endpoints.contrats,
-    params,
-    contratsFakeData,
-  );
-  return d;
-}
-
-export async function getfetchCotations(token: string): Promise<listCotation> {
-  if (isModeDemoEnabled()) {
-    return cotationsFakeData;
-  }
-
-  const data = await getJsonAuth<listCotation>(
-    `${apiConfig.endpoints.cotations}`,
-    token,
-  );
-
-  return data;
-}
-
-export async function getfetchContratById(
-  token: string,
-  id: number,
-): Promise<contrat | null> {
-  if (isModeDemoEnabled()) {
-    return contratsFakeData.data.filter((c) => c.id === id).length > 0
-      ? contratsFakeData.data.filter((c) => c.id === id)[0]
-      : null;
-  }
-
-  const d = await getJsonAuth<contrat>(
-    `${apiConfig.endpoints.contrats}/${id}`,
-    token,
-  );
-
-  return d;
-}
-
-export async function annulerPolice(
-  token: string,
-  id: number,
-): Promise<contrat> {
-  if (isModeDemoEnabled()) {
-    const idx = contratsFakeData.data.findIndex((c) => c.id === id);
-    if (idx !== -1) {
-      contratsFakeData.data[idx] = {
-        ...contratsFakeData.data[idx],
-        categorie: 100,
-      };
-      return contratsFakeData.data[idx];
-    }
-    throw new Error("Police introuvable");
-  }
-  return putJsonAuth<contrat, Partial<contrat>>(
-    `${apiConfig.endpoints.contrats}/${id}/annuler`,
-    token,
-    { categorie: 100 },
-  );
-}
-
-export async function createContrat(
-  token: string,
-  data: Partial<contrat>,
-): Promise<contrat> {
-  if (isModeDemoEnabled()) {
-    const newContrat: contrat = {
-      ...data,
-    } as contrat;
-    contratsFakeData.data.unshift(newContrat);
-    return newContrat;
-  }
-  return postJsonAuth<contrat, Partial<contrat>>(
-    apiConfig.endpoints.contrats,
-    token,
-    data,
-  );
-}
-
-export async function updateContrat(
-  token: string,
-  id: number,
-  data: Partial<contrat>,
-): Promise<contrat> {
-  if (isModeDemoEnabled()) {
-    const index = contratsFakeData.data.findIndex((c) => c.id === id);
-    if (index !== -1) {
-      contratsFakeData.data[index] = { ...contratsFakeData.data[index], ...data };
-      return contratsFakeData.data[index];
-    }
-    throw new Error("Contrat introuvable");
-  }
-  return putJsonAuth<contrat, Partial<contrat>>(
-    `${apiConfig.endpoints.contrats}/${id}`,
-    token,
-    data,
-  );
-}
 
 export async function createClient(
   token: string,
@@ -295,7 +181,27 @@ export async function getfetchBasesVehicules(
 
 
 
+export async function getfetchUtilisateurs(
+  token: string,
+  partenaireId?: number,
+): Promise<listUtilisateurs> {
+  if (isModeDemoEnabled()) {
+    if (partenaireId !== undefined) {
+      return {
+        ...listUtilisateursFake,
+        data: listUtilisateursFake.data.filter((v: utilisateur) => v.partenaireId === partenaireId),
+      };
+    }
+    return listUtilisateursFake;
+  }
 
+  const endpoint = partenaireId !== undefined
+    ? `${apiConfig.endpoints.utilisateurs}?partenaire=${partenaireId}`
+    : apiConfig.endpoints.utilisateurs;
+
+  const data = await getJsonAuth<listUtilisateurs>(endpoint, token);
+  return data;
+}
 
 
 export async function createVehicule(
@@ -373,35 +279,79 @@ export async function updateVehicule(
   );
 }
 
-
-export async function getfetchParametres(token: string,tabParams: params[]): Promise<parametresData> {
+export async function createUtilisateur(
+  token: string,
+  data: Partial<utilisateur>,
+): Promise<utilisateur> {
   if (isModeDemoEnabled()) {
-    return parametresFakeData;
+    const newUtilisateur: utilisateur = {
+      id: Math.max(...listUtilisateursFake.data.map((v) => v.id), 0) + 1,
+      nom: data.nom ?? "",
+      login: data.login ?? "",
+      email: data.email ?? "",
+      contacts: data.contacts ?? "",
+      compteActive: data.compteActive ?? true,
+      superUser: data.superUser ?? false,
+      typeUser: data.typeUser ?? 1,
+      partenaireNom: data.partenaireNom ?? "",
+    };
+    
+    listUtilisateursFake.data.unshift(newUtilisateur);
+    return newUtilisateur;
   }
+  const d = await postJsonAuth<utilisateur, Partial<utilisateur>>( apiConfig.endpoints.utilisateurs, token, data);
 
-  const parameters: string = tabParams.join(",");
-  const finalUrl = apiConfig.endpoints.parametres + "?param="+parameters;
-
-  console.log("URL finale pour les paramètres :", finalUrl);
-
-  const payload = await getJsonAuth<parametresData>(finalUrl, token);
-    return payload
+  return d ;
 }
 
-export async function getfetchProfessions(token: string): Promise<itemDefaut[]> {
+export async function updateUtilisateur(
+  token: string,
+  id: number,
+  data: Partial<utilisateur>,
+): Promise<utilisateur> {
   if (isModeDemoEnabled()) {
-    return professionsFakeData;
-  }
+    const index = listUtilisateursFake.data.findIndex((v) => v.id === id);
+    if (index === -1) {
+      throw new Error("Utilisateur introuvable");
+    }
 
-  const payload = await getfetchParametres(token, [params.PROFESSIONS]);
-  return payload.professions?.data ?? [];
+    listUtilisateursFake.data[index] = {
+      ...listUtilisateursFake.data[index],
+      ...data,
+      id,
+    };
+
+    return listUtilisateursFake.data[index];
+  }
+  const d = await putJsonAuth<utilisateur, Partial<utilisateur>>(
+    `${apiConfig.endpoints.utilisateurs}/${id}`,
+    token,
+    data,
+  );
+
+  return d ;
 }
 
-export async function getfetchCompagnies(token: string): Promise<itemDefaut[]> {
+
+export async function desactivationUtilisateur(token: string, id: number): Promise<utilisateur> {
   if (isModeDemoEnabled()) {
-    return CompagnieFakeData;
+    const index = listUtilisateursFake.data.findIndex((p) => p.id === id);
+    if (index !== -1) listUtilisateursFake.data.splice(index, 1);
+    return index !== -1
+      ? { ...listUtilisateursFake.data[index], compteActive: false }
+      : { id, nom: "", compteActive: false } as utilisateur;
   }
 
-  const payload = await getfetchParametres(token, [params.COMPAGNIES]);
-  return payload.compagnies?.data ?? [];
+  return putAuthNoBody<utilisateur>(`${apiConfig.endpoints.utilisateurs}/${id}/desactivations`, token);
+}
+
+export async function activationUtilisateur(token: string, id: number): Promise<utilisateur> {
+  if (isModeDemoEnabled()) {
+    const index = listUtilisateursFake.data.findIndex((p) => p.id === id);
+    if (index !== -1) listUtilisateursFake.data.splice(index, 1);
+    return index !== -1
+      ? { ...listUtilisateursFake.data[index], compteActive: true }
+      : { id, nom: "", compteActive: true } as utilisateur;
+  }
+  return putAuthNoBody<utilisateur>(`${apiConfig.endpoints.utilisateurs}/${id}/activations`, token);
 }

@@ -240,7 +240,7 @@ export default function ClientDetailsScreen() {
           <InfoRow
             icon="badge"
             label="Profession"
-            value={selectedClient.libProfession}
+            value={selectedClient.professionNom}
           />
           <View style={[styles.cardDivider, { borderColor }]} />
           <InfoRow
@@ -307,7 +307,7 @@ export default function ClientDetailsScreen() {
           <InfoRow
             icon="mail"
             label="Boîte postale"
-            value={selectedClient.bP}
+            value={selectedClient.bp}
           />
         </View>
 

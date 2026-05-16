@@ -13,11 +13,11 @@ export type client = {
   mobile?: string;
   tel: string;
   whatsapp?: string;
-  bP: string;
+  bp: string;
   exoTaxe?: boolean;
 	rccm?: string;
-  libProfession?: string;
-  libType?: string ;
+  professionNom?: string;
+  typeNom?: string ;
 };
 
 export type listClients = {

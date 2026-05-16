@@ -1,4 +1,4 @@
-import { itemDefaut, meta, parametresData } from "@/types/other.type";
+import { itemDefaut, meta, parametresData, permission } from "@/types/other.type";
 import { SoldeResponse } from "@/types/solde.type";
 
 export const soldeFake: SoldeResponse = {
@@ -308,3 +308,32 @@ export const parametresFakeData: parametresData = {
   compagnies: { data: CompagnieFakeData },
   motifs_annulations: { data: [] }
 }
+
+
+
+export const  permissionsFakeData : permission[] = [
+  {
+    id: 1,
+    code: "DCreerAgence",
+    libelle: "Créer une nouvelle agence",
+    ordre: 1,
+  },
+  {
+    id: 2,
+    code: "DModifierAgence",
+    libelle: "Modifier une agence",
+    ordre: 2,
+  },
+  {
+    id: 3,
+    code: "DSupprimerAgence",
+    libelle: "Supprimer une agence",
+    ordre: 3,
+  },
+  {
+    id: 4,
+    code: "DDesactiverAgence",
+    libelle: "Désactiver une agence",
+    ordre: 4,
+  }
+];

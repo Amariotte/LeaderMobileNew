@@ -4,7 +4,7 @@ import { listAgencesDataFake, listPartenairesDataFake } from "@/data/fake/parten
 import { isModeDemoEnabled } from "@/tools/tools";
 import { agence, listAgences } from "@/types/agences";
 import { listPartenaires, partenaire } from "@/types/partenaires";
-import { deleteJsonAuth, getJsonAuth, postJsonAuth, putJsonAuth } from "./api-client";
+import { deleteJsonAuth, getJsonAuth, postJsonAuth, putAuthNoBody, putJsonAuth } from "./api-client";
 
 
 export async function getfetchPartenaires(token: string): Promise<listPartenaires> {
@@ -65,20 +65,25 @@ export async function deletePartenaire(token: string, id: number): Promise<{ mes
 }
 
 
-export async function desactivationPartenaire(token: string, id: number): Promise<{ message: string }> {
+export async function desactivationPartenaire(token: string, id: number): Promise<partenaire> {
   if (isModeDemoEnabled()) {
     const index = listPartenairesDataFake.data.findIndex((p) => p.id === id);
     if (index !== -1) listPartenairesDataFake.data.splice(index, 1);
-    return { message: "Partenaire désactivé avec succès." };
+
+    return index !== -1
+      ? { ...listPartenairesDataFake.data[index], etat: 3 }
+      : { id, nom: "", etat: 3} as partenaire;
   }
-  return putJsonAuth<{ message: string }>(`${apiConfig.endpoints.partenaires}/${id}/desactivations`, token, { etatLib: "Désactivé" });
+  return putAuthNoBody<partenaire>(`${apiConfig.endpoints.partenaires}/${id}/desactivations`, token);
 }
 
-export async function activationPartenaire(token: string, id: number): Promise<{ message: string }> {
+export async function activationPartenaire(token: string, id: number): Promise<partenaire> {
   if (isModeDemoEnabled()) {
     const index = listPartenairesDataFake.data.findIndex((p) => p.id === id);
     if (index !== -1) listPartenairesDataFake.data.splice(index, 1);
-    return { message: "Partenaire activé avec succès." };
+    return index !== -1
+      ? { ...listPartenairesDataFake.data[index], etat: 2 }
+      : { id, nom: "", etat: 2 } as partenaire;
   }
-  return putJsonAuth<{ message: string }>(`${apiConfig.endpoints.partenaires}/${id}/activations`, token, { etatLib: "Activé" });
+  return putAuthNoBody<partenaire>(`${apiConfig.endpoints.partenaires}/${id}/activations`, token);
 }

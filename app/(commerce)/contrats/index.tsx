@@ -9,7 +9,7 @@ import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { annulerPolice, getfetchContrats } from "@/services/api-service";
+import { annulerPolice, getfetchContrats } from "@/services/api-souscriptions";
 import { sharedStyles } from "@/styles/shared.js";
 import { formatAmount, formatDate } from "@/tools/tools";
 import { client } from "@/types/client.type";

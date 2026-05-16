@@ -1,7 +1,7 @@
   import { meta } from "./other.type";
 
 export type utilisateur = {
-  id?: number;
+  id: number;
   login?: string;
   codeAsaci?: string;
   partenaireId?: number;
