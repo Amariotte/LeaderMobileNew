@@ -9,8 +9,8 @@ import BottomPickerModal, { PickerOption } from "@/components/ui/bottom-picker-m
 import { useAuthContext } from "@/hooks/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
+import { getfetchParametres } from "@/services/api-parametres";
 import { getfetchPartenaires } from "@/services/api-partenaires";
-import { getfetchParametres } from "@/services/api-service";
 import { getfetchStockCourtierById, getfetchStockPartenaireById, getfetchStockPartenaires, updateStockPartenaire } from "@/services/api-stock";
 import { formatNumber } from "@/tools/tools";
 import { itemDefaut, params } from "@/types/other.type";

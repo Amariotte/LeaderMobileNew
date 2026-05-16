@@ -12,6 +12,8 @@ export async function getfetchPartenaires(token: string): Promise<listPartenaire
     return  listPartenairesDataFake;
   } 
   const payload = await getJsonAuth<listPartenaires>(`${apiConfig.endpoints.partenaires}`, token);
+   console.log("Payload des partenaires :", payload);
+
   return payload
 }
 
@@ -21,6 +23,8 @@ export async function getfetchAgences(token: string,idPartenaire: number): Promi
     return  listAgencesDataFake;
   } 
   const payload = await getJsonAuth<listAgences>(`${apiConfig.endpoints.agences.replace("{idPartenaire}", idPartenaire.toString())}`, token);
+
+  console.log("Payload des agences :", payload);
   return payload
 }
 

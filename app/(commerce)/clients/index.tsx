@@ -7,8 +7,8 @@ import ClientEditorModal from "@/components/client-editor-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
+import { useAppColors } from "@/hooks/use-app-theme";
 import { useClientEditorModal } from "@/hooks/use-client-editor-modal";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import { createClient, deleteClient, getfetchClients, updateClient } from "@/services/api-service";
 import { getAvatarColor, getLabelTypeClient } from "@/tools/tools";
@@ -19,8 +19,7 @@ import { useEffect, useState } from "react";
 
 
 export default function ClientsScreen() {
-  const scheme = useColorScheme() ?? "light";
-  const isDark = scheme === "dark";
+  const { isDark, pageBackground, cardBackground, softBlock, mutedText, primaryColor, onPrimary } = useAppColors();
 
   const [customersList, setCustomersList] = useState<client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,11 +39,6 @@ export default function ClientsScreen() {
       .then((res) => setCustomersList(res.data ?? []))
       .finally(() => setIsLoading(false));
   }, [userToken]);
-
-  const pageBackground = isDark ? "#11131A" : "#F4F4F7";
-  const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const softBlock = isDark ? "#242735" : "#F2F3F8";
-  const mutedText = isDark ? "#A8AEC7" : "#8B90A5";
 
   const handleOpenNewClient = () => {
     clientEditor.openCreate();
@@ -191,7 +185,7 @@ export default function ClientsScreen() {
       >
         {isLoading && customersList.length === 0 ? (
           <View style={styles.centerState}>
-            <ActivityIndicator size="large" color="#1F8B82" />
+            <ActivityIndicator size="large" color={primaryColor} />
             <ThemedText style={[styles.centerStateText, { color: mutedText }]}>
               Chargement des clients…
             </ThemedText>
@@ -271,12 +265,13 @@ export default function ClientsScreen() {
                       size={15}
                       color={isDark ? "#DCE0F8" : "#707792"}
                     />
-                  </Pressable>
+                    </Pressable>
                   <Pressable
-                    style={[styles.actionIcon, { backgroundColor: softBlock }]}
-                    onPress={() => handleDeleteClient(item)}
-                    hitSlop={6}
+                    style={[styles.primaryAction, { backgroundColor: primaryColor }]}
+                    onPress={handleOpenNewClient}
                   >
+                    <MaterialIcons name="add" size={18} color={onPrimary} />
+                 
                     <MaterialIcons
                       name="delete-outline"
                       size={15}

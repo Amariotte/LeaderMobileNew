@@ -15,6 +15,7 @@ import PartenaireFormModal from "@/components/partenaire-form-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthContext } from "@/hooks/auth-context";
+import { useAppColors } from "@/hooks/use-app-theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import {
@@ -51,14 +52,7 @@ const badgeStyles = StyleSheet.create({
 export default function PartenairesScreen() {
   const scheme = useColorScheme() ?? "light";
   const isDark = scheme === "dark";
-
-  const pageBackground = isDark ? "#11131A" : "#F4F4F7";
-  const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const borderColor = isDark ? "#2F3547" : "#E4E9F5";
-  const mutedText = isDark ? "#A8AEC7" : "#75809A";
-  const inputBg = isDark ? "#1E2230" : "#F9FAFD";
-  const textColor = isDark ? "#FFFFFF" : "#2D3142";
-  const primaryColor = "#1F8B82";
+  const { pageBackground, cardBackground, mutedText, borderColor, inputBg, textColor, primaryColor } = useAppColors();
 
   const [partenaires, setPartenaires] = useState<partenaire[]>([]);
   const [isLoading, setIsLoading] = useState(false);

@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAppColors } from "@/hooks/use-app-theme";
 import { partenaire } from "@/types/partenaires";
 
 type PartenaireFormModalProps = {
@@ -46,20 +46,21 @@ export default function PartenaireFormModal({
   initialPartenaire,
   title,
 }: PartenaireFormModalProps) {
-  const scheme = useColorScheme() ?? "light";
-  const isDark = scheme === "dark";
+  const {
+    isDark,
+    cardBackground,
+    borderColor,
+    textColor,
+    mutedText: labelColor,
+    inputBg,
+    primaryColor,
+    sectionBg,
+    dangerColor,
+  } = useAppColors();
 
   const [formData, setFormData] = useState<Partial<partenaire>>(buildInitialForm(initialPartenaire));
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const borderColor = isDark ? "#363A4C" : "#E7EAF5";
-  const textColor = isDark ? "#FFFFFF" : "#2D3142";
-  const labelColor = isDark ? "#A8AEC7" : "#61637A";
-  const inputBg = isDark ? "#242735" : "#F9F9FC";
-  const primaryColor = "#1F8B82";
-  const sectionBg = isDark ? "#161924" : "#F4F6FC";
 
   useEffect(() => {
     if (visible) {
@@ -222,8 +223,8 @@ export default function PartenaireFormModal({
 
             {/* Validation error */}
             {validationError && (
-              <View style={[styles.errorBox, { backgroundColor: isDark ? "#2E1A1A" : "#FFF0F0", borderColor: "#E05252" }]}>
-                <MaterialIcons name="error-outline" size={16} color="#E05252" />
+              <View style={[styles.errorBox, { backgroundColor: isDark ? "#2E1A1A" : "#FFF0F0", borderColor: dangerColor }]}>
+                <MaterialIcons name="error-outline" size={16} color={dangerColor} />
                 <ThemedText style={styles.errorText}>{validationError}</ThemedText>
               </View>
             )}

@@ -1,13 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
@@ -15,9 +15,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import BottomPickerModal, { PickerOption as BPickerOption } from "@/components/ui/bottom-picker-modal";
 import { useAuthContext } from "@/hooks/auth-context";
+import { useAppColors } from "@/hooks/use-app-theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
-import { annulerPolice, getfetchContrats } from "@/services/api-service";
+import { annulerPolice, getfetchContrats } from "@/services/api-souscriptions";
 import { formatDate, formatNumber } from "@/tools/tools";
 import { contrat } from "@/types/contrat.type";
 
@@ -90,11 +91,7 @@ export default function PolicesScreen() {
   const activeFilters = (filterStatut ? 1 : 0) + filterCompagnie.length + filterAgence.length;
 
   // Couleurs
-  const pageBackground = isDark ? "#11131A" : "#F4F4F7";
-  const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
-  const muted = isDark ? "#A8AEC7" : "#61637A";
-  const softBlock = isDark ? "#242735" : "#F2F3F8";
-  const borderColor = isDark ? "#363A4C" : "#E7EAF5";
+  const { pageBackground, cardBackground, borderColor  } = useAppColors();
 
   // Handlers
   const handleAnnuler = (item: contrat) => {

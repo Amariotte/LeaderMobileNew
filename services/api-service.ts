@@ -299,6 +299,9 @@ export async function createUtilisateur(
     listUtilisateursFake.data.unshift(newUtilisateur);
     return newUtilisateur;
   }
+
+     console.log("Payload des createUtilisateur :", data);
+
   const d = await postJsonAuth<utilisateur, Partial<utilisateur>>( apiConfig.endpoints.utilisateurs, token, data);
 
   return d ;
