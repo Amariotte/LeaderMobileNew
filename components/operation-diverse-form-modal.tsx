@@ -1,13 +1,13 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
 } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
@@ -39,7 +39,6 @@ type OperationDiverseFormModalProps = {
   onSubmit: (data: OperationDiverseFormData) => Promise<void>;
   initialData?: operation;
   title: string;
-  agenceOptions: PickerOption[];
   banqueOptions: PickerOption[];
   modeOptions: PickerOption[];
 };
@@ -75,7 +74,6 @@ export default function OperationDiverseFormModal({
   onSubmit,
   initialData,
   title,
-  agenceOptions,
   banqueOptions,
   modeOptions,
 }: OperationDiverseFormModalProps) {
@@ -86,8 +84,9 @@ export default function OperationDiverseFormModal({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openPicker, setOpenPicker] = useState<InlinePicker>(null);
-
   const cardBackground = isDark ? "#1B1E28" : "#FFFFFF";
+  const [agenceOptions, setAgenceOptions] = useState<PickerOption[]>([]);
+  
   const borderColor = isDark ? "#363A4C" : "#E7EAF5";
   const textColor = isDark ? "#FFFFFF" : "#2D3142";
   const labelColor = isDark ? "#A8AEC7" : "#61637A";

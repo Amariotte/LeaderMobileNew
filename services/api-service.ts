@@ -337,12 +337,7 @@ export async function updateUtilisateur(
 
 
 export async function desactivationUtilisateur(token: string, id: number): Promise<utilisateur> {
-<<<<<<< HEAD
-
-  console.log("ID de l'utilisateur à désactiver :", id);
   
-=======
->>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
   if (isModeDemoEnabled()) {
     const index = listUtilisateursFake.data.findIndex((p) => p.id === id);
     if (index !== -1) listUtilisateursFake.data.splice(index, 1);
@@ -351,15 +346,7 @@ export async function desactivationUtilisateur(token: string, id: number): Promi
       : { id, nom: "", compteActive: false } as utilisateur;
   }
 
-<<<<<<< HEAD
-  const d = await putAuthNoBody<utilisateur>(`${apiConfig.endpoints.utilisateurs}/${id}/desactivations`, token);
-
-  console.log("Response des desactivationUtilisateur :", d);
-
-  return d;
-=======
-  return putAuthNoBody<utilisateur>(`${apiConfig.endpoints.utilisateurs}/${id}/desactivations`, token);
->>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
+  return await putAuthNoBody<utilisateur>(`${apiConfig.endpoints.utilisateurs}/${id}/desactivations`, token);
 }
 
 export async function activationUtilisateur(token: string, id: number): Promise<utilisateur> {
