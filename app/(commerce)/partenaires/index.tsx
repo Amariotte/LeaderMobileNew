@@ -2,12 +2,21 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+<<<<<<< HEAD
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
+=======
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    View,
+>>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
 } from "react-native";
 
 import AppHeaderDrawer from "@/components/app-header-drawer";
@@ -19,12 +28,19 @@ import { useAppColors } from "@/hooks/use-app-theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import {
+<<<<<<< HEAD
   activationPartenaire,
   createPartenaire,
   deletePartenaire,
   desactivationPartenaire,
   getfetchPartenaires,
   updatePartenaire,
+=======
+    createPartenaire,
+    deletePartenaire,
+    getfetchPartenaires,
+    updatePartenaire,
+>>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
 } from "@/services/api-partenaires";
 import { getAvatarColor, getInitials } from "@/tools/tools";
 import { partenaire, statusPartenaires } from "@/types/partenaires";
@@ -129,6 +145,7 @@ export default function PartenairesScreen() {
     });
   };
 
+<<<<<<< HEAD
   const handleToggleActive = (p: partenaire) => {
     if (!userToken || !p.id) return;
 
@@ -158,6 +175,8 @@ export default function PartenairesScreen() {
   };
 
 
+=======
+>>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
   return (
     <ThemedView style={[styles.container, { backgroundColor: pageBackground }]}>
       <View style={styles.headerWrap}>
@@ -284,7 +303,28 @@ export default function PartenairesScreen() {
                         <Pressable
                           style={[styles.actionBtn, { backgroundColor: p.etatLib === "Activé" ? (isDark ? "#2E1A1A" : "#FFF0F0") : (isDark ? "#143B39" : "#DBF4F1") }]}
                           onPress={(e) => {
+<<<<<<< HEAD
                             e.stopPropagation();handleToggleActive(p);
+=======
+                            e.stopPropagation();
+                            const newEtat = p.etatLib === "Activé" ? "Désativé" : "Activé";
+                            showConfirm(
+                              "info",
+                              newEtat === "Activé" ? "Activer le partenaire" : "Désactiver le partenaire",
+                              `Voulez-vous vraiment ${newEtat === "Activé" ? "activer" : "désactiver"} "${p.nom}" ?`,
+                              async () => {
+                                if (!userToken) return;
+                                try {
+                                  const updated = await updatePartenaire(userToken, p.id ?? 0, { etatLib: newEtat });
+                                  setPartenaires((prev) => prev.map((x) => x.id === p.id ? { ...x, ...updated, etatLib: newEtat } : x));
+                                  showMessage("success", newEtat === "Activé" ? "Partenaire activé" : "Partenaire désactivé", `Le partenaire a été ${newEtat === "Activé" ? "activé" : "désactivé"}.`);
+                                } catch {
+                                  showMessage("error", "Erreur", `Impossible de ${newEtat === "Activé" ? "activer" : "désactiver"} ce partenaire.`);
+                                }
+                              },
+                              { confirmLabel: newEtat === "Activé" ? "Activer" : "Désactiver", cancelLabel: "Annuler" }
+                            );
+>>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
                           }}
                           hitSlop={6}
                         >
