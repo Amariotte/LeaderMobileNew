@@ -18,11 +18,7 @@ import { useAppColors } from "@/hooks/use-app-theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { usePopup } from "@/hooks/use-popup";
 import { putAuthNoBody } from "@/services/api-client";
-<<<<<<< HEAD
 import { activationUtilisateur, createUtilisateur, desactivationUtilisateur, getfetchUtilisateurs, updateUtilisateur } from "@/services/api-service";
-=======
-import { createUtilisateur, getfetchUtilisateurs, updateUtilisateur } from "@/services/api-service";
->>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
 import { getAvatarColor, getInitials } from "@/tools/tools";
 import { utilisateur } from "@/types/utilisateurs";
 
