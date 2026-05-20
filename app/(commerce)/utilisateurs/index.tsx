@@ -100,7 +100,6 @@ export default function UtilisateursScreen() {
       `Voulez-vous vraiment ${u.compteActive ? "désactiver" : "activer"} "${u.nom}" ?`,
       async () => {
         try {
-<<<<<<< HEAD
 
           if (u.compteActive) {
             await desactivationUtilisateur(userToken, u.id!);
@@ -114,13 +113,6 @@ export default function UtilisateursScreen() {
           showMessage("success", u.compteActive ? "Utilisateur désactivé" : "Utilisateur activé", `L'utilisateur a été ${u.compteActive ? "désactivé" : "activé"}.`);
         } catch {
           showMessage("error", "Erreur", `Impossible ${u.compteActive ? "de désactiver" : "d'activer"} cet utilisateur.`);
-=======
-          await updateUtilisateur(userToken, u.id!, { compteActive: !u.compteActive });
-          setUtilisateurs((prev) => prev.map((x) => x.id === u.id ? { ...x, compteActive: !u.compteActive } : x));
-          showMessage("success", u.compteActive ? "Utilisateur désactivé" : "Utilisateur activé", `L'utilisateur a été ${u.compteActive ? "désactivé" : "activé"}.`);
-        } catch {
-          showMessage("error", "Erreur", `Impossible de ${u.compteActive ? "désactiver" : "activer"} cet utilisateur.`);
->>>>>>> e6774c06b0c8bc7dd76c8e0e89402624848388f1
         }
       },
       { confirmLabel: u.compteActive ? "Désactiver" : "Activer", cancelLabel: "Annuler" }
